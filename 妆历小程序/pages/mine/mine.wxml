@@ -2,13 +2,16 @@
      落点：A1「Tab · 我的」。M0 只放静态资料项。
      ⛔ 绝不放「邀请同行」—— 它最像增长手段，同时是多商户入驻最直接的证据。
 
-     📌 五行全部跳得动（没有一行是「点了没反应」）：
-        我的资料 → my-profile、我的作品 → my-works（两个子页都带「‹ 返回」）、
-        设置 → settings、关于妆历 → 弹框、切换身份 → 角色选择页。
-     ⚠️ 原先「我的资料 / 我的作品」只弹一句 toast、不跳页面 ——
-        那是**缺功能**不是 bug，已补两页，见 README §4。
-     📌「我的作品 0 张」是事实陈述，「还没有上传作品」也是事实陈述，
-        都不是「功能开发中」那类承诺（红线 10）。
+     📌 四行全部跳得动（没有一行是「点了没反应」）：
+        我的资料 → my-profile（带「‹ 返回」）、设置 → settings、
+        关于妆历 → 弹框、切换身份 → 角色选择页。
+     ⚠️ 原先「我的资料」只弹一句 toast、不跳页面 ——
+        那是**缺功能**不是 bug，已补页，见 README §4 第十四处。
+     🔴「我的作品」这一行**已整体删除**（2026-09-30，第十五处）。它原来跳一个
+        空态页 `pages/my-works/`，那个页面**永远长不出内容**：妆娘上传的图片一旦
+        让顾客看见，就是「用户自行生成内容的记录、分享」= 个人主体未开放的
+        「社交-笔记」类目；而对顾客不可见的话，作品集对她本人又没有任何价值。
+        ⛔ **不要加回来**，也⛔ 不要改挂到别的地方 —— 详见 README §4。
      🔴「我的资料」这一项**只留在这儿**，设置页里那一行重复的已删。 -->
 <view class="app">
   <nav-bar title="我的"></nav-bar>
@@ -25,9 +28,6 @@
     <view class="grp">
       <view class="cell" bindtap="goProfile" hover-class="btn-hover" hover-stay-time="80">
         <text class="cl">我的资料</text><text class="cr">›</text>
-      </view>
-      <view class="cell" bindtap="goWorks" hover-class="btn-hover" hover-stay-time="80">
-        <text class="cl">我的作品</text><text class="cr">0 张 ›</text>
       </view>
       <view class="cell" bindtap="goSettings" hover-class="btn-hover" hover-stay-time="80">
         <text class="cl">设置</text><text class="cr">›</text>

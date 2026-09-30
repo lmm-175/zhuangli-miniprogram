@@ -10,11 +10,6 @@ Page({
     wx.navigateTo({ url: '/pages/my-profile/my-profile' })
   },
 
-  // 「我的作品」空态页（M0 一页空态，没有上传入口）
-  goWorks() {
-    wx.navigateTo({ url: '/pages/my-works/my-works' })
-  },
-
   // §9.4 #6 的落点页 → 壳 4
   goSettings() {
     wx.navigateTo({ url: '/pages/settings/settings' })
