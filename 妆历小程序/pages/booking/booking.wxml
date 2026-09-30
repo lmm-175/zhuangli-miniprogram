@@ -34,9 +34,22 @@
       <view class="sb-pick" bindtap="toggleSched" hover-class="btn-hover" hover-stay-time="80">
         <text class="sb-lb">{{schedLabel}}</text>
       </view>
-      <input class="sb-ip" value="{{kwInput}}" placeholder="搜 CN / 展名"
-             placeholder-class="sb-ph" confirm-type="search"
-             bindinput="onKwInput" bindconfirm="doSearch" />
+      <!-- 输入框 + 里面那颗 ✕（只有框里有字才出现）。
+           ⚠️ 输入框和 ✕ 包在【同一个壳】里，背景和圆角在壳上 ——
+              分开画的话输入框自带的白底会把后面那颗 ✕ 盖住。 -->
+      <view class="sb-ipw">
+        <input class="sb-ip" value="{{kwInput}}" placeholder="搜 CN / 展名"
+               placeholder-class="sb-ph" confirm-type="search"
+               bindinput="onKwInput" bindfocus="onFocus" bindconfirm="doSearch" />
+        <!-- ✕【用两根斜条画的】，⛔ 不用文字 —— 理由同放大镜。
+             ⚠️ clearKw 清的是「这一次搜的词」，⛔ 不动搜索历史：
+                历史框里那个垃圾桶图标才管历史。 -->
+        <view wx:if="{{kwInput}}" class="sb-clr" bindtap="clearKw"
+              hover-class="btn-hover" hover-stay-time="80">
+          <view class="cl-a"></view>
+          <view class="cl-b"></view>
+        </view>
+      </view>
       <view class="sb-arw" bindtap="toggleSched" hover-class="btn-hover" hover-stay-time="80">
         <view class="sb-ar {{schedOpen ? 'up' : ''}}"></view>
       </view>
@@ -48,20 +61,19 @@
       </view>
     </view>
 
-    <!-- 搜索是【跨场次】的：妆娘要找的是「这个人的全部下单记录」，
-         不是「这一场里有没有这个人」。这句话得说出来，不然她看到别的场次的
-         单子冒出来会以为是 bug。
-         ⚠️ 它必须在【面板收起时也看得见】—— 搜完面板立刻就收起了（不收就盖住
-            结果第一屏），所以这句要是还留在面板里，就永远不会被人看到。 -->
-    <view wx:if="{{searching}}" class="sb-tip">
-      <text class="sb-tip-t">搜索中：跨全部场次</text>
-      <text class="sb-tip-x" bindtap="clearKw" hover-class="btn-hover" hover-stay-time="80">清空</text>
-    </view>
+    <!-- 🔴 2026-09-30 用户删掉了这一条「搜索中：跨全部场次」。
+         搜索【不再】跨场次了：它现在跟着上面选的场次走，两个条件相乘
+         （选「全部」= 这个 CN 的全部单；选某一场 = 只有这一场里她那些单）。
+         场次名就明明白白写在条子左边，再挂一条提示只是重复，还让人以为
+         「我明明选了 05-02，怎么又跨全部了」。 -->
 
-    <!-- 下拉面板。⚠️ 绝对定位【浮】在列表上面，⛔ 不占流 ——
+    <!-- 两个面板共用的一层蒙层。⚠️ 铺满整屏的透明层，z-index 要比面板低一档。
+         它们不同时开（开一个就关另一个），所以一层就够。 -->
+    <view wx:if="{{schedOpen || histOpen}}" class="pn-mask" bindtap="closePanels"></view>
+
+    <!-- 场次下拉面板。⚠️ 绝对定位【浮】在列表上面，⛔ 不占流 ——
          占流的话展开/收起会把下面整块内容顶下去又拉回来，而用户正盯着它选。
          和「未付定金」那行红字同一个道理（见 §3.5）。 -->
-    <view wx:if="{{schedOpen}}" class="sp-mask" bindtap="closeSched"></view>
     <view wx:if="{{schedOpen}}" class="sched-panel">
       <view class="sp-list">
         <view wx:for="{{schedChips}}" wx:key="id"
@@ -75,6 +87,34 @@
              等于一个字没查过 CN，就替 CN 下了「没有」的结论。人明明在，它说没有，
              她再点放大镜，这回真去查 CN 又搜到了 —— 用户报的「过程有问题」就是它。
              现在面板只管选场次、⛔ 不认输入框里的字，那句假话连同它的条件一起删。 -->
+      </view>
+    </view>
+
+    <!-- 搜索历史（2026-09-30 用户要的）。用户原话：「点击输入框会显示搜索历史，
+         搜索历史框最多容纳十条记录，在搜索历史框里面有一个清空图标，
+         点一下即可清空搜索历史。」
+         ⚠️ 只在【点过输入框】时弹出来，不是常驻 —— 平时这一格是空的，不占屏。
+         ⚠️ 一条历史都没有时也⛔ 不弹：一个空的「搜索历史」框纯属噪声（见 onFocus）。 -->
+    <view wx:if="{{histOpen}}" class="hist-panel">
+      <view class="hp-head">
+        <text class="hp-t">搜索历史</text>
+        <!-- 垃圾桶【用画的】：提手 + 盖子横条 + 桶身 + 两道竖纹。⛔ 不用 emoji。
+             ⚠️ 图标本身很小，外面这层 .hp-del 才是点击区（同放大镜那套道理）。 -->
+        <view class="hp-del" bindtap="clearHist" hover-class="btn-hover" hover-stay-time="80">
+          <view class="hd-hd"></view>
+          <view class="hd-lid"></view>
+          <view class="hd-body">
+            <view class="hd-l1"></view>
+            <view class="hd-l2"></view>
+          </view>
+        </view>
+      </view>
+      <view class="hp-list">
+        <view wx:for="{{hist}}" wx:key="*this"
+              class="hp-item" data-k="{{item}}" bindtap="pickHist"
+              hover-class="btn-hover" hover-stay-time="80">
+          <text class="hp-k">{{item}}</text>
+        </view>
       </view>
     </view>
   </view>
@@ -133,12 +173,26 @@
     </block>
 
     <view wx:else class="body center" style="flex:1;padding:0">
-      <!-- ⚠️ 空态要分三种说法。搜了半天没结果，却告诉她「客人填单后会出现」——
-           那是答非所问，她会以为是自己哪一步做错了。 -->
-      <view wx:if="{{searching}}" class="empty">
+      <!-- ⚠️ 空态要分四种说法。搜了半天没结果，却告诉她「客人填单后会出现」——
+           那是答非所问，她会以为是自己哪一步做错了。
+           🔴 2026-09-30 起搜索【也跟着场次走】，所以「搜了词」这里还要再分一半：
+              选「全部」搜不到 = 这个人真的没在她这儿下过单；
+              选了某一场搜不到 = 只有【这一场】没有，别的场次可能有。
+              两种混成一句，她会对着一个明明下过单的 CN 说「你查不到」。
+              所以搜 + 选场次这一支【单独一屏】，并且第一件事是告诉她去点「全部」。 -->
+      <view wx:if="{{searching && schedId !== 'all'}}" class="empty">
+        <text class="ic">🔍</text>
+        <view class="et">这一场里没有「{{kw}}」的单</view>
+        <view style="font-size:26rpx">{{schedLabel}}这一场里找不到她，<br />点左上角选「全部」看她所有场次</view>
+        <view class="btn sec sm" style="margin-top:24rpx" bindtap="clearKw"
+              hover-class="btn-hover" hover-stay-time="80">清空搜索</view>
+      </view>
+      <view wx:elif="{{searching}}" class="empty">
         <text class="ic">🔍</text>
         <!-- 2026-09-30 用户定的：搜 CN 搜不到人时，要明确说「没有叫这个名字的
-             展子 / CN」，而不是泛泛一句「没找到」。 -->
+             展子 / CN」，而不是泛泛一句「没找到」。
+             ⚠️ 这句只在「全部」场次下说 —— 它是一句覆盖所有场次的结论，
+                选着某一場时没资格下这个结论（见上面那支）。 -->
         <view class="et">没有叫这个名字的展子 / CN</view>
         <view style="font-size:26rpx">「{{kw}}」只按顾客 CN 和漫展名找，换个词试试</view>
         <view class="btn sec sm" style="margin-top:24rpx" bindtap="clearKw"

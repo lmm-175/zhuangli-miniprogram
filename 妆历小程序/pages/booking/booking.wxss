@@ -6,7 +6,7 @@
    它决定面板从哪儿展开。z-index 是给「盖住 Tab / 列表 / 底栏」用的。 */
 .sched-wrap{position:relative;flex:none;z-index:30}
 /* gap 收窄到 12rpx：这一行现在要塞四件东西，还留 20rpx 的话输入框没剩多宽。 */
-/* ⚠️ position+z-index 是为了压在 .sp-mask（z-index:19）上面 ——
+/* ⚠️ position+z-index 是为了压在 .pn-mask（z-index:19）上面 ——
    面板开着的时候那一层铺满全屏，条子要是被它盖住，输入框就点不着了。
    输入框现在长在这条条子上，点不着是硬伤。
    （面板挂在这条下面、跟它不重叠，所以压过 20 也不会挡到面板本身。） */
@@ -20,10 +20,23 @@
          padding:10rpx 20rpx;border-radius:14rpx;background:var(--line2)}
 .sb-lb{font-size:27rpx;color:var(--t1);font-weight:600;
        overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* 输入框常驻在条子上（不是在面板里）。高度跟场次名那块对齐。 */
+/* 输入框常驻在条子上（不是在面板里）。高度跟场次名那块对齐。
+   ⚠️ 背景和圆角画在【壳 .sb-ipw】上，输入框自己是透明的 ——
+      输入框自带白底，画在它身上的话会把壳里那颗 ✕ 盖住。 */
+.sb-ipw{flex:1;min-width:0;display:flex;align-items:center;
+        border-radius:14rpx;background:var(--line2)}
 .sb-ip{flex:1;min-width:0;height:68rpx;font-size:27rpx;color:var(--t1);
-       padding:0 20rpx;border-radius:14rpx;background:var(--line2)}
+       padding:0 20rpx;background:transparent}
 .sb-ph{color:var(--t4)}
+
+/* 输入框里那颗「清掉这一次搜索」的 ✕。⚠️ 它在流里（⛔ 不绝对定位）——
+   绝对定位会压在输入框的字上面。两根斜条画的，同放大镜那套。
+   ⚠️ 它【不动搜索历史】：清历史是里面那个垃圾桶图标的事。 */
+.sb-clr{width:56rpx;height:68rpx;flex:none;position:relative}
+.cl-a,.cl-b{position:absolute;left:18rpx;top:32rpx;width:20rpx;height:3rpx;
+            background:var(--t3);border-radius:2rpx}
+.cl-a{transform:rotate(45deg)}
+.cl-b{transform:rotate(-45deg)}
 
 /* 下拉箭头【用两条边画的】，⛔ 不用文字「▾」/「∨」——
    字形和基线各平台不一，同一个道理见圆钮那两根小条。 */
@@ -44,22 +57,18 @@
       background:var(--t2);border-radius:2rpx;transform:rotate(-45deg);
       transform-origin:top center}
 
-/* 「搜索中：跨全部场次 · 清空」。⚠️ 它在【条子下面、面板外面】——
-   搜完面板立刻就收起了（不收就盖住结果第一屏），这句话要是留在面板里
-   就永远不会被人看到。 */
-.sb-tip{display:flex;align-items:center;justify-content:space-between;gap:16rpx;
-        padding:10rpx 22rpx;background:var(--brand-l);border-bottom:1px solid #EFD3DA;
-        position:relative;z-index:21}
-.sb-tip-t{font-size:23rpx;color:var(--brand-d);flex:1;min-width:0}
-.sb-tip-x{font-size:23rpx;font-weight:600;color:var(--brand);
-          padding:6rpx 12rpx;flex:none}
+/* 🔴 2026-09-30 删掉了 .sb-tip*（「搜索中：跨全部场次 · 清空」那条）。
+   搜索现在跟着场次走、不再跨全部场次，这句话本身就是错的；
+   场次名就写在条子左边，再挂一条提示只是重复。 */
 
-/* 点面板以外的地方收起它。⚠️ 铺满整屏的透明层，z-index 要比面板低一档。 */
-.sp-mask{position:fixed;left:0;right:0;top:0;bottom:0;z-index:19}
+/* 点面板以外的地方收起它。⚠️ 铺满整屏的透明层，z-index 要比面板低一档。
+   ⚠️ 两个面板（场次 / 搜索历史）共用这一层，它们不同时开。 */
+.pn-mask{position:fixed;left:0;right:0;top:0;bottom:0;z-index:19}
 
 /* 下拉面板。⚠️ 绝对定位浮在 Tab 和列表上面，⛔ 不占流 ——
    占流的话展开/收起会把下面整块内容顶下去又拉回来，而用户正盯着它选。
-   ⚠️ top:100% = .sched-wrap 的下沿（条子，或者搜索中时再加那条提示）。
+   ⚠️ top:100% = .sched-wrap 的下沿（就是条子本身，2026-09-30 起下面
+      不再有「搜索中」提示那一条了）。
       它挂在 .sched-wrap 上（上面那条 position:relative）。 */
 .sched-panel{position:absolute;left:0;right:0;top:100%;z-index:20;
              background:#fff;border-bottom:1px solid var(--line);
@@ -77,6 +86,39 @@
 .sp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sp-sub{flex:none;font-size:22rpx;color:var(--t4);font-weight:400}
 .sp-item.on .sp-sub{color:var(--brand-d)}
+
+/* ── 搜索历史（2026-09-30 用户要的）────────────────────────────────────
+   ⚠️ 和场次面板【同一层、同一个定位上下文】（.sched-wrap），
+      所以定位那几行跟 .sched-panel 一模一样 —— 它们是同一个位置的两个替身，
+      ⛔ 不同时出现（开一个就关另一个）。
+   ⚠️ z-index 也是 20（跟场次面板同级）：它们互斥，不存在谁压谁。 */
+.hist-panel{position:absolute;left:0;right:0;top:100%;z-index:20;
+            background:#fff;border-bottom:1px solid var(--line);
+            box-shadow:0 12rpx 28rpx rgba(0,0,0,.10);
+            max-height:640rpx;overflow:hidden;display:flex;flex-direction:column}
+.hp-head{display:flex;align-items:center;justify-content:space-between;
+         padding:14rpx 22rpx 6rpx 26rpx;flex:none}
+.hp-t{font-size:24rpx;color:var(--t3);font-weight:600}
+/* 垃圾桶。⚠️ 图标本身小，88rpx 的方块才是点击区（描不准 = 点了没反应，
+   这个坑在「取消场次」那轮踩过两次，见 README §3.5 第 22 条）。 */
+.hp-del{width:72rpx;height:72rpx;flex:none;position:relative}
+/* 盖子上的小提手 → 盖子横条 → 桶身（下圆角、无上边）→ 桶里两道竖纹 */
+.hd-hd{position:absolute;left:31rpx;top:16rpx;width:10rpx;height:5rpx;
+       background:var(--t3);border-radius:2rpx}
+.hd-lid{position:absolute;left:23rpx;top:21rpx;width:26rpx;height:3rpx;
+        background:var(--t3);border-radius:2rpx}
+.hd-body{position:absolute;left:26rpx;top:27rpx;width:20rpx;height:21rpx;
+         border:3rpx solid var(--t3);border-top:none;
+         border-radius:0 0 5rpx 5rpx}
+.hd-l1,.hd-l2{position:absolute;top:4rpx;width:2rpx;height:11rpx;
+              background:var(--t3);border-radius:1rpx}
+.hd-l1{left:3rpx}
+.hd-l2{left:9rpx}
+.hp-list{overflow-y:auto;padding:6rpx 0 12rpx}
+.hp-item{display:flex;align-items:center;padding:22rpx 26rpx;font-size:28rpx;color:var(--t1)}
+.hp-item + .hp-item{border-top:1px solid var(--line2)}
+/* 历史可能很长（上限 10 条，但一条 CN 也可能长），末尾省略号保住行高一致 */
+.hp-k{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 .b-tabs{display:flex;background:#fff;border-bottom:1px solid var(--line);flex:none}
 .b-tab{flex:1;text-align:center;padding:24rpx 0;font-size:29rpx;color:var(--t2);position:relative}

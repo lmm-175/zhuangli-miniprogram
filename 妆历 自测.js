@@ -1437,6 +1437,9 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
      分开写是为了让「打字不搜」「提交才搜」这两件事各自能被断言到。 */
   const typeKw = (v) => pg.onKwInput({ detail: { value: v } })
   const search = (v) => { typeKw(v); pg.doSearch() }
+  /* 点输入框 = 弹搜索历史。⚠️ 它和「打字」是两回事：点一下只是把框激活，
+     一个字符都还没输（onFocus 里那条 `一条历史都没有就不弹` 就靠这个区分）。 */
+  const focusKw = () => pg.onFocus()
   const last = () => toasts[toasts.length - 1]
 
   // 「勾不上」那句话 1 秒后要自己消失 —— 定时器收下来由测试触发，
@@ -1491,7 +1494,9 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
   pg.toggleSched()
   eq('再点一下 → 收回去（同一个键开关）', pg.data.schedOpen, false)
   pg.toggleSched()
-  pg.closeSched()
+  eq('★ 展开场次面板时，历史面板必须被关掉（两个面板同一个位置，会叠在一起）',
+    pg.data.histOpen, false)
+  pg.closePanels()
   eq('点面板以外 → 收起', pg.data.schedOpen, false)
 
   // ── 输入框【常驻在条子上】（2026-09-30 用户定的）──
@@ -1546,8 +1551,9 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
     const bw = bwRaw.replace(/<!--[\s\S]*?-->/g, '')
     eq('🔴★ 面板里那句「没有叫这个名字的展子 / CN」已经删干净（只剩 1 处）',
       bw.split('没有叫这个名字的展子 / CN').length - 1, 1)
-    eq('★ 剩下的那一处在【主列表空态】里（搜不到人时才说，这话查过 CN 了、是真的）',
-      /wx:if="\{\{searching\}\}"[\s\S]{0,400}?没有叫这个名字的展子 \/ CN/.test(bw), true)
+    eq('★ 那句「没有叫这个名字的展子 / CN」只给【选着「全部」】的时候看',
+      /wx:if="\{\{searching && schedId !== 'all'\}\}"[\s\S]*?wx:elif="\{\{searching\}\}"[\s\S]{0,400}?没有叫这个名字的展子 \/ CN/.test(bw),
+      true)
     eq('★ 面板现在直接循环 schedChips（⛔ 不再有 schedOptions）',
       /wx:for="\{\{schedChips\}\}"/.test(bw), true)
 
@@ -1555,25 +1561,60 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
       .readFileSync(R('妆历小程序/pages/booking/booking.wxss'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '')
     eq('⛔ .sp-none 那套样式也跟着删了（不留死代码）', /\.sp-none/.test(bwss), false)
+    // 🔴「搜索中：跨全部场次」这条提示用户点名删掉（搜索不再跨场次了）
+    eq('🔴★ 「搜索中：跨全部场次」那句话在 wxml 里已经删干净',
+      /搜索中：跨全部场次/.test(bw), false)
+    eq('⛔ 它的样式（.sb-tip*）也跟着删了，不留死代码', /\.sb-tip/.test(bwss), false)
+    eq('★ 蒙层改名成两个面板共用的 .pn-mask', /\.pn-mask\s*\{/.test(bwss), true)
+    eq('⛔ 老名字 .sp-mask 一个都不剩', /\.sp-mask/.test(bwss), false)
+    eq('★ 输入框里的 ✕ 只有框里有字才出现',
+      /wx:if="\{\{kwInput\}\}"[\s\S]{0,120}?class="sb-clr"/.test(bw), true)
+    eq('★ 点输入框弹历史走的是 bindfocus', /bindfocus="onFocus"/.test(bw), true)
+    eq('★ 历史框里的清空图标挂的是 clearHist（⛔ 不是清搜索那个 clearKw）',
+      /class="hp-del"[^>]*bindtap="clearHist"/.test(bw), true)
+    eq('★ 点一条历史挂的是 pickHist',
+      /wx:for="\{\{hist\}\}"[\s\S]{0,200}?bindtap="pickHist"/.test(bw), true)
   }
 
   pg.doSearch()
   eq('★ 回车 / 点放大镜 → 这一下才真的搜', pg.data.searching, true)
   eq('★ 搜完面板自己收起（不收就盖住结果第一屏）', pg.data.schedOpen, false)
-  eq('★ 搜索是跨场次的：待处理里是 05-02 的 bk-1（05-03 那单在已确认里）',
-    pg.data.rows.map((r) => r.id).join(','), 'bk-1')
+
+  /* 🔴🔴 2026-09-30 用户把搜索的【范围】反过来了。原话：
+     「我希望搜 CN 时如果点击全部可以展示这个 cn 约过的预约单，如果点击
+       某场次漫展只显示该场次这个 CN 的预约单，如果没有就是空的。」
+     即：搜索【也】按当前场次筛，两个条件相乘。⛔ 不再是「kw 非空就跨全部场次」。
+     ⚠️ 这会儿还在 sched-demo-0503（上一段切过来的）、Tab 是待处理。 */
+  eq('🔴★ 搜索跟着场次走：05-03 的待处理里没有千夏的单 → 空',
+    pg.data.rows.length, 0)
   goto('已确认')
-  /* ★ 一个人在这位妆娘这里下过两单（bk-1 在 05-02、bk-7 在 05-03），
-     搜 CN 要能一次全捞出来 —— 这正是用户说的「搜索用户的 cn
-     找出这个用户在此妆娘这里下单记录」。 */
-  eq('★ 同一个 CN 跨两场的两单都被捞出来（另一单本来不在这一场）',
+  eq('★ 同一场换到已确认：她在 05-03 的那一单出来了',
     pg.data.rows.map((r) => r.id).join(','), 'bk-7')
   eq('搜出来的单带着 CN，一眼认得出是谁', pg.data.rows[0].cn, '千夏')
 
+  /* ★ 一个人在这位妆娘这里下过两单（bk-1 在 05-02、bk-7 在 05-03）。
+     「全部」+ 搜 CN = 她在这儿的全部下单记录 —— 用户要的正是这个入口。 */
+  onSched('all')
+  goto('待处理')
+  eq('🔴★ 点「全部」+ 搜千夏 → 她还没处理的那一单（在 05-02）',
+    pg.data.rows.map((r) => r.id).join(','), 'bk-1')
+  eq('★ 挑场次【不再】把搜索清掉（清了就串不起「全部 / 某一场」两档）',
+    pg.data.kw, '千夏')
+  goto('已确认')
+  eq('★ 同一个 CN 跨两场的单都还在射程内', pg.data.rows.map((r) => r.id).join(','), 'bk-7')
+
   search('示例漫展')
   goto('待处理')
-  eq('★ 也能搜漫展名：两场的待处理一起出来',
+  eq('★ 也能搜漫展名：「全部」下两场的待处理一起出来',
     pg.data.rows.map((r) => r.id).join(','), 'bk-1,bk-6')
+  // 同一个词，挑一场就只剩这一场的 —— 这正是这一轮要的「相乘」
+  onSched('sched-demo-0502')
+  eq('🔴★ 同一个词挑 05-02 → 只剩这一场的 bk-1',
+    pg.data.rows.map((r) => r.id).join(','), 'bk-1')
+  onSched('sched-demo-0503')
+  eq('🔴★ 换成 05-03 → 只剩这一场的 bk-6',
+    pg.data.rows.map((r) => r.id).join(','), 'bk-6')
+
   search('  初七  ')
   goto('已确认')
   eq('★ 关键词前后有空格也认（去掉再比）', pg.data.rows.map((r) => r.id).join(','), 'bk-4')
@@ -1581,31 +1622,121 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
   search('DEMO_MIKU')
   eq('★ 微信号【搜不出来】—— 高风险字段不进这个入口', pg.data.rows.length, 0)
 
-  // 搜不到 → 三种空态说法里的第一种
+  /* 搜不到 → 空态现在分【两种】，因为它们该说的话不一样：
+     选着某一场搜不到 = 只有这一场没有，别的场次可能有；
+     选「全部」搜不到 = 这个人真的没在她这儿下过单。
+     混成一句，「她明明下过单」的时候妆娘会以为自己白找了一场。 */
   search('不存在的人')
   eq('搜不到就是空列表', pg.data.rows.length, 0)
   eq('★ 空态认得出「这是搜出来的空」，不会说「客人填单后会出现」', pg.data.searching, true)
+  onSched('all')
+  eq('★「全部」下搜不到 → 才轮到那句「没有叫这个名字的展子 / CN」',
+    pg.data.searching && pg.data.schedId === 'all', true)
 
-  // 把框里删空再搜 = 清空搜索（不用非得去点那颗「清空」键）
+  // 把框里删空再搜 = 清空搜索（不用非得去点那颗 ✕）
   typeKw('')
   pg.doSearch()
   eq('★ 删光再搜 = 清空搜索', pg.data.searching, false)
   goto('待处理')
-  eq('清空后回到当前这一场的单', pg.data.rows.map((r) => r.id).join(','), 'bk-6')
+  eq('清空后回到当前这一场的单（这会儿停在「全部」，两场的待处理都在）',
+    pg.data.rows.map((r) => r.id).join(','), 'bk-1,bk-6')
 
-  // 「清空」那颗键（搜索提示行右边）：两级状态必须一起清
+  // 输入框里那颗 ✕：两级状态必须一起清
   search('千夏')
   eq('搜索中', pg.data.searching, true)
+  eq('★ 有字的时候 ✕ 才在（wxml 上那条 wx:if 的运行时对应物）', !!pg.data.kwInput, true)
   pg.clearKw()
-  eq('★ 点「清空」→ 主列表回到按场次筛', pg.data.searching, false)
+  eq('★ 点 ✕ → 主列表回到按场次筛', pg.data.searching, false)
   eq('★ 输入框也一起清干净（只清一级 = 框里留着字说还在搜）', pg.data.kwInput, '')
+  eq('★ 而且 ✕ 一按就把框里那个字抹掉了，✕ 自己也就跟着没了', pg.data.kwInput, '')
 
-  // 挑了场次要顺手把搜索清掉 —— 两种找法同时开着没人说得清谁优先
-  search('千夏')
+  /* ══ 搜索历史（2026-09-30 用户要的）══════════════════════════════
+     用户原话：「点击输入框会显示搜索历史，搜索历史框最多容纳十条记录，
+                在搜索历史框里面有一个清空图标，点一下即可清空搜索历史。」 */
   onSched('sched-demo-0503')
-  eq('★ 挑场次会把搜索一起清掉', pg.data.kw, '')
-  eq('★ 输入框里那个词也一起清', pg.data.kwInput, '')
+  delete store.zhuangli_bk_hist          // 从零开始数
+  pg.setData({ hist: [] })
+  eq('★ 一条历史都没有时，点输入框【什么都不弹】（空框纯噪声）', (() => {
+    focusKw()
+    return pg.data.histOpen
+  })(), false)
+
+  // 显式攒一遍（⛔ 不依赖上面那段搜过什么 —— 那种断言看着绿，其实在数别的）
+  search('千夏'); search('示例漫展'); search('初七')
+  eq('★ 提交过的词会进历史（按搜的顺序，最近的在最前）',
+    store.zhuangli_bk_hist.join(','), '初七,示例漫展,千夏')
+  eq('★ 只是打字、没提交的词⛔ 不进历史（那是她还没下定的决心）', (() => {
+    typeKw('别记我')
+    return store.zhuangli_bk_hist.indexOf('别记我')
+  })(), -1)
+  focusKw()
+  eq('★ 有历史了 → 点输入框弹出来', pg.data.histOpen, true)
+  eq('★ 弹历史时场次面板要收起来（同一个位置，会叠在一起）', pg.data.schedOpen, false)
+  eq('★ 打字（不是点框）不弹历史 —— 她已经在输了，那份清单挡着没用',
+    (() => { typeKw('千'); return pg.data.histOpen })(), false)
+
+  // 重复搜同一个词 = 把它置顶，⛔ 不是再攒一条
+  pg.setData({ hist: [] })
+  store.zhuangli_bk_hist = []
+  search('千夏'); search('初七'); search('千夏')
+  eq('🔴★ 重复的词不重复记，而是置顶到最前',
+    store.zhuangli_bk_hist.join(','), '千夏,初七')
+  eq('★ 去重按【小写】比，所以大小写不同也算同一个词', (() => {
+    search('DEMO_MIKU'); search('demo_miku')
+    return store.zhuangli_bk_hist.filter((x) => x.toLowerCase() === 'demo_miku').length
+  })(), 1)
+  eq('★ 但存下来的是【她最后打的那个写法】（所见即所搜）',
+    store.zhuangli_bk_hist[0], 'demo_miku')
+
+  // 上限 10 条：第 11 条进来，最老的那条被挤掉
+  pg.setData({ hist: [] })
+  store.zhuangli_bk_hist = []
+  for (let i = 1; i <= 10; i++) search('CN' + i)
+  eq('★ 攒到 10 条', store.zhuangli_bk_hist.length, 10)
+  search('CN11')
+  eq('🔴★ 上限就是 10 条（用户原话「最多容纳十条记录」）',
+    store.zhuangli_bk_hist.length, 10)
+  eq('★ 第 11 条进来，最老的那条（CN1）被从尾巴上挤掉',
+    store.zhuangli_bk_hist.indexOf('CN1'), -1)
+  eq('★ 新的排最前', store.zhuangli_bk_hist[0], 'CN11')
+  eq('★ 第 2 老的那条还在（砍的是尾巴，不是整个清）',
+    store.zhuangli_bk_hist.indexOf('CN2') >= 0, true)
+
+  // 点一条历史 = 填进框【并立刻搜】（用户定的「直接搜」）
+  eq('★ 点历史前先把词清掉，确保下面那条断言是点出来的、不是上一步剩的',
+    (() => { pg.clearKw(); return pg.data.kwInput })(), '')
+  pg.pickHist({ currentTarget: { dataset: { k: '千夏' } } })
+  eq('★ 点一条历史 → 框里有那个词了', pg.data.kwInput, '千夏')
+  eq('★ 而且【当场就搜了】（用户定的：不用再点一下放大镜）', pg.data.kw, '千夏')
+  eq('★ 搜完历史面板自己收起', pg.data.histOpen, false)
+  eq('★ 点历史也把它置顶（复用这个词 = 它确实是常用的）',
+    store.zhuangli_bk_hist[0], '千夏')
+
+  // 清空图标：一次点掉全部
+  focusKw()
+  eq('（前置）清空前历史是满的', store.zhuangli_bk_hist.length > 0, true)
+  pg.clearHist()
+  eq('🔴★ 点清空图标 → 历史一条不剩（用户原话「点一下即可清空」）',
+    store.zhuangli_bk_hist.length, 0)
+  eq('★ data 里也同步清了（不然框里还画着旧的）', pg.data.hist.length, 0)
+  eq('★ 清空后历史框自己收起（都没了，还开着是个空框）', pg.data.histOpen, false)
+  eq('★ 清空【不弹二次确认】—— 这是她自己手机上的搜索记录，删了不损失业务数据',
+    (() => { const n = toasts.length; pg.clearHist(); return toasts.length === n })(), true)
+  // ⚠️ 清历史 ⛔ 不动当前那次搜索 —— 那是两件事
+  eq('★ 清历史不碰当前搜索（词还在框里、列表还筛着）',
+    (() => { const before = pg.data.kw; pg.clearHist(); return pg.data.kw === before })(), true)
+
+  // 挑完场次面板也收起来
+  search('千夏')
+  pg.toggleSched()
+  onSched('sched-demo-0503')
   eq('★ 挑完场次面板也收起来', pg.data.schedOpen, false)
+  /* 🔴 这一条就是上一轮反过来的那件事：挑场次【不清】搜索。
+     清了的话「先搜 CN，再点某一场看她这一场的单」这个流程会当场断掉。 */
+  eq('🔴★ 挑场次【不清】搜索，两个条件叠加（用户这一轮要的用法）',
+    pg.data.kw, '千夏')
+  eq('★ 输入框里那个词也留着', pg.data.kwInput, '千夏')
+  pg.clearKw()   // 下面那段要干净的场次视角
 
   // 勾选态里换档期：⛔ 勾上的单可能根本不在新选的这一场里
   goto('已确认')
