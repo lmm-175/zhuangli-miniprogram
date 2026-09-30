@@ -1,5 +1,5 @@
 const { SCHEDULE, SLOTS } = require('../../mock/data')
-const { getArtist } = require('../../utils/artistStore')
+const { getArtistById } = require('../../utils/artistStore')
 const { getContact } = require('../../utils/contact')
 const { TOAST } = require('../../utils/toast')
 
@@ -7,7 +7,8 @@ Page({
   data: {
     /* ⛔ artist 里没有 wechat_id，也不会有 —— 见 utils/contact.js。
        ⚠️ 2026-09-30（第十七处）：数据源从 `mock/data.js` 的 ARTIST_PUBLIC
-          换成 artistStore.getArtist()。决定 2 说的是「资料改动要同步给顾客看」，
+          换成 artistStore.getArtist()（第二十处再换成 getArtistById，见 onShow）。
+          决定 2 说的是「资料改动要同步给顾客看」，
           而这一页就是**顾客看的那一页**（提审截图 ②）—— 妆娘改了昵称/城市/风格，
           这里必须跟着变。字段名一个字没改，所以 wxml 那段 `{{artist.xxx}}` 照旧。
        ⚠️ 初值只给个能渲染的空壳，真数据在 onShow 里灌 —— 理由见下面 onShow。 */
@@ -19,17 +20,28 @@ Page({
     copied: false
   },
 
-  /* ⚠️ 必须在 onShow 里读，⛔ 不能写进 data 的初值（`artist: getArtist()`）。
+  /* ⚠️ 必须在 onShow 里读，⛔ 不能写进 data 的初值（`artist: getArtistById(...)`）。
      小程序的页面模块【只求值一次】然后被缓存：第二次进这一页时，
      data 初值还是第一次那一份 —— 妆娘改了资料，顾客这边纹丝不动，
      而且没有任何报错。这正是「同步」那条决定最容易假实现的地方。
-     ⚠️ onShow 也覆盖了「从填写页退回来」这条路径（不必是 onLoad）。 */
+     ⚠️ onShow 也覆盖了「从填写页退回来」这条路径（不必是 onLoad）。
+     🔴 2026-10-01（第二十处）：读的是 `getArtistById(this.artistId)`，⛔ 不再是
+        光秃秃的 `getArtist()` —— 这一页从「妆娘 demo 一个人的分享页」变成了
+        「**任意一位**妆娘的妆位页」（顾客从「我约过的妆娘」点进来）。
+        `artistId` 只能来自 onLoad 的查询串，所以它存在【实例】上
+        （`this.artistId`），⛔ 不进 data：它不是要渲染的东西，
+        进了 data 反而会被 setData 无谓地送一遍。
+        ⚠️ demo（或没带参数）仍然走 storage —— 妆娘改了资料顾客端要跟着变，
+           这条决定一个字没改，见 artistStore.getArtistById 的注释。 */
   onShow() {
-    this.setData({ artist: getArtist() })
+    this.setData({ artist: getArtistById(this.artistId) })
   },
 
   onLoad(options) {
+    // 🔴 「这一页是谁的」只在这里解一次。⛔ 缺省仍是 demo（提审备注那条路径
+    //    `/pages/landing/landing?artist_id=demo`，以及所有老分享卡片）。
     const artistId = options.artist_id || 'demo'
+    this.artistId = artistId
 
     // 🔴 这一行就是「微信号唯一出口」的落地处。
     //    M1 换成：
