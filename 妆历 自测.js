@@ -2868,6 +2868,11 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
     showModal: () => {}
   }
 
+  /* ⚠️ 必须【在 wx 桩装好之后】才 require artistStore：它模块级不碰 storage，
+     但下面那几条断言要读它的常量（AVATAR_COLORS），顺手拿一份。
+     ⚠️ ⑩ 段开头会 delete require.cache 再重新 require，所以这份缓存不会串段。 */
+  const AS9 = require(R('妆历小程序/utils/artistStore.js'))
+
   const loadPage = (p) => {
     let cfg = null
     global.Page = (c) => { cfg = c }
@@ -2905,9 +2910,9 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
   eq('🔴 my-works 已从 app.json 注销（第十五处：整块删掉）',
     appJson.pages.indexOf('pages/my-works/my-works'), -1)
   /* ⚠️ 这一条是**页数账本**，每次加页都要跟着改：15 → 14（第十五处删了作品页）
-     → **16**（第十七处加了 style-edit / intro-edit）。⛔ 不是「改到能过就行」——
-     它存在的意义是「有人顺手加了一页却没想清楚」时当场红。 */
-  eq('🔴 app.json 的 pages 是 16 项（加回风格页 + 简介页）', appJson.pages.length, 16)
+     → **16**（第十七处加了 style-edit / intro-edit）→ **17**（第十九处加了 feedback）。
+     ⛔ 不是「改到能过就行」—— 它存在的意义是「有人顺手加了一页却没想清楚」时当场红。 */
+  eq('🔴 app.json 的 pages 是 17 项（加回风格页 + 简介页 + 反馈页）', appJson.pages.length, 17)
   eq('★ tabBar 还是 3 项（没被顺手改成 4 项）', appJson.tabBar.list.length, 3)
   eq('★ 跳的路径确实都在 pages 里（拼错了就是白屏）',
     navs.every((u) => appJson.pages.indexOf(u.slice(1)) >= 0), true)
@@ -2935,13 +2940,16 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
   eq('🔴★ 也没有 wechat_id / contact.js',
     /wechat_id|contact\.js/.test(profJs), false)
   eq('🔴★ 数据对象里没有 wechat_id 这个键', 'wechat_id' in prof.data.artist, false)
-  eq('★ 上这一页的就是公开那几项（昵称 / 城市 / 风格 / 简介）—— 多了就是漏了别的字段',
+  /* 🔴 仍然是【7 个键，没有第 8 个】—— 第十九处只是把第 7 个键由
+     `initial`（昵称首字）换成 `avatar_color`（颜色令牌），键数一个字没变。
+     ⚠️ 这条断言的价值不在数字上，在**白名单**上：这一页展示的就是客人能看到
+        的那几项，多一个键就是漏了别的字段（尤其 wechat_id）。 */
+  eq('★ 上这一页的就是公开那几项（昵称 / 城市 / 风格 / 简介 / 头像底色）—— 多了就是漏了别的字段',
     Object.keys(prof.data.artist).sort().join(','),
-    'artist_id,city,initial,intro,nickname,style_tags,style_text')
-  eq('★ 头像位取昵称首字', prof.data.artist.initial, '示')
-  /* ⚠️ 两处冗余也不能漂：wxml 里写的是 {{artist.initial}}，
-     而 introLen 是「简介那一行只报字数」的数据源。
-     两者都必须跟 store 里那份对得上（一处算、一处用，⛔ 不是各算一遍）。 */
+    'artist_id,avatar_color,city,intro,nickname,style_tags,style_text')
+  eq('★ 头像底色是个画得出来的令牌', AS9.AVATAR_COLORS.indexOf(prof.data.artist.avatar_color) >= 0, true)
+  /* ⚠️ 两处冗余也不能漂：`introLen` 是「简介那一行只报字数」的数据源，
+     必须跟 store 里那份对得上（一处算、一处用，⛔ 不是各算一遍）。 */
   eq('★ 简介字数跟正文对得上（这一行只报字数，⛔ 不渲染正文）',
     prof.data.introLen, prof.data.artist.intro.length)
 
@@ -2981,8 +2989,16 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
     (mineWxml.match(/我的资料/g) || []).length, 1)
   eq('🔴 第十五处：「我的作品」四个字已从「我的」页消失',
     mineWxml.indexOf('我的作品'), -1)
-  eq('🔴「我的」页正好 4 行可点 cell（原来是 5 行）',
-    (mineWxml.match(/class="cell"/g) || []).length, 4)
+  /* ⚠️ 这是【行数账本】，每次动「我的」页的行都要跟着改：
+     5 行（最早）→ 4 行（第十五处删「我的作品」）→ **3 行**（第十九处删
+     「我的资料」那一行：它合进头像卡片了，同时新增「问题反馈」，所以 4 − 1 = 3）。
+     ⚠️ 光钉数字不够 —— 删错一行、加错一行，数字照样对得上。
+        所以下面连着钉子把这三行【分别是谁】也钉死（顺序就是屏幕上的顺序）。 */
+  eq('🔴「我的」页正好 3 行可点 cell', (mineWxml.match(/class="cell"/g) || []).length, 3)
+  eq('🔴 这三行分别是：设置 / 问题反馈 / 切换身份（「我的资料」已合进卡片）',
+    (mineWxml.match(/class="cl">([^<]+)</g) || [])
+      .map((s) => s.replace(/class="cl">/, '').replace('<', '')).join(','),
+    '设置,问题反馈,切换身份')
 
   // ── H. toast.js 里那条 NO_WORK 成了死常量，已删 ──
   const toastJs = stripJs(fs.readFileSync(R('妆历小程序/utils/toast.js'), 'utf8'))
@@ -3075,12 +3091,37 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     AS.buildStyleText(AS.splitStyleText('浓系  /  展妆')),
     AS.buildStyleText(AS.splitStyleText(AS.buildStyleText(AS.splitStyleText('浓系  /  展妆')))))
 
-  // ── B. 纯函数：头像首字 / 勾选态 / 点选 ─────────────────────────────
-  eq('★ 头像首字 = 昵称第一个字', AS.initialOf('阿黎'), '阿')
-  eq('★ 空昵称兜底成「妆」（⛔ 不留空 —— 空头像位看着像页面坏了）',
-    AS.initialOf(''), '妆')
-  eq('★ 全是空格也兜底', AS.initialOf('   '), '妆')
-  eq('★ 喂 undefined 也兜底', AS.initialOf(undefined), '妆')
+  /* ── B. 纯函数：头像颜色令牌 / 勾选态 / 点选 ─────────────────────────
+     📌 2026-09-30（第十九处）：头像位从「昵称首字」改成「人像标识 + 自选底色」，
+        于是 `initialOf` 整个换成 `avatarColorOf`。
+        🔴 换掉之后【不再有任何函数去吃昵称】—— 这一条顺带消灭了一个真 bug：
+           头像位原先渲染 `nickname.slice(0, 1)`，而那会把 emoji（代理对）
+           劈成半个字符，真机上拍到的现象是「一个菱形里面一个问号」。
+           现在头像画的是和昵称无关的一张脸，这类输入问题从根上没有了。
+        ⚠️ `initialOf` 这一轮是【删掉】不是【改个名留着】：自测里有一条
+           「全项目不再出现 initial / initialOf」的反向断言钉着（见下面 D 段）。 */
+  eq('★ 令牌闭集：正好 6 个颜色', AS.AVATAR_COLORS.join(','),
+    'rose,blue,green,amber,plum,slate')
+  eq('★ 默认色是第一位（调色板第一颗 = 没选过的人看到的颜色）',
+    AS.AVATAR_COLOR_DEFAULT, AS.AVATAR_COLORS[0])
+  eq('★ 认识的令牌原样放行', AS.avatarColorOf('slate'), 'slate')
+  eq('🔴★ 认不出的令牌回落默认色（⛔ 不许透出去）',
+    AS.avatarColorOf('chartreuse'), AS.AVATAR_COLOR_DEFAULT)
+  /* 🔴 下面这几条钉的是【兜底是个全函数】：任何输入都要变成一个画得出来的颜色。
+     ⛔ 别把「认识就返回、不认识就返回空」当成更严格 —— 返回空 = 一个透明底的头像
+     （白脑袋白肩膀贴在白卡片上 = 什么都没画），而且屏幕上不会有一句话解释。 */
+  eq('★ 空串兜底', AS.avatarColorOf(''), AS.AVATAR_COLOR_DEFAULT)
+  eq('★ 全是空格也兜底（先 trim 再比）', AS.avatarColorOf('  '), AS.AVATAR_COLOR_DEFAULT)
+  eq('★ 喂 undefined 也兜底', AS.avatarColorOf(undefined), AS.AVATAR_COLOR_DEFAULT)
+  eq('★ 喂 null 也兜底', AS.avatarColorOf(null), AS.AVATAR_COLOR_DEFAULT)
+  eq('★ 喂数字也兜底（storage 被手改过的那种）', AS.avatarColorOf(7), AS.AVATAR_COLOR_DEFAULT)
+  eq('★ 带空格的合法令牌能吃进来（先 trim 再比）', AS.avatarColorOf(' rose '), 'rose')
+  /* 🔴 大小写【不】宽容：令牌是我们自己写在调色板上的，'Rose' 只可能来自
+     手改的 storage 或别的调用方。按原样认它 = 颜色域从 6 个变成 12 个，
+     而 CSS 那边只有 `.c-rose`（'.c-Rose' 选不中 → 透明底头像）。
+     ⚠️ 这条是【故意的】，⛔ 别"顺手"改成大小写不敏感。 */
+  eq('🔴★ 令牌大小写不宽容（认不出来就回落，因为 CSS 类名是区分大小写的）',
+    AS.avatarColorOf('Rose'), AS.AVATAR_COLOR_DEFAULT)
 
   /* 📌 第十八处：`toStyleOptions(picked)` → `toStyleView(presets, custom)`。
      新签名一次给出**勾选态 + 扁平并集**（旧版页面上要自己再算一份 picked，
@@ -3137,8 +3178,11 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     AS.validateStyles(['展妆', '自创词'], []).error, '「自创词」不在可选风格里，请从上面选')
 
   // ── D. 🔴 白名单：这一层永远没有 wechat_id ──────────────────────────
+  /* ⚠️ 第十九处换的是第 7 个键【叫什么】（initial → avatar_color），
+     键数仍然是 7 —— 这一条是白名单断言，⛔ 不是「改到能过就行」：
+     加一个键就是往外多送一个字段（这条链上翻车就是 wechat_id 那种事）。 */
   eq('★ getArtist() 的键就是那 7 个', Object.keys(AS.getArtist()).sort().join(','),
-    'artist_id,city,initial,intro,nickname,style_tags,style_text')
+    'artist_id,avatar_color,city,intro,nickname,style_tags,style_text')
   eq('🔴★ 输出里没有 wechat_id 这个键', 'wechat_id' in AS.getArtist(), false)
   /* 播种之后，任何 patch 里带进来的 wechat_id 都必须被【静默丢掉】
      （不是报错，是不落库）—— 这是「资料页不许夹带微信号」在代码层的落点。 */
@@ -3150,20 +3194,49 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('🔴★ getArtist() 输出里也搜不到',
     JSON.stringify(AS.getArtist()).indexOf('demo_makeup'), -1)
 
-  // ── E. 派生字段：style_text / initial 只算不存 ──────────────────────
+  // ── E. 派生字段：style_text 只算不存；avatar_color 是【存了但不派生】 ──
   const saved2 = AS.saveArtist({ style_tags: ['展妆', '古风妆'] })
   eq('★ 改了 style_tags，style_text 当场跟着变',
     saved2.artist.style_text, '展妆 / 古风妆')
   eq('🔴★ style_text 【没有】落进 storage（派生字段落库就是第二份真相）',
     'style_text' in JSON.parse(store10['zhuangli_artist']), false)
-  eq('🔴★ initial 也没有落进 storage',
-    'initial' in JSON.parse(store10['zhuangli_artist']), false)
-  eq('★ 存的就那 6 个键（第十八处多了 style_custom）',
+  /* 🔴 `initial` 这一条是【反面】的：它必须连【名字】都不存在了。
+     第十九处把头像位的字整个换成颜色，于是 initial 既不该落库、
+     也不该在 getArtist() 的输出里；而自测里继续断言它"没落库"是弱断言 ——
+     它对着一个压根不存在的概念下结论，永远绿。所以改成查【所有】键。 */
+  eq('🔴★ initial 这个字段整个不存在了（既不落库也不在输出里）',
+    Object.keys(JSON.parse(store10['zhuangli_artist'])).concat(Object.keys(AS.getArtist()))
+      .filter((k) => k === 'initial'), [])
+  eq('★ 存的就那 7 个键（第十九处多了 avatar_color）',
     Object.keys(JSON.parse(store10['zhuangli_artist'])).sort().join(','),
-    'artist_id,city,intro,nickname,style_custom,style_tags')
-  eq('★ 改了昵称，头像首字当场跟着变',
-    AS.saveArtist({ nickname: '洛霞' }).artist.initial, '洛')
-  eq('★ 四个键都能各自保存', AS.saveArtist({ city: '北京' }).artist.city, '北京')
+    'artist_id,avatar_color,city,intro,nickname,style_custom,style_tags')
+  eq('🔴★ 头像底色【真的落库了】（它是数据不是派生值，下一帧还得读回来）',
+    JSON.parse(store10['zhuangli_artist']).avatar_color, 'rose')
+  eq('★ 改了昵称，头像底色不受影响（⛔ 头像已经和昵称无关了）',
+    AS.saveArtist({ nickname: '洛霞' }).artist.avatar_color, 'rose')
+  /* 🔴🔴 这一条钉的是 §3.5 那个形状的坑（第十九处的翻版）：
+     `next` 是逐字段重建的，漏接 avatar_color 的后果不是报错，是【静默抹掉】——
+     她换完色，接着改一次昵称，头像就悄悄回到默认色。
+     ⚠️ 顺序很重要：先换色，再改昵称，最后才读 —— 复现的正是她真会走的动作序列。 */
+  eq('🔴★ 换过色之后再改昵称，颜色【一个字没变】',
+    (() => {
+      AS.saveArtist({ avatar_color: 'plum' })
+      return [AS.saveArtist({ nickname: '洛霞' }).artist.avatar_color,
+        AS.saveArtist({ city: '北京' }).artist.city].join(',')
+    })(), 'plum,北京')
+  eq('★ 存的令牌永远在闭集里（手改过的 storage 也过一道消毒）',
+    (() => {
+      store10['zhuangli_artist'] = JSON.stringify({
+        artist_id: 'demo', nickname: '阿黎', city: '上海', intro: '',
+        style_tags: ['展妆'], style_custom: [], avatar_color: 'chartreuse'
+      })
+      return AS.getArtist().avatar_color
+    })(), 'rose')
+  eq('★ 消毒是【写入也在】做的（不是只读的时候修一下）',
+    (() => {
+      AS.saveArtist({ avatar_color: 'chartreuse' })
+      return JSON.parse(store10['zhuangli_artist']).avatar_color
+    })(), 'rose')
 
   // ── F. 校验不过时【一次都不写】 ─────────────────────────────────────
   const before10 = store10['zhuangli_artist']
@@ -3411,11 +3484,40 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('🔴★「我的」页那张卡片【不】显示简介（那是她自己的页头）',
     /artist\.intro/.test(stripHtml(fs.readFileSync(R('妆历小程序/pages/mine/mine.wxml'), 'utf8'))),
     false)
-  /* 🔴 三处写死的「示」必须都没了 —— 改了昵称头像首字不跟着变，是同一个病。 */
-  eq('🔴★ 三处写死的「示」都换成 {{artist.initial}} 了',
-    ['pages/landing/landing.wxml', 'pages/guest-home/guest-home.wxml', 'pages/mine/mine.wxml']
-      .filter((p) => /class="ava[^"]*">[^<{]/.test(
-        stripHtml(fs.readFileSync(R('妆历小程序/' + p), 'utf8')))), [])
+  /* 🔴 三处写死的「示」必须都没了 —— 改了昵称头像首字不跟着变，是同一个病。
+     📌 2026-09-30（第十九处）：头像位从「昵称首字」改成「人像标识 + 令牌底色」
+        之后，这一段**换了判据但保住了精神**：
+        · 原先查的是「`.ava` 里不许有写死的字」；
+        · 现在查的是「全项目每个 `.ava` 都必须带一个颜色令牌、而且都是空的」——
+          空是结构性要求（人像是 `::before/::after` 画的，⛔ 里面不许再放内容，
+          放了就是一个字压在人像上）。
+        ⚠️ 这一段的另一个价值：它是**全项目扫一遍**的，将来谁在新页面里加一个
+          `<view class="ava">`（漏了令牌 = 兜底色能画出来，但换色换不到它），
+          这条会红。 */
+  const avaOwners = ['pages/landing/landing.wxml', 'pages/guest-home/guest-home.wxml',
+    'pages/mine/mine.wxml', 'pages/my-profile/my-profile.wxml']
+  const avaTags = avaOwners.reduce((acc, p) => {
+    /* ⚠️ 正则末尾那个 `(\s*</view>)?` 是可选的【闭合标签】——
+       标签里**有内容**时它匹配不上，于是捕获到的那一段就不以 `</view>` 结尾。
+       这就是下面「每一处都是空标签」那条的判据（⛔ 别改成查 `>` 后面一个字符：
+       那种写法要能看见标签【外面】，而 match 的结果已经在 `>` 上截断了）。 */
+    const hits = stripHtml(fs.readFileSync(R('妆历小程序/' + p), 'utf8'))
+      .match(/<view class="[^"]*\bava\b[^"]*"[^>]*>(\s*<\/view>)?/g) || []
+    return acc.concat(hits.map((h) => p + ' → ' + h))
+  }, [])
+  eq('★ 全项目恰好 4 处头像（4 个消费者，⛔ 没有第 5 处）', avaTags.length, 4)
+  eq('🔴★ 每一处头像都带颜色令牌（漏了 = 换色换不到它）',
+    avaTags.filter((h) => !/c-\{\{artist\.avatar_color\}\}/.test(h)), [])
+  eq('🔴★ 每一处头像内都是空的（人像是 ::before/::after 画的，⛔ 不许再放字）',
+    avaTags.filter((h) => !/<\/view>$/.test(h)), [])
+  /* 🔴 令牌只走 class，⛔ 不许有人图省事写成内联样式
+     （`style="background:{{…}}"` = 让数据直接当样式用，等于把颜色域开放了）。 */
+  const avaWxmlAll = avaOwners.map((p) => stripHtml(fs.readFileSync(R('妆历小程序/' + p), 'utf8'))).join('\n')
+  eq('🔴★ 头像底色【只走 class】，没有一处写成内联 background',
+    /style="[^"]*background/.test(avaWxmlAll), false)
+  /* 🔴 令牌名字【不许】散在 wxml 里（散着写就没法保证它跟 CSS 那份对得上）。 */
+  eq('🔴★ wxml 里不出现任何字面量令牌（一律 {{artist.avatar_color}} / {{item}}）',
+    AS.AVATAR_COLORS.filter((t) => new RegExp('c-' + t + '\\b').test(avaWxmlAll)), [])
   eq('★ C1 的导航栏标题也跟着昵称走（原先写死「示例的妆位」）',
     /title="\{\{artist\.nickname\}\}的妆位"/.test(landWxml10), true)
 
@@ -3428,8 +3530,8 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     /getSchedules\(\)[^\n]{0,40}\n[^\n]{0,40}setStorageSync/.test(ssStore10), false)
 
   // ── R. app.json 的页数账本 ─────────────────────────────────────────
-  eq('🔴 页数是 16（= 14 + 风格页 + 简介页），加页要主动改这一条',
-    appJson10.pages.length, 16)
+  eq('🔴 页数是 17（= 14 + 风格页 + 简介页 + 反馈页），加页要主动改这一条',
+    appJson10.pages.length, 17)
   eq('★ 而且没有重复注册',
     appJson10.pages.length, new Set(appJson10.pages).size)
 
@@ -3690,6 +3792,9 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     return pg
   }
   const ev10 = (ds) => ({ currentTarget: { dataset: ds } })
+  /* 话术一律从 toast.js 里取，⛔ 不在断言里手抄字符串 ——
+     手抄的话，某天改了文案，断言会跟着"改经文"，而它本来该红。 */
+  const TOAST10 = require(R('妆历小程序/utils/toast.js')).TOAST
 
   seed6()
   const sp = loadPage10('pages/style-edit/style-edit.js')
@@ -3810,6 +3915,340 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('🔴★ booking-form（顾客端妆感 chips）不读妆娘资料（那些自填词不上顾客那一屏）',
     /artistStore|getStyleState|style_custom/.test(
       stripJs(fs.readFileSync(R('妆历小程序/pages/booking-form/booking-form.js'), 'utf8'))), false)
+
+  /* ════════════════════════════════════════════════════════════════════
+     X. 第十九处 · 头像（人像标识 + 自选底色）
+
+     用户原话：「我测试了一遍，输入中文显示第一个字，输入英文显示首字母，
+               输入表情符号显示一个菱形里面有问号，我觉得头像可以直接使用
+               人像标识，妆师点一下头像可以选头像颜色」
+     🔴 那句「菱形里面一个问号」是个**真 bug**：头像位原先渲染
+        `nickname.slice(0, 1)`，而 emoji 是代理对，slice 会把它劈成半个字符。
+        换成「和昵称无关的一张脸」之后，这类输入问题从根上没有了 ——
+        这是"改设计顺手消灭一类 bug"的典型，⛔ 别只当成换了个样式。
+     ════════════════════════════════════════════════════════════════════ */
+  const wxssSrc = fs.readFileSync(R('妆历小程序/app.wxss'), 'utf8')
+
+  /* 颜色令牌 ↔ CSS 规则【双向】比。少一条规则 = 那颗色点画出来是透明底
+     （白脑袋白肩膀贴在白卡片上 = 什么都没画）；多一条规则 = 死样式。 */
+  const cssTokens = (wxssSrc.match(/\.c-([a-z]+)\s*\{/g) || [])
+    .map((s) => s.replace(/\.c-([a-z]+)\s*\{/, '$1')).sort()
+  eq('🔴★ 每一个颜色令牌在 app.wxss 里都有规则（少一条 = 画出来是透明底）',
+    AS.AVATAR_COLORS.slice().sort().join(','), cssTokens.join(','))
+  eq('🔴★ 也没有多余的 .c-* 死样式（多一条 = 有人加了令牌没登记）',
+    cssTokens.filter((t) => AS.AVATAR_COLORS.indexOf(t) < 0), [])
+
+  /* 🔴 兜底背景和默认色那条规则必须【逐字一样】。
+     它们是同一个渐变、刻意写了两遍（兜底那份挡的是「某个 wxml 漏了 c-」），
+     而写两遍的东西迟早分家 —— 这条断言就是那个"迟早"的拦截网。 */
+  const bgOf = (sel) => {
+    const m = wxssSrc.match(new RegExp(sel.replace(/\./g, '\\.') + '\\{([^}]*)\\}'))
+    const g = m ? m[1].match(/background:([^;}]+)/) : null
+    return g ? g[1].trim() : ''
+  }
+  eq('🔴★ `.ava` 的兜底背景 === `.c-' + AS.AVATAR_COLOR_DEFAULT + '` 的背景（写了两遍，就不会分家）',
+    bgOf('.ava'), bgOf('.ava.c-' + AS.AVATAR_COLOR_DEFAULT))
+  eq('★ 兜底那条确实是个背景（不是比空字符串空对空）', bgOf('.ava').length > 10, true)
+
+  /* 人像是纯 CSS 画的：⛔ 没有第二个实现（没有图片、没有字体、没有组件）。 */
+  eq('🔴★ `.ava` 有 overflow:hidden（肩膀是故意画到圆外的，靠它裁成圆弧）',
+    /\.ava\{[^}]*overflow:hidden/.test(wxssSrc), true)
+  eq('🔴★ 人像就是 ::before（脑袋）+ ::after（肩膀）两笔，没有别的实现',
+    /\.ava::before\{[^}]*border-radius:50%/.test(wxssSrc) &&
+    /\.ava::after\{[^}]*border-radius:50% 50% 0 0/.test(wxssSrc), true)
+  eq('🔴★ 全项目没有为头像引进任何图片资源（零 UGC、零审核风险）',
+    /\.ava[^{]*\{[^}]*url\(/.test(wxssSrc), false)
+
+  /* ── X2. 「我的」页：卡片合并 + 换色 + 删关于妆历 + 新增反馈 ── */
+  const mineWxml19 = stripHtml(fs.readFileSync(R('妆历小程序/pages/mine/mine.wxml'), 'utf8'))
+  const mineJs19 = stripJs(fs.readFileSync(R('妆历小程序/pages/mine/mine.js'), 'utf8'))
+  const setWxml19 = stripHtml(fs.readFileSync(R('妆历小程序/pages/settings/settings.wxml'), 'utf8'))
+  const setJs19 = stripJs(fs.readFileSync(R('妆历小程序/pages/settings/settings.js'), 'utf8'))
+
+  /* 🔴 整张卡是「我的资料」的入口。⛔ 不许改成「只有框的右边能点」——
+     那样框里会留出一大片「看着像按钮、点下去是卡片」的空白，
+     正是这个项目栽过三轮的形状（README 第 21 条 / Request N·O）。 */
+  eq('🔴★ 整张资料卡就是「我的资料」的入口（⛔ 不是只有右边一小块）',
+    /class="card tight row"[^>]*bindtap="goProfile"/.test(mineWxml19), true)
+  /* 🔴 头像是卡里唯一的子键 ⇒ 必须 catchtap。用 bindtap 会冒泡成
+     「又进资料页又开调色板」——两个动作同时发生，而且**都不会报错**。 */
+  eq('🔴★ 头像用 catchtap（父卡片是 bindtap，用 bindtap 会冒泡成两个动作一起发生）',
+    /class="ava sm c-\{\{artist\.avatar_color\}\}"\s+catchtap="toggleColors"/.test(mineWxml19), true)
+  eq('🔴★ 卡里除了头像没有第二个手势（再加一个就是上面那条的翻版）',
+    (mineWxml19.match(/class="card tight row"[\s\S]*?<\/view>\s*<\/view>/) || [''])[0]
+      .match(/(?:bind|catch)tap="/g).length, 2)
+  eq('★ 卡片右侧带「›」（下面每一行 cell 都有，卡片不带就不像能点）',
+    /class="cr">›<\/text>/.test(mineWxml19), true)
+
+  /* 调色板：6 颗色点，每颗都是【小号头像】（同一个 .ava + 同一个令牌类），
+     ⛔ 不是另写一套背景色 —— 色值只有一份。 */
+  eq('🔴★ 调色板用 wx:for 铺 AVATAR_COLORS（⛔ 不手抄 6 个色点）',
+    /wx:for="\{\{colors\}\}"[\s\S]{0,200}?data-token="\{\{item\}\}"/.test(mineWxml19), true)
+  eq('🔴★ 色点就是小号头像（挂 .ava + .c-{{item}}），⛔ 没有第二套背景色',
+    /class="ava pal-dot c-\{\{item\}\}/.test(mineWxml19), true)
+  eq('★ 当前色那颗带 .on（她一眼看得出现在是哪个）',
+    /\{\{item === artist\.avatar_color \? 'on' : ''\}\}/.test(mineWxml19), true)
+
+  eq('🔴★「关于妆历」已从「我的」页删掉（用户原话：设置里面有，不需要重复出现）',
+    mineWxml19.indexOf('关于妆历'), -1)
+  eq('🔴★ goAbout 也一起删了（⛔ 不留没用的死代码）', /\bgoAbout\b/.test(mineJs19), false)
+  eq('★ 但设置页那一行【还在】—— 删的是重复入口，⛔ 不是删功能',
+    setWxml19.indexOf('关于妆历') > 0 && /\bgoAbout\b/.test(setJs19), true)
+  eq('★「关于妆历」全项目只剩设置页这一处入口',
+    ['pages/mine/mine.wxml', 'pages/settings/settings.wxml']
+      .filter((p) => stripHtml(fs.readFileSync(R('妆历小程序/' + p), 'utf8')).indexOf('关于妆历') >= 0)
+      .join(','), 'pages/settings/settings.wxml')
+
+  eq('🔴★「问题反馈」这一行跳得动（⛔ 不是弹一句 toast 顶替）',
+    /class="cell"[^>]*bindtap="goFeedback"/.test(mineWxml19) &&
+    /navigateTo\(\{ url: '\/pages\/feedback\/feedback' \}\)/.test(mineJs19), true)
+
+  // ── X3. 「我的」页的页面级行为（打桩 wx + Page）──
+  const toasts10b = toasts10
+  const minePage = loadPage10('pages/mine/mine.js')
+  minePage.onShow()
+  eq('★「我的」页 onShow 灌的是 getArtist()（⛔ 不是手写的）',
+    minePage.data.artist.nickname, AS.getArtist().nickname)
+  eq('🔴★ 头像底色从 storage 来', minePage.data.artist.avatar_color, AS.getArtist().avatar_color)
+  eq('★ 调色板的 6 颗色点来自 store 常量（⛔ 页面不自己列）',
+    minePage.data.colors.join(','), AS.AVATAR_COLORS.join(','))
+  eq('★ 进页面时调色板是收着的', minePage.data.colorsOpen, false)
+  minePage.toggleColors()
+  eq('★ 点头像 → 展开', minePage.data.colorsOpen, true)
+  minePage.toggleColors()
+  eq('★ 再点一下 → 收起（它是个开关，⛔ 不是"打开"）', minePage.data.colorsOpen, false)
+
+  // 换色：真落库 + 卡片当场变色 + 面板不收起（她要挨个试）
+  toasts10.length = 0
+  minePage.toggleColors()
+  minePage.pickColor(ev10({ token: 'plum' }))
+  eq('🔴★ 换色【当场落库】（一次点击一次写入，没有第二个要提交的字段）',
+    JSON.parse(store10['zhuangli_artist']).avatar_color, 'plum')
+  eq('★ 卡片头像跟着变色', minePage.data.artist.avatar_color, 'plum')
+  eq('★ 选完不收起面板（6 颗色点就在眼前，她要挨个试）', minePage.data.colorsOpen, true)
+  eq('★ 成功时【不出声】（变色本身就是证据，连点 6 下弹 6 个 toast 是噪声）',
+    toasts10.length, 0)
+  /* 🔴🔴 这一条钉的是最阴的一种失败：setStorageSync 静默失败。
+     不重新读一遍 storage 的话，页面会显示新色、storage 里还是旧色，
+     下次进来又变回去 —— 而中间没有任何信号。 */
+  toasts10.length = 0
+  const realSet = global.wx.setStorageSync
+  global.wx.setStorageSync = () => {}   // 假装写进去了，其实没写
+  minePage.pickColor(ev10({ token: 'blue' }))
+  eq('🔴★ storage 静默失败时【必须出声】（⛔ 不许"点了颜色、什么都没变、也没一句话"）',
+    toasts10.join(','), TOAST10.SAVE_FAILED)
+  eq('★ 而且卡片不会谎报成蓝色（页面只画 storage 里真有的那个）',
+    minePage.data.artist.avatar_color, 'plum')
+  global.wx.setStorageSync = realSet
+  // 复位，免得影响后面的断言
+  AS.saveArtist({ avatar_color: 'rose' })
+  minePage.onShow()
+
+  /* ── Y. 第十九处 · 问题反馈（第一条真的会写云端的通道）── */
+  const FB = require(R('妆历小程序/utils/feedbackStore.js'))
+  const Cloud = require(R('妆历小程序/utils/cloud.js'))
+
+  // Y1. 纯函数校验
+  eq('★ 空的拦住', FB.validateFeedback('').ok, false)
+  eq('★ 全是空格的也拦住（先 trim）', FB.validateFeedback('   \n  ').ok, false)
+  eq('★ 喂 undefined 也拦住', FB.validateFeedback(undefined).ok, false)
+  eq('★ 拦住时的话是 store 给的（⛔ 页面不自己拼）',
+    FB.validateFeedback('').error, TOAST10.FEEDBACK_EMPTY)
+  eq('★ 正常的一句话放行', FB.validateFeedback('午休那行我总选错').ok, true)
+  eq('🔴★ 首尾空白 trim 掉（⛔ 不让开发者收到一条全是空白的反馈）',
+    FB.validateFeedback('  有内容  ').value, '有内容')
+  eq('★ 中间的空行【保留】（那是她分的段，不是噪声）',
+    FB.validateFeedback('第一段\n\n第二段').value, '第一段\n\n第二段')
+  eq('★ 正好 500 字放行', FB.validateFeedback('一'.repeat(FB.FEEDBACK_MAX)).ok, true)
+  eq('★ 501 字拦住', FB.validateFeedback('一'.repeat(FB.FEEDBACK_MAX + 1)).ok, false)
+  eq('★ 超长的话术里点了字数（N 被填成真实值）',
+    FB.validateFeedback('一'.repeat(501)).error.indexOf('501') > 0, true)
+
+  // Y2. 上限只有一个来源（wxml 的 maxlength 和计数器都绑它）
+  const fbWxml = stripHtml(fs.readFileSync(R('妆历小程序/pages/feedback/feedback.wxml'), 'utf8'))
+  const fbJs = stripJs(fs.readFileSync(R('妆历小程序/pages/feedback/feedback.js'), 'utf8'))
+  eq('🔴★ textarea 的 maxlength 绑的是 {{max}}（⛔ 不是字面量 —— 有计数器的地方才敢用 maxlength）',
+    /<textarea[^>]*maxlength="\{\{max\}\}"/.test(fbWxml), true)
+  eq('🔴★ 页面上不出现第二个字体上限数字',
+    /500/.test(fbWxml) || /500/.test(fbJs), false)
+  eq('★ 计数器读的也是同一个 max',
+    /\{\{max\}\}/.test(fbWxml) && /max: FEEDBACK_MAX/.test(fbJs), true)
+
+  /* 🔴 「确认反馈」在【导航栏右侧】，⛔ 不在底部 .footbar ——
+     下面的 textarea 一聚焦，键盘从底部升起来，正好压住 .footbar。
+     这是「点了没反应」的第 5 种长相（intro-edit 的注释里写了完整理由）。 */
+  eq('🔴★「确认反馈」在导航栏右侧（⛔ 不被键盘盖住的底部条）',
+    /slot="right"[\s\S]{0,120}确认反馈/.test(fbWxml) && fbWxml.indexOf('footbar'), -1)
+  eq('★ 按钮文案就是用户说的那四个字', fbWxml.indexOf('确认反馈') > 0, true)
+  eq('🔴 ⛔ 全页没有 wx.hideKeyboard()（规矩 20：这一页真有键盘，最容易顺手加上）',
+    /hideKeyboard/.test(fbJs), false)
+  eq('🔴 每个 bindtap 都有同名处理函数（拼错了就是"点了没反应"）',
+    (fbWxml.match(/bindtap="([^"]+)"/g) || [])
+      .map((s) => s.replace(/bindtap="([^"]+)"/, '$1'))
+      .filter((n) => !new RegExp('\\b' + n + '\\b\\s*:').test(fbJs)), [])
+  eq('★ feedback 页只有 .js + .wxml（样式全在 app.wxss，同 settings / intro-edit）',
+    fs.readdirSync(R('妆历小程序/pages/feedback')).sort().join(','), 'feedback.js,feedback.wxml')
+
+  /* 🔴🔴 云环境【配没配】两种状态都必须绿，而且两种状态各自只有一种正确答案：
+     配了 = 真的 .add() 一次；没配 = 一次都不发 + 当场出声。
+     ⚠️ 这不是"分支测试的偷懒"—— 它钉的正是「环境配没配都不能静默」。
+        用户把环境 ID 填上之后，这一段的期望值会自动翻到另一半，仍然在保同一件事。 */
+  const fbCalls = []
+  /* ⚠️ 这个桩的 add() 返回一个**同步 thenable**（.then 当场回调），
+     于是整套自测仍然是直线脚本，⛔ 不用把整段改成 async（改了整个文件的
+     收尾汇总就会跑在断言之前）。代价：它不检验"真的等到了" —— 那件事由
+     wx.cloud 自己保证，不在我们这一层。 */
+  const cloudStub = (mode) => (mode === 'ok'
+    ? { then: (ok) => { ok({ _id: 'x' }); return { catch: () => {} } } }
+    : { then: () => ({ catch: (bad) => { bad({}) } }) })
+  global.wx.cloud = {
+    init: () => {},
+    database: () => ({
+      collection: (name) => ({
+        add: (o) => { fbCalls.push({ name: name, data: o.data }); return cloudStub('ok') }
+      }),
+      serverDate: () => 'SERVER_DATE'
+    })
+  }
+  const cfgNow = Cloud.isConfigured()
+  eq('★ CLOUD_ENV 是空的还是填好的，isConfigured 都给一个布尔（⛔ 不靠侧面猜）',
+    typeof cfgNow, 'boolean')
+
+  const errBak = console.error
+  console.error = () => {}   // 没配环境时那条给开发者看的 error，别混进自测输出
+  let fbRes = null
+  FB.submitFeedback('午休那行我总选错', (r) => { fbRes = r })
+  console.error = errBak
+  if (cfgNow) {
+    eq('🔴★ 云环境配好了 → 真的往 feedback 集合 .add() 了一次', fbCalls.length, 1)
+    eq('★ 写入的是 feedback 集合（⛔ 不是别的集合名）', fbCalls[0].name, 'feedback')
+    eq('★ 只写正文 + 服务端时间（⛔ 不收集任何联系方式）',
+      Object.keys(fbCalls[0].data).sort().join(','), 'created_at,text')
+    eq('🔴★ 时间用的是服务端时间（⛔ 不是设备时间 —— 那可以被用户改）',
+      fbCalls[0].data.created_at, 'SERVER_DATE')
+    eq('★ 发出去了 → ok', fbRes.ok, true)
+  } else {
+    eq('🔴★ 云环境没配 → 【一次都没发】(⛔ 不许假装成功)', fbCalls.length, 0)
+    eq('🔴★ 而且当场返回失败 + 一句话（⛔ 不是"按了确认、什么都没发生"）',
+      fbRes.ok, false)
+    eq('★ 那句话是 toast.js 里那句（⛔ 不现场拼）', fbRes.error, TOAST10.FEEDBACK_FAILED)
+  }
+  // 校验不过时【连云都不碰】—— 判据在 store，不依赖页面
+  fbCalls.length = 0
+  FB.submitFeedback('   ', (r) => { fbRes = r })
+  eq('🔴★ 空反馈不碰云端（校验在 store 里，⛔ 不靠页面拦）', fbCalls.length, 0)
+  eq('★ 空反馈返回的是校验那句话', fbRes.error, TOAST10.FEEDBACK_EMPTY)
+
+  // Y3. 云端写入失败 → 出声（⛔ 不静默）
+  if (cfgNow) {
+    const okDb = global.wx.cloud.database
+    global.wx.cloud.database = () => ({
+      collection: () => ({ add: () => cloudStub('fail') }),
+      serverDate: () => 'SERVER_DATE'
+    })
+    let failRes = null
+    FB.submitFeedback('有内容', (r) => { failRes = r })
+    eq('🔴★ 云端写失败 → ok:false（⛔ 不静默吞掉）', failRes.ok, false)
+    eq('★ 失败也是 toast.js 里那句话', failRes.error, TOAST10.FEEDBACK_FAILED)
+    global.wx.cloud.database = okDb
+  }
+
+  // Y4. 反馈页的页面级行为
+  /* ⚠️ back10 是【跨小节共用】的计数器（style-edit 那边已经用过一次），
+     这里必须清零再断 —— 不清的话「也不退页」会被上一节的 1 顶掉，
+     看着像失败、其实是脏数据。 */
+  back10.n = 0
+  const fbPage = loadPage10('pages/feedback/feedback.js')
+  eq('★ 页面的 max 就是 store 的上限（一处实现）', fbPage.data.max, FB.FEEDBACK_MAX)
+  eq('★ 一进来文本框是空的、不发送', fbPage.data.text + '/' + fbPage.data.sending, '/false')
+  fbPage.onInput({ detail: { value: '午休那一行' } })
+  eq('★ 打字时计数器跟着走', fbPage.data.len, 5)
+
+  toasts10.length = 0
+  let loadings = 0
+  const realLoading = global.wx.showLoading
+  global.wx.showLoading = () => { loadings++ }
+  global.wx.hideLoading = () => {}
+  fbCalls.length = 0
+  fbPage.data.text = '   '
+  fbPage.onSubmit()
+  eq('🔴★ 空着点「确认反馈」→ 出声（⛔ 不是静默）',
+    toasts10.join(','), TOAST10.FEEDBACK_EMPTY)
+  eq('★ 而且连 loading 都不弹（为一次误触闪一下"正在发送"看着像网络问题）', loadings, 0)
+  eq('★ 也不碰云端', fbCalls.length, 0)
+  eq('★ 也不退页（她就站在原页，字还在）', back10.n, 0)
+
+  /* 🔴 连点两下只发一条：守卫要在【发送途中】才起作用 ——
+     所以这一条必须让 add 一直不返回（挂起），否则第一次早就完成了。 */
+  global.wx.cloud.database = () => ({
+    collection: () => ({ add: () => { fbCalls.push({ name: 'feedback', data: {} }); return { then: () => ({ catch: () => {} }) } } }),
+    serverDate: () => 'SERVER_DATE'
+  })
+  fbCalls.length = 0
+  loadings = 0
+  fbPage.data.text = '有内容'
+  fbPage.data.sending = false
+  fbPage.onSubmit()
+  fbPage.onSubmit()
+  fbPage.onSubmit()
+  eq('🔴★ 发送途中连点三下 → 只发一条（⛔ 不靠"页面没反应"挡手指）',
+    fbCalls.length, cfgNow ? 1 : 0)
+  eq('★ 每次真的进发送都会弹「正在发送」（她看得见在发生什么）', loadings >= 1, true)
+  /* ⚠️ 「只弹了一次 loading」这一条只在【第一下还挂在途中】时成立：
+     没配环境时第一下当场就返回失败了（sending 被复位），后两下各自再走一遍
+     —— **那是对的行为**，不是守卫失灵。所以这一条按状态分。 */
+  if (cfgNow) eq('★ 发送途中那两下连 loading 都没弹（守卫真的挡住了）', loadings, 1)
+  eq('★ 而且加了 mask（这段时间她点不动页面，比"点了没反应"诚实）',
+    /mask: true/.test(fbJs), true)
+
+  // 成功那条路：发出去 → 退回上一页
+  fbPage.data.sending = false
+  back10.n = 0
+  toasts10.length = 0
+  global.wx.cloud.database = () => ({
+    collection: () => ({ add: (o) => { fbCalls.push({ name: 'feedback', data: o.data }); return cloudStub('ok') } }),
+    serverDate: () => 'SERVER_DATE'
+  })
+  fbPage.data.text = '有内容'
+  if (cfgNow) {
+    fbPage.onSubmit()
+    eq('🔴★ 发成功 → 退回「我的」页（那一页的 onShow 会重读）', back10.n, 1)
+    eq('★ 而且出了声（TOAST.FEEDBACK_SENT）', toasts10.join(','), TOAST10.FEEDBACK_SENT)
+    eq('★ 复位了 sending（她要是再进来一次不该被上一轮的守卫卡住）',
+      fbPage.data.sending, false)
+  } else {
+    // 没配环境：同样的动作必须【不退页 + 出声】，把字留在原地
+    fbPage.onSubmit()
+    eq('🔴★ 没配环境时【不退页】（退了等于把她刚打的一段话一起丢掉）', back10.n, 0)
+    eq('★ 而且出声说没发出去', toasts10.join(','), TOAST10.FEEDBACK_FAILED)
+    eq('★ 文本框里的字还在', fbPage.data.text, '有内容')
+  }
+  global.wx.showLoading = realLoading
+
+  /* ── Z. 云开发的配置面（这一块是给"别把密钥写进去"兜底的）── */
+  const cloudSrc = fs.readFileSync(R('妆历小程序/utils/cloud.js'), 'utf8')
+  /* 🔴 查源码之前【必须先摘注释】—— 这一条我自己又栽了一次：
+     cloud.js 的注释里就写着「⛔ 别在这里写 AppSecret」，那是**警告**，
+     不摘注释等于对着自己的警告下结论，永远红。
+     （同 ⑨ 段 ARTIST_CONTACT 那条的教训，规矩 27 旁边的老话。） */
+  eq('🔴★ cloud.js 里⛔ 没有任何密钥字样（这个文件会进代码仓库 + 可被解包）',
+    /secret|Secret|api_key|apiKey|privateKey/.test(stripJs(cloudSrc)), false)
+  /* ⚠️ 判据是「别处不许**定义**它」，⛔ 不是「别处不许**提到**它」——
+     feedbackStore 的那句 console.error 里就写着 CLOUD_ENV（那是给出错的人
+     指路的话），把它也算成"第二处"就变成了一句假断言。 */
+  eq('★ 环境 ID 只在这一个文件里定义（⛔ 别处不许再 const 一份）',
+    stripJs(cloudSrc).indexOf('const CLOUD_ENV') >= 0 &&
+    ['pages/feedback/feedback.js', 'app.js', 'utils/feedbackStore.js']
+      .filter((p) => /(const|let|var)\s+CLOUD_ENV/.test(
+        stripJs(fs.readFileSync(R('妆历小程序/' + p), 'utf8'))))
+      .join(','), '')
+  eq('🔴★ app.js 里【没有】写死环境 ID 字面量（它在 cloud.js 一处持有）',
+    /env:\s*'/.test(stripJs(fs.readFileSync(R('妆历小程序/app.js'), 'utf8'))), false)
+
+  const appJson19 = JSON.parse(fs.readFileSync(R('妆历小程序/app.json'), 'utf8'))
+  eq('🔴 app.json 的 pages 是 17 项（第十九处加了 feedback 页）', appJson19.pages.length, 17)
+  eq('★ feedback 页已注册（没注册 = 跳过去白屏）',
+    appJson19.pages.indexOf('pages/feedback/feedback') >= 0, true)
 }
 
 restoreBookings()

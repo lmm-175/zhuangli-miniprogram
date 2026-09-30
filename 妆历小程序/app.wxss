@@ -160,9 +160,60 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
       display:flex;align-items:center;justify-content:center;color:#B08D98;font-size:24rpx}
 
 /* ── 化妆师头像 / 信息 ───────────────────────────────── */
-.ava{width:97rpx;height:97rpx;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);
-     flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:29rpx;font-weight:700}
-.ava.sm{width:88rpx;height:88rpx;font-size:26rpx}
+/* 🔴 2026-09-30（第十九处）：头像从「昵称首字」改成【人像标识 + 自选颜色】。
+   人像是纯 CSS 画的（`.ava::before` 脑袋 / `.ava::after` 肩膀），所以
+   wxml 那边只是个空的 `<view class="ava c-rose"></view>` ——
+   ⛔ 不加任何标签、⛔ 不用 emoji、⛔ 不引图片资源（零 UGC、零审核风险）。
+   ⚠️ 为什么是 ::before/::after 而不是两个子节点：四个消费者
+      （landing / guest-home / mine / my-profile）的 wxml 一行都不用为
+      「画一张脸」而改结构。本文件里 `.sw::after`、`.btn-share::after` 是现成先例。
+   ⚠️ 尺寸全部用【百分比】：`.ava`(97rpx) 和 `.ava.sm`(88rpx) 共用同一套比例，
+      改一处尺寸不用改第二处像素。
+   ⚠️ `overflow:hidden` 不能省 —— 肩膀是故意画到圆外面的，靠它裁成圆弧。
+   🔴 上面那条 `background` 是【没带令牌时的兜底】（= 默认色 rose），
+      和下面的 `.c-rose` 是同一个渐变、刻意写了两遍：
+      · 少了兜底 → 哪天某个 wxml 漏了 `c-`，画出来是【白脑袋白肩膀贴在白卡片上】，
+        等于什么都没画，而且屏幕上不会有一句话解释。
+      · 两遍写法会分家的风险，由自测的一条断言扛着：它会把这两处的值
+        抽出来逐字比（⛔ 别只钉 `.c-rose` 存在就完事）。 */
+
+.ava{width:97rpx;height:97rpx;border-radius:50%;flex:none;position:relative;overflow:hidden;
+     background:linear-gradient(135deg,#E8C9D2,#C0556E)}
+.ava.sm{width:88rpx;height:88rpx}
+/* 脑袋：白色小圆，居中偏上。 */
+.ava::before{content:'';position:absolute;left:33%;top:22%;width:34%;height:34%;
+             border-radius:50%;background:rgba(255,255,255,.94)}
+/* 肩膀：一个上圆下方的宽块，往下压 14% 让 `overflow:hidden` 把底边裁掉，
+   于是看起来是「一副从圆里长出来的肩膀」而不是一个浮着的小方块。
+   ⚠️ left 是 13%（=(100-74)/2）而不是 `transform:translateX(-50%)`：
+      居中的写法越少依赖越好（这一条本项目在导航栏那轮踩过）。 */
+.ava::after{content:'';position:absolute;left:13%;bottom:-14%;width:74%;height:46%;
+            border-radius:50% 50% 0 0;background:rgba(255,255,255,.94)}
+/* 颜色令牌 → 底色。🔴 这里是【唯一】一份映射（规矩 11）：
+   artistStore 只管令牌合不合法，色值只住在这 6 行 + 上面那条默认渐变里。
+   ⛔ 别把色值搬进 js（撞「头像颜色只走闭集」那条断言），
+   ⛔ 也别用内联 style="background:{{…}}"（那等于让数据直接当样式用）。
+   ⚠️ AVATAR_COLORS 增删令牌时，这 6 条必须同步增删 —— 自测双向比这两份清单。 */
+.ava.c-rose{background:linear-gradient(135deg,#E8C9D2,#C0556E)}
+.ava.c-blue{background:linear-gradient(135deg,#C6D8E8,#4E7FA8)}
+.ava.c-green{background:linear-gradient(135deg,#CCE0CB,#4F8360)}
+.ava.c-amber{background:linear-gradient(135deg,#F0DCC0,#C08434)}
+.ava.c-plum{background:linear-gradient(135deg,#DDCBE4,#7A5390)}
+.ava.c-slate{background:linear-gradient(135deg,#D2D6DC,#5A6472)}
+
+/* ── 头像换色的调色板（「我的」页 · 2026-09-30 第十九处）────────────
+   ⚠️ 色点【就是小号头像】：元素同时挂 `.ava` 和 `.pal-dot`，于是它自带
+      人像 + 同一套 `.c-*` 底色 —— 她看到的是「换完之后的样子」，
+      ⛔ 不是一颗抽象色块，而色值也只有一份（🔴 别为色点另写一套背景色）。 */
+.pal-hint{font-size:25rpx;color:var(--t3);margin-bottom:20rpx}
+.pal-row{display:flex;align-items:center;gap:24rpx;flex-wrap:wrap}
+/* ⚠️ 必须排在 `.ava` 后面：两条选择器权重一样（都是 0,1,0），靠顺序取胜。 */
+.pal-dot{width:64rpx;height:64rpx}
+/* 当前底色：套一圈白 + 一圈品牌色的外环。
+   ⚠️ 用 box-shadow 而不是 border —— border 会占掉盒子的内边距，
+      里面那套百分比排的人像会跟着缩（`::before/::after` 的 left/top 是
+      按【内容盒】算的）。box-shadow 完全不参与布局。 */
+.pal-dot.on{box-shadow:0 0 0 4rpx #fff,0 0 0 8rpx var(--brand-d)}
 .meta{font-size:25rpx;color:var(--t3);margin-top:4rpx}
 /* 妆娘自己写的简介（分享页 landing ⑤ 段）· 2026-09-30 第十七处新增。
    🔴 `white-space:pre-wrap` 不能省：artistStore 的 validateIntro 只 trim

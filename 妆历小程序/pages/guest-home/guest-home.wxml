@@ -17,7 +17,9 @@
     <view class="sec-ttl">可约妆位</view>
     <view class="card tight slot-card" hover-class="btn-hover" hover-stay-time="80" bindtap="goLanding">
       <view class="row">
-        <view class="ava">{{artist.initial}}</view>
+        <!-- 头像位 = 人像标识 + 妆娘自选底色（2026-09-30 第十九处）。
+             `c-{{…}}` 是颜色【令牌】不是色值，色值住在 app.wxss 的 `.c-*`。 -->
+        <view class="ava c-{{artist.avatar_color}}"></view>
         <view style="flex:1;min-width:0">
           <view class="m-name">{{artist.nickname}}</view>
           <view class="meta">{{artist.city}} · {{artist.style_text}}</view>

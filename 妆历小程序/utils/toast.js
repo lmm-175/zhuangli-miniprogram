@@ -101,7 +101,20 @@ const TOAST = {
   // 这一场在别处被取消（软删除）了
   SCHEDULE_GONE: '这一场已经不在了，换一场',
   // 一场档期都没有 —— 页面里那条卡片也写了同一件事，这里是提交时再兜一次
-  NO_SCHEDULE_YET: '你还没有建过档期，先去「档期」建一场'
+  NO_SCHEDULE_YET: '你还没有建过档期，先去「档期」建一场',
+
+  /* ── 2026-09-30（第十九处）· 问题反馈（妆师端「我的」→「问题反馈」）────
+     ⚠️ 前两条由 utils/feedbackStore.validateFeedback 产出（唯一校验点）；
+        后两条由 submitFeedback 产出（发不出去的那几种情况共用一句）。
+     🔴 FEEDBACK_FAILED 的判据（toast.js 开头那条）：**这句话描述的事，
+        此刻已经发生了吗？**「没发出去」此刻确实发生了 —— 成立。
+        ⛔ 所以它⛔ 不许写成「即将支持」「请稍后再试」那类承诺：
+        网络失败可能重试就有用，而**云环境没配**时重试一万次都没用，
+        两种情况下唯一诚实的一句话就是「这次没发出去」。 */
+  FEEDBACK_EMPTY: '先写点什么再提交',
+  FEEDBACK_LONG: '反馈最多 500 字，现在 N 字',   // ⚠️ N 由 validateFeedback 填
+  FEEDBACK_SENT: '反馈已发出，谢谢',
+  FEEDBACK_FAILED: '反馈没发出去，请再试一次'
 }
 
 module.exports = { TOAST }

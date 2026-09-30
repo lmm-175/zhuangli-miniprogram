@@ -1,44 +1,83 @@
-<!-- 壳 3 · 我的 · Tab 第 4 位
-     落点：A1「Tab · 我的」。M0 只放静态资料项。
+<!-- 壳 3 · 我的 · Tab 第 3 位（原第 4 位，A1 工作台页已取消）
+     落点：A1「Tab · 我的」。
      ⛔ 绝不放「邀请同行」—— 它最像增长手段，同时是多商户入驻最直接的证据。
 
-     📌 四行全部跳得动（没有一行是「点了没反应」）：
-        我的资料 → my-profile（带「‹ 返回」）、设置 → settings、
-        关于妆历 → 弹框、切换身份 → 角色选择页。
-     ⚠️ 原先「我的资料」只弹一句 toast、不跳页面 ——
-        那是**缺功能**不是 bug，已补页，见 README §4 第十四处。
+     📌 三行全部跳得动（没有一行是「点了没反应」）：
+        设置 → settings、问题反馈 → feedback、切换身份 → 角色选择页。
+     🔴 2026-09-30（第十九处）这一页动过三处：
+        ① 【头像卡片和「我的资料」合并】：那一行 `.cell` 删了，**整张卡片**
+           就是入口（原话：「把『我的资料』与有头像的那个框合并，就是点一下
+           那个框的右边可以进入调整资料」）。
+           🔴 为什么不是「只有框的右边能点」：那样框里会留出一大片
+           「看着像按钮、点下去是卡片」的空白 —— 那正是这一个项目栽过三轮的
+           形状（README 第 21 条 / Request N·O：小键被顶到卡片另一头、
+           中间的空隙点下去等于点整张卡片）。整张卡都能点，就没有那片空白。
+           ⚠️ 用户说的「点框的右边」照样成立：右边也是卡的一部分。
+        ② 头像**单独**是换颜色的开关 → 所以它必须是 `catchtap`
+           （⛔ 不能用 bindtap：整张卡是 bindtap="goProfile"，
+           用 bindtap 会冒泡成「又进资料页又开调色板」）。
+           它是全项目唯一一处「小键挂在大键里面」，所以这一处必须写死 catchtap。
+        ③ 「关于妆历」这一行**删了**（原话：「把『我的』界面的关于妆历删除，
+           设置里面有，不需要重复出现」）—— 设置页里那一行是同一条 `goAbout`，
+           删的是这里的**重复入口**，⛔ 不是删功能。
+
      🔴「我的作品」这一行**已整体删除**（2026-09-30，第十五处）。它原来跳一个
         空态页 `pages/my-works/`，那个页面**永远长不出内容**：妆娘上传的图片一旦
         让顾客看见，就是「用户自行生成内容的记录、分享」= 个人主体未开放的
         「社交-笔记」类目；而对顾客不可见的话，作品集对她本人又没有任何价值。
         ⛔ **不要加回来**，也⛔ 不要改挂到别的地方 —— 详见 README §4。
-     🔴「我的资料」这一项**只留在这儿**，设置页里那一行重复的已删。 -->
+     🔴「我的资料」这一项**只留在这儿**（就是那张卡片），设置页里重复的一行已删。 -->
 <view class="app">
   <nav-bar title="我的"></nav-bar>
 
   <view class="body tight">
-    <view class="card tight row">
-      <!-- ⚠️ 2026-09-30（第十七处）：原先这里**写死一个「示」**，
-           改了昵称头像首字也不动。现在由 artistStore.initialOf(nickname) 算
-           （一处实现，⛔ 不各页 slice(0,1) 一遍）。
-           ⛔ 这张卡片**故意不显示简介**：它是她自己这个 Tab 的页头，
-              塞 200 字会把它整个撑开；正文点「我的资料」就看得到。 -->
-      <view class="ava sm">{{artist.initial}}</view>
+    <!-- ⚠️ 整张卡 = 「我的资料」的入口；头像单独 catchtap = 换底色。
+         ⚠️ 右侧那个「›」是【新加的】：这一页下面每一行 `.cell` 都带「›」，
+            卡片不带的话，它看起来不像能点 —— 而这一页的可点元素⛔ 不许
+            靠用户去猜（README 第 21 条的教训）。 -->
+    <view class="card tight row" bindtap="goProfile" hover-class="btn-hover" hover-stay-time="80">
+      <!-- 🔴 2026-09-30（第十九处）：头像位从「昵称首字」改成【人像标识 + 自选底色】。
+           画的是纯 CSS 的人像（app.wxss 的 `.ava::before/::after`），
+           `c-{{artist.avatar_color}}` 是底色令牌 —— ⛔ 令牌不是色值，
+           色值住在 app.wxss 里（见 artistStore 文件头 ③）。
+           ⚠️ 换掉「昵称首字」顺带消灭了 emoji 被劈成半个字符那个 bug
+              （真机上拍到的「一个菱形里面一个问号」）。
+           ⛔ 别在这张卡里加第二个手势 —— 卡整面都能点，再加一个就是上面
+               ①那条空白坑的翻版。 -->
+      <view class="ava sm c-{{artist.avatar_color}}" catchtap="toggleColors"></view>
       <view style="flex:1;min-width:0">
         <view style="font-size:31rpx;font-weight:700">{{artist.nickname}}</view>
         <view class="meta">{{artist.city}} · {{artist.style_text}}</view>
       </view>
+      <text class="cr">›</text>
     </view>
 
-    <view class="grp">
-      <view class="cell" bindtap="goProfile" hover-class="btn-hover" hover-stay-time="80">
-        <text class="cl">我的资料</text><text class="cr">›</text>
+    <!-- ⚠️ 点一下头像才展开。放在卡片外面（同级的第二张卡）而不是塞进卡里：
+         塞进卡里的话每颗色点都得 catchtap（卡整面是 bindtap），
+         而「什么时候要用 catchtap」越少越好 —— 那是这个项目栽过的地方。 -->
+    <view class="card pal" wx:if="{{colorsOpen}}">
+      <view class="pal-hint">点一个换头像底色，再点一下头像就收起</view>
+      <view class="pal-row">
+        <!-- 每颗色点都排成一个【小号头像】（同一套 `.ava` + 同一个令牌类），
+             于是她看到的就是换完之后的样子，⛔ 不是一颗抽象色块。
+             ⚠️ wx:key="*this" 是给字符串数组用的写法（这里 item 就是令牌本身）。 -->
+        <view wx:for="{{colors}}" wx:key="*this"
+              class="ava pal-dot c-{{item}} {{item === artist.avatar_color ? 'on' : ''}}"
+              data-token="{{item}}" bindtap="pickColor"></view>
       </view>
+    </view>
+
+    <view class="hint">点头像换底色，点上面的空白处进「我的资料」</view>
+
+    <view class="grp">
       <view class="cell" bindtap="goSettings" hover-class="btn-hover" hover-stay-time="80">
         <text class="cl">设置</text><text class="cr">›</text>
       </view>
-      <view class="cell" bindtap="goAbout" hover-class="btn-hover" hover-stay-time="80">
-        <text class="cl">关于妆历</text><text class="cr">›</text>
+      <!-- ⚠️ 「问题反馈」是 2026-09-30（第十九处）新加的一行：用户点进去
+           打字反馈，点「确认反馈」真发到妆历那边（云开发，见 utils/feedbackStore.js）。
+           ⛔ 不许改成「点了没反应」或者只弹一句 toast —— 那正是第十四处那类病。 -->
+      <view class="cell" bindtap="goFeedback" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">问题反馈</text><text class="cr">›</text>
       </view>
       <view class="cell" bindtap="switchRole" hover-class="btn-hover" hover-stay-time="80">
         <text class="cl">切换身份</text><text class="cr">约妆 / 妆师 ›</text>

@@ -15,7 +15,8 @@
     "pages/landing/landing",
     "pages/my-profile/my-profile",
     "pages/style-edit/style-edit",
-    "pages/intro-edit/intro-edit"
+    "pages/intro-edit/intro-edit",
+    "pages/feedback/feedback"
   ],
   "window": {
     "navigationStyle": "custom",

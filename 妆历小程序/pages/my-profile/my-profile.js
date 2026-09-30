@@ -38,7 +38,7 @@ Page({
     // ⚠️ 初值先给个能渲染的空壳，真数据在 onShow 里灌。
     //    不在这儿调 getArtist()：模块加载期碰 storage 会让自测的桩
     //    「还没装上就被读了一次」，那种时序 bug 查起来最费劲。
-    artist: { nickname: '', city: '', style_text: '', intro: '', initial: '妆' },
+    artist: { nickname: '', city: '', style_text: '', intro: '', avatar_color: 'rose' },
     // 简介那一行只显示字数，⛔ 不显示正文 —— 200 字会把这一页整个撑开
     introLen: 0
   },

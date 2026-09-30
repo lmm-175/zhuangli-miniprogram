@@ -6,7 +6,7 @@ Page({
     /* ⚠️ 2026-09-30（第十七处）：数据源从 ARTIST_PUBLIC 换成 getArtist() ——
        顾客端这两页（guest-home / landing）看到的必须是妆娘**改过之后**的资料。
        ⚠️ 初值是个能渲染的空壳，真数据在 onShow 里灌（理由见 onShow）。 */
-    artist: { nickname: '', city: '', style_text: '', intro: '', initial: '妆' },
+    artist: { nickname: '', city: '', style_text: '', intro: '', avatar_color: 'rose' },
     schedule: SCHEDULE,
     slots: SLOTS
   },

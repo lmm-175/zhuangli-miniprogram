@@ -12,13 +12,20 @@
  *    出现在 intro 字符串里，永远不会变成一个能被程序读出来的字段。
  *    （简介里写微信号是允许的，那是她自己写的正文，不是数据库字段。）
  *
- * ② style_text 和 initial 是【派生字段】—— 只在这里算，⛔ 从不落 storage。
+ * ② style_text 是【派生字段】—— 只在这里算，⛔ 从不落 storage。
  *    style_text 派生自 style_tags ∪ style_custom（预设词 + 她自填的词），
  *    于是 landing / guest-home / mine / my-profile 四个 wxml 的
  *    `{{artist.style_text}}` 一个字都不用改，接妆风格一改它们全都跟着变。
  *    只有一份真相：style_tags（闭合，只装预设词）+ style_custom（只装自填词）。
  *    ⚠️ 反面同样要守住：⛔ 别把派生值写回 storage —— 那就成了第二份真相，
  *       迟早跟 style_tags 对不上，而且是【静默】对不上。
+ *
+ * ③ avatar_color 存的是【颜色令牌】（`'rose'` / `'blue'` …），⛔ 不是色值。
+ *    令牌从 AVATAR_COLORS 那一份闭集里取，认不出的一律回落 AVATAR_COLOR_DEFAULT。
+ *    🔴 为什么不存 `#C0556E` 这种：storage 是本机可以被手改的（也是 M1 要挪到
+ *       云端的一份数据）。存色值等于把一个【任意字符串】接进 `style="…"` 的位置；
+ *       存令牌则整个颜色域只有 6 个可能值，画出来的一定是个头像。
+ *       ⚠️ 令牌 → 颜色的映射【只住在 app.wxss 的 `.c-*` 里】（一处实现，规矩 11）。
  * ══════════════════════════════════════════════════════════════════════
  */
 const KEY = 'zhuangli_artist'
@@ -54,7 +61,25 @@ const GROUP_FALLBACK = '其他'
    （空格 斜杠 空格）。差一个空格，往返断言当场红。
    🔴 也正因为它是分隔符，自填词里不许出现 `/`（见 validateCustomWord）。 */
 const STYLE_SEP = ' / '
-const INITIAL_FALLBACK = '妆'
+
+/* ══ 头像颜色（2026-09-30 第十九处）═══════════════════════════════════
+   头像画的是【人像标识】（一个白脑袋 + 一副白肩膀，Drawn in app.wxss 的
+   `.ava::before` / `.ava::after`），底色由妆娘自己挑。所以这里只需要一份
+   【颜色令牌】的闭集，⛔ 不需要任何字、更不需要图片。
+
+   🔴 令牌 = 唯一真相；色值住在 app.wxss 的 `.c-<token>` 里。
+     · 加一个颜色 = 这里加一个字符串 + app.wxss 加一条 `.c-<token>` 规则。
+       ⚠️ 两处必须同时加 —— 只加这边那颗会画成【透明底】，白脑袋看不见。
+       自测里有一条断言逐字对着 app.wxss 的源码比这两份清单（双向都比：
+       少一条规则 = 画不出来，多一条规则 = 死样式）。
+     · rose = 第一位 = 默认，它的渐变逐字等于这一版之前所有头像的底色，
+       所以「没选过颜色的老数据」和「新用户」看到的是同一张脸。
+
+   ⚠️ 顺序就是调色板里的显示顺序，⛔ 别靠 sort 表达任何语义。
+   ⚠️ 名字是【英文令牌】不是中文：它要做 CSS 类名（`.c-rose`）。
+     中文类名在 WXSS 里能不能选中是另一回事，没必要赌。 */
+const AVATAR_COLORS = ['rose', 'blue', 'green', 'amber', 'plum', 'slate']
+const AVATAR_COLOR_DEFAULT = 'rose'
 
 /* ══ 平台词表摊平（5 组 16 个预设词）═════════════════════════════════
    ⚠️ 来源是 mock/data.js 的 STYLE_GROUPS —— 那个文件自己写着「全站唯一来源」，
@@ -116,10 +141,18 @@ function buildStyleText(tags) {
   return presets.concat(others).join(STYLE_SEP)
 }
 
-/* 头像位那个字。空昵称兜底成「妆」，⛔ 不要留空 —— 空头像位看着像页面坏了。 */
-function initialOf(nickname) {
-  const s = String(nickname == null ? '' : nickname).trim()
-  return s ? s.slice(0, 1) : INITIAL_FALLBACK
+/* 头像颜色令牌的消毒 —— 🔴 唯一一处（读和写都过它）。
+   不认识的令牌（手改过的 storage、M1 里别人写坏的数据）一律回落默认色，
+   ⛔ 不报错、也不原样透出去：透出去的结果是一个【透明底的头像】，
+   白脑袋白肩膀贴在白卡片上 = 什么都没画，而屏幕上不会有一句话解释。
+
+   ⛔ 注意它不是「读的时候悄悄改一下」：saveArtist 写入前也过这一道，
+      所以 storage 里永远只可能是这 6 个令牌之一（自测钉着）。
+   ⚠️ 输入先 String() 再 trim：`undefined` / 数字 / 带空格的 ' rose '
+      都该被安安全全地吃进来，回落成一个能画出来的颜色。 */
+function avatarColorOf(v) {
+  const s = String(v == null ? '' : v).trim()
+  return AVATAR_COLORS.indexOf(s) >= 0 ? s : AVATAR_COLOR_DEFAULT
 }
 
 /* ══ 自填词的遍历口 ═══════════════════════════════════════════════════
@@ -446,11 +479,13 @@ function validateStyles(presets, custom) {
    ──────────────────────────────────────────────────────────────────── */
 
 /* 播种用的那条记录。
-   ⚠️ 形状是【存进 storage 的那 6 个键】，⛔ 不含 style_text / initial
+   ⚠️ 形状是【存进 storage 的那 7 个键】，⛔ 不含 style_text
       （派生字段从不落库，见文件头 ②）。
    ⚠️ style_tags 优先用 mock 里那份；没有才拿 style_text 反推 ——
       反推只服务「不完整的数据」，见 splitStyleText 上面的注释。
-   ⚠️ style_custom 是空的：demo 不给自填词（提审截图里别多出东西）。 */
+   ⚠️ style_custom 是空的：demo 不给自填词（提审截图里别多出东西）。
+   ⚠️ avatar_color 也过 avatarColorOf：mock 里那个令牌是哪天被改错的，
+      播种出来的也仍然是个能画出来的颜色（⛔ 别信 mock 里写的东西）。 */
 function seedRecord() {
   const p = ARTIST_PUBLIC || {}
   const tags = Array.isArray(p.style_tags) && p.style_tags.length
@@ -462,7 +497,8 @@ function seedRecord() {
     city: p.city || '',
     style_tags: tags,
     style_custom: Array.isArray(p.style_custom) ? JSON.parse(JSON.stringify(p.style_custom)) : [],
-    intro: typeof p.intro === 'string' ? p.intro : ''
+    intro: typeof p.intro === 'string' ? p.intro : '',
+    avatar_color: avatarColorOf(p.avatar_color)
   }
 }
 
@@ -489,7 +525,15 @@ function raw() {
    ⚠️ 这里的 style_tags 是【并集】（预设 + 自填），和 style_text 同口径 ——
       于是 `style_text === buildStyleText(style_tags)` 是结构性成立的（规矩 16）。
    📌 style_custom【不出去】：「她自填了哪些词、挂在哪一组」是编辑页的事，
-      展示方只认一句 style_text。编辑页走 getStyleState()。 */
+      展示方只认一句 style_text。编辑页走 getStyleState()。
+   📌 2026-09-30（第十九处）：第 7 个键由 `initial`（昵称首字）换成
+      `avatar_color`（颜色令牌）。**仍然是 7 个键，⛔ 没有第 8 个** ——
+      `my-profile.js` 是整对象 setData，加键会撞上「资料页只上公开那几项」
+      那几条断言（规矩 16）。
+      🔴 换掉 initial 顺带消灭了一个真 bug：头像位原先渲染昵称的**第一个字**，
+         而 `s.slice(0,1)` 会把 emoji（代理对）劈成半个字符，屏幕上出现
+         「一个菱形里面一个问号」（用户真机上拍的）。现在头像位画的是一张
+         【和昵称无关的人像】，这类输入问题从根上没有了。 */
 function getArtist() {
   const r = raw()
   const words = allStyleWords(readPresets(r), normalizeCustom(r.style_custom))
@@ -500,7 +544,7 @@ function getArtist() {
     style_tags: words,
     style_text: buildStyleText(words),
     intro: typeof r.intro === 'string' ? r.intro : '',
-    initial: initialOf(r.nickname)
+    avatar_color: avatarColorOf(r.avatar_color)
   }
 }
 
@@ -521,14 +565,16 @@ function getStyleState() {
 /* 唯一写入口，也是唯一校验点（规矩 11）。
    ⚠️ 任何一条校验不过 → 直接返回，`setStorageSync` 一次都不调。
       这是自测里「超 200 字被拦住且没有发生任何写操作」那条断言的落点。
-   ⚠️ 白名单：只认 nickname / city / intro / style_tags / style_custom 五个键。
+   ⚠️ 白名单：只认 nickname / city / intro / style_tags / style_custom /
+      avatar_color 六个键。
       patch 里带 artist_id / wechat_id / 别的任何东西 → 一律丢弃
       （不是报错，是不落库）。
    🔴🔴 `next` 是【逐字段重建】的，所以每加一个字段就必须在这儿显式接住它。
       漏接一个的后果不是"报错"，是**静默抹掉**：比如上一版有人给
       pages/my-profile 加了 saveArtist({nickname})，而 next 里没接
       style_custom —— 改一次昵称＝她的自填词全没了，屏幕上还弹「已保存」。
-      ⇒ 风格那两个字段一律无条件从 cur 接住（自测里有专门一条钉这个）。 */
+      ⇒ 风格那两个字段 + avatar_color 一律无条件从 cur 接住
+        （自测里每种抹掉各有一条钉着）。 */
 function saveArtist(patch) {
   const cur = raw()
   const next = {
@@ -537,7 +583,8 @@ function saveArtist(patch) {
     city: cur.city || '',
     style_tags: readPresets(cur),
     style_custom: normalizeCustom(cur.style_custom),
-    intro: typeof cur.intro === 'string' ? cur.intro : ''
+    intro: typeof cur.intro === 'string' ? cur.intro : '',
+    avatar_color: avatarColorOf(cur.avatar_color)
   }
   const p = patch || {}
   let v
@@ -569,6 +616,13 @@ function saveArtist(patch) {
     next.style_tags = v.presets
     next.style_custom = v.custom
   }
+  /* 头像颜色：⛔ 这里没有 error 分支，而且**这不是漏了** ——
+     avatarColorOf 是个【全函数】（任何输入都映射到一个能画出来的令牌），
+     所以「校验失败」这个状态不存在，也就没有需要出声的分支（规矩 22 管的是
+     "有失败路径却不说话"，不是"不许有无分支的赋值"）。
+     她挑的颜色一定在闭集里（调色板就 6 颗）；会走到回落分支的只有
+     手改过的 storage / M1 里别人写坏的数据，那时回落到默认色正是我们要的。 */
+  if ('avatar_color' in p) next.avatar_color = avatarColorOf(p.avatar_color)
 
   try {
     wx.setStorageSync(KEY, next)
@@ -581,8 +635,8 @@ function saveArtist(patch) {
 
 module.exports = {
   KEY, NICKNAME_MAX, CITY_MAX, INTRO_MAX, CUSTOM_MAX, CUSTOM_MAX_LEN,
-  GROUP_FALLBACK, STYLE_SEP, ALL_TAGS,
-  splitStyleText, buildStyleText, initialOf, allStyleWords, toStyleView, toggleTag,
+  GROUP_FALLBACK, STYLE_SEP, ALL_TAGS, AVATAR_COLORS, AVATAR_COLOR_DEFAULT,
+  splitStyleText, buildStyleText, avatarColorOf, allStyleWords, toStyleView, toggleTag,
   eachCustom, isValidGroup, normalizeCustom, customWords,
   toggleCustomTag, validateCustomWord, validateCustomTag, addCustomTag, removeCustomTag,
   validateNickname, validateCity, validateIntro, validateStyles,

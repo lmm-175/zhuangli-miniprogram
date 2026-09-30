@@ -43,7 +43,12 @@ const ARTIST_PUBLIC = {
   style_custom: [],
   style_text: '建模感 / 展妆 / 浓系',
   // 选填，≤200 字，顾客在分享页上能看到（2026-09-30 用户要的那一行）
-  intro: ''
+  intro: '',
+  // 2026-09-30（第十九处）· 头像颜色令牌，⛔ 不是色值（见 artistStore 的文件头 ③）。
+  //    ⚠️ 它跟 style_custom 一样是「storage 里那份的形状」（规矩 16）——
+  //       播种时由 artistStore 的 seedRecord() 一并搬过去，之后这里不再变。
+  //    ⚠️ 令牌 → 颜色的映射住在 app.wxss 的 `.c-*`，这个文件里⛔ 不出现任何色值。
+  avatar_color: 'rose'
 }
 
 /* 🔒 只给 utils/contact.js 用。

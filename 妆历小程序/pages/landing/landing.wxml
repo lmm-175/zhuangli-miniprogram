@@ -14,7 +14,14 @@
     <!-- ① 化妆师信息 -->
     <view class="card">
       <view class="row">
-        <view class="ava">{{artist.initial}}</view>
+        <!-- 🔴 2026-09-30（第十九处）：头像位改画【人像标识 + 妆娘自选底色】。
+             人像是 app.wxss 的 `.ava::before/::after` 画的（纯 CSS，⛔ 无图片、
+             ⛔ 无 emoji、⛔ 无用户上传 = 零「社交-笔记」类目风险）；
+             这里的 `c-{{…}}` 只是【颜色令牌】，⛔ 不是色值 ——
+             色值只住在 app.wxss 的 `.c-*` 里（见 artistStore 文件头 ③）。
+             ⚠️ 这一页是【顾客看的】C1，所以这里的令牌来自 share 那一份数据；
+                令牌不认识时会回落成默认色（avatarColorOf），⛔ 不会画出一个空。 -->
+        <view class="ava c-{{artist.avatar_color}}"></view>
         <view style="flex:1;min-width:0">
           <view style="font-size:32rpx;font-weight:700">{{artist.nickname}}</view>
           <view class="meta">{{artist.city}} · {{artist.style_text}}</view>

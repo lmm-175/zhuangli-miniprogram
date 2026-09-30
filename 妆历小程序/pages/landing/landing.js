@@ -11,7 +11,7 @@ Page({
           而这一页就是**顾客看的那一页**（提审截图 ②）—— 妆娘改了昵称/城市/风格，
           这里必须跟着变。字段名一个字没改，所以 wxml 那段 `{{artist.xxx}}` 照旧。
        ⚠️ 初值只给个能渲染的空壳，真数据在 onShow 里灌 —— 理由见下面 onShow。 */
-    artist: { nickname: '', city: '', style_text: '', intro: '', initial: '妆' },
+    artist: { nickname: '', city: '', style_text: '', intro: '', avatar_color: 'rose' },
     // ⛔ 微信号只能落在这个字段里，来源只能是 getContact()
     contact: {},
     schedule: SCHEDULE,
