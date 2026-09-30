@@ -1,0 +1,125 @@
+<!-- 预约单填写页
+     落点：C1【选这个妆位】（slot_id）+ 妆师端「代填」（mode=artist）。
+     字段按方案草案 §5：档案层（CN/眼型/肤质/性别/未成年/联系方式）+ 每次层（角色/妆感/另需服务/备注）。
+     ⚠️ 顺序是【先档案、后本次】（2026-09-29 调整为用户要求）：CN 在档案里又排最前。
+     ⛔ 顾客端零金额（红线 2）：全页没有任何 ¥ 价格承诺 ——
+        另需服务只显示项目名 +「用户自备」提示，价格是妆娘端的事。 -->
+<view class="app">
+  <nav-bar title="{{title}}" back="{{true}}"></nav-bar>
+
+  <view class="body tight">
+    <!-- 你选的妆位 -->
+    <view class="card tight picked">
+      <view class="pt">{{mode === 'artist' ? '代填的妆位' : '你选的妆位'}}</view>
+      <view class="pv">{{slotText}}</view>
+    </view>
+
+    <!-- 顾客档案层，整体排在最前（2026-09-29 调整顺序）：
+         档案是「这个人是谁 + 她的条件」，每次填的是「这一次要做什么」。
+         先答「谁」，再答「做什么」—— 而且档案下次会自动带出来，故先填。
+         ⚠️ 档案里 CN 又排最前：它是妆娘认人的唯一凭据，角色名每单都不一样。 -->
+    <view class="sec-ttl">顾客档案 · CN（圈名）</view>
+    <view class="grp">
+      <view class="fld">
+        <text class="lb">CN</text>
+        <input class="vl ip" value="{{form.cn}}" placeholder="你的圈名，妆娘靠它认人" placeholder-class="ph"
+               bindinput="onInput" data-k="cn" />
+      </view>
+    </view>
+
+    <!-- 档案层 · 眼型 / 肤质（多选） -->
+    <view class="sec-ttl">眼型（可多选）</view>
+    <view class="chips" style="padding:2rpx 4rpx">
+      <view wx:for="{{eyeTypes}}" wx:key="name"
+            class="chip {{item.on ? 'on' : ''}}"
+            data-k="eyeTypes" data-i="{{index}}" bindtap="toggleMulti" hover-class="btn-hover" hover-stay-time="80">{{item.name}}</view>
+    </view>
+
+    <view class="sec-ttl">肤质（可多选）</view>
+    <view class="chips" style="padding:2rpx 4rpx">
+      <view wx:for="{{skinTypes}}" wx:key="name"
+            class="chip {{item.on ? 'on' : ''}}"
+            data-k="skinTypes" data-i="{{index}}" bindtap="toggleMulti" hover-class="btn-hover" hover-stay-time="80">{{item.name}}</view>
+    </view>
+
+    <!-- 性别（单选） -->
+    <view class="sec-ttl">性别（单选）</view>
+    <view class="chips" style="padding:2rpx 4rpx">
+      <view wx:for="{{genders}}" wx:key="name"
+            class="chip {{item.on ? 'on' : ''}}"
+            data-i="{{index}}" bindtap="selectSingle" hover-class="btn-hover" hover-stay-time="80">{{item.name}}</view>
+    </view>
+
+    <!-- 未成年（开关 + 条件必勾） -->
+    <view class="card tight" style="margin-top:20rpx" bindtap="toggleMinor" hover-class="btn-hover" hover-stay-time="80">
+      <view style="flex:1">
+        <view style="font-size:30rpx">未成年</view>
+        <view style="font-size:24rpx;color:var(--t3);margin-top:4rpx">「否」会自动带入，下次不用再选</view>
+      </view>
+      <view class="sw {{isMinor ? 'on' : ''}}"></view>
+    </view>
+    <view wx:if="{{isMinor}}" class="guard-row" bindtap="toggleGuardian" hover-class="btn-hover" hover-stay-time="80">
+      <view class="ck {{guardian ? 'on' : ''}}">✓</view>
+      <view style="flex:1;font-size:29rpx">已得到监护人允许</view>
+    </view>
+
+    <!-- 联系方式（档案层） -->
+    <view class="sec-ttl">联系方式</view>
+    <view class="grp">
+      <view class="fld">
+        <text class="lb">微信号</text>
+        <input class="vl ip" value="{{form.wechat}}" placeholder="妆娘加你微信用的" placeholder-class="ph"
+               bindinput="onInput" data-k="wechat" />
+      </view>
+      <view class="fld">
+        <text class="lb">紧急联系</text>
+        <input class="vl ip" value="{{form.phone}}" placeholder="当天找不到你时用（选填）" placeholder-class="ph"
+               bindinput="onInput" data-k="phone" />
+      </view>
+    </view>
+
+    <!-- 每次填写的部分从这儿开始：下面这些每单都不一样 -->
+    <view class="sec-ttl">本次填写 · 角色名</view>
+    <view class="grp">
+      <view class="fld">
+        <text class="lb">角色名</text>
+        <input class="vl ip" value="{{form.role}}" placeholder="请输入角色名" placeholder-class="ph"
+               bindinput="onInput" data-k="role" />
+      </view>
+    </view>
+
+    <!-- 每次层 · 妆感（分组多选） -->
+    <view class="sec-ttl">妆感（可多选）</view>
+    <view wx:for="{{styleGroups}}" wx:key="group" wx:for-item="g" class="grp-sec">
+      <view class="grp-tag">{{g.group}}</view>
+      <view class="chips" style="padding:2rpx 4rpx">
+        <view wx:for="{{g.items}}" wx:key="name" wx:for-item="it" wx:for-index="j"
+              class="chip {{it.on ? 'on' : ''}}"
+              data-k="styleGroups" data-i="{{index}}" data-j="{{j}}"
+              bindtap="toggleMulti" hover-class="btn-hover" hover-stay-time="80">{{it.name}}</view>
+      </view>
+    </view>
+
+    <!-- 每次层 · 另需服务 -->
+    <view class="sec-ttl">另需服务（选填）</view>
+    <view class="chips" style="padding:2rpx 4rpx">
+      <view wx:for="{{extras}}" wx:key="name"
+            class="chip {{item.on ? 'on' : ''}}"
+            data-k="extras" data-i="{{index}}" bindtap="toggleMulti" hover-class="btn-hover" hover-stay-time="80">{{item.name}}{{item.need_self_supply ? '·自备' : ''}}</view>
+    </view>
+
+    <!-- 备注 -->
+    <view class="sec-ttl">备注</view>
+    <view class="grp">
+      <view class="fld">
+        <text class="lb">备注</text>
+        <input class="vl ip" value="{{form.note}}" placeholder="选填" placeholder-class="ph"
+               bindinput="onInput" data-k="note" />
+      </view>
+    </view>
+  </view>
+
+  <view class="footbar">
+    <view class="btn pri" style="flex:1" bindtap="onSubmit" hover-class="btn-hover" hover-stay-time="80">提交预约单</view>
+  </view>
+</view>

@@ -1,0 +1,168 @@
+<!-- 预约单列表 · 妆娘端 · Tab 第 3 位
+     落点：妆师端 tabBar「预约单」+ 约妆端「我的预约」。
+     四个状态 Tab：待处理 / 已确认 / 已完成 / 已取消（方案草案 §4.1）。
+
+     批量处理（2026-09-29 加）：待处理页「一键处理」、已确认页「一键确认」+
+     「定金一键已支付」。点任意一个键进【勾选态】—— 进来就是全选，用户可以
+     取消勾选；没勾的留在原地，勾上的才走。三个键各走各的勾选态。 -->
+<view class="app">
+  <!-- 「代填」放【左上角】：右上角是微信自己的胶囊按钮，动作贴过去会被误当成
+       微信的按键点到。道理同档期页，center="screen" 见 nav.wxss 里 .nv.cs。 -->
+  <nav-bar title="预约单" center="screen">
+    <view slot="left" class="nv-act" bindtap="goNewArtistForm" hover-class="nv-hover" hover-stay-time="80">代填</view>
+  </nav-bar>
+
+  <!-- 场次 + 搜索，2026-09-30 合并成【一条】（用户定的）。
+       ⚠️ 一场档期都没有的时候整个不显示 —— 只剩「全部」等于没得选，白占一行。 -->
+  <!-- ⚠️ 下拉条和它的面板必须包在【同一个定位上下文】里。
+       ⛔ 不能让面板直接挂在 .app 下面用 position:absolute —— 按 flexbox 规范，
+          绝对定位的子元素在 flex 容器里的静态位置 = 「把它当成唯一的那个
+          flex item」，也就是 .app 的最顶上，而不是下拉条的下面。
+          结果是面板从导航栏那里盖下来。所以外面这层 .sched-wrap 是必须的，
+          z-index 也要加：它得盖住下面的 Tab、列表和底栏。 -->
+  <view wx:if="{{schedChips.length > 1}}" class="sched-wrap">
+    <!-- 一条上四件：当前场次（点=开面板）· 输入框 · 下拉箭头（点=开面板）· 放大镜（点=搜）。
+         ⚠️ 输入框【平时空着】，场次名单独放左边 —— 它俩是两件事，塞进一个框里
+            会出现「框里那行字到底是我要搜的词，还是当前这一场」的歧义。
+         ⚠️ 输入框和场次名都【常驻】，不藏在面板里：要搜就直接点框打字，
+            不用先点开面板把它找出来。 -->
+    <view class="sched-bar">
+      <view class="sb-pick" bindtap="toggleSched" hover-class="btn-hover" hover-stay-time="80">
+        <text class="sb-lb">{{schedLabel}}</text>
+      </view>
+      <input class="sb-ip" value="{{kwInput}}" placeholder="搜 CN / 展名"
+             placeholder-class="sb-ph" confirm-type="search"
+             bindinput="onKwInput" bindconfirm="doSearch" />
+      <view class="sb-arw" bindtap="toggleSched" hover-class="btn-hover" hover-stay-time="80">
+        <view class="sb-ar {{schedOpen ? 'up' : ''}}"></view>
+      </view>
+      <!-- 放大镜【用画的】，⛔ 不用文字「🔍」—— 各平台 emoji 的字形和基线都不一样，
+           同一个道理见圆钮那两根小条（README §3.5 第八条）。 -->
+      <view class="sb-find" bindtap="doSearch" hover-class="btn-hover" hover-stay-time="80">
+        <view class="mg-c"></view>
+        <view class="mg-h"></view>
+      </view>
+    </view>
+
+    <!-- 搜索是【跨场次】的：妆娘要找的是「这个人的全部下单记录」，
+         不是「这一场里有没有这个人」。这句话得说出来，不然她看到别的场次的
+         单子冒出来会以为是 bug。
+         ⚠️ 它必须在【面板收起时也看得见】—— 搜完面板立刻就收起了（不收就盖住
+            结果第一屏），所以这句要是还留在面板里，就永远不会被人看到。 -->
+    <view wx:if="{{searching}}" class="sb-tip">
+      <text class="sb-tip-t">搜索中：跨全部场次</text>
+      <text class="sb-tip-x" bindtap="clearKw" hover-class="btn-hover" hover-stay-time="80">清空</text>
+    </view>
+
+    <!-- 下拉面板。⚠️ 绝对定位【浮】在列表上面，⛔ 不占流 ——
+         占流的话展开/收起会把下面整块内容顶下去又拉回来，而用户正盯着它选。
+         和「未付定金」那行红字同一个道理（见 §3.5）。 -->
+    <view wx:if="{{schedOpen}}" class="sp-mask" bindtap="closeSched"></view>
+    <view wx:if="{{schedOpen}}" class="sched-panel">
+      <view class="sp-list">
+        <view wx:for="{{schedOptions}}" wx:key="id"
+              class="sp-item {{schedId === item.id ? 'on' : ''}}"
+              data-id="{{item.id}}" bindtap="pickSched" hover-class="btn-hover" hover-stay-time="80">
+          <text class="sp-nm">{{item.label}}</text>
+          <text wx:if="{{item.sub}}" class="sp-sub">{{item.sub}}</text>
+        </view>
+        <!-- 清单跟着【输入框里正在打的字】缩（见 booking.js 的 onKwInput）。
+             ⚠️「全部」永远留着，所以有匹配时节清单至少是 1 项 ——
+                「一项都没有」= 真的没匹配上。 -->
+        <view wx:if="{{kwInput && schedOptions.length <= 1}}" class="sp-none">没有叫这个名字的展子 / CN</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 状态 Tab -->
+  <view class="b-tabs">
+    <view wx:for="{{tabs}}" wx:key="key"
+          class="b-tab {{active == index ? 'on' : ''}}"
+          data-i="{{index}}" bindtap="onTab" hover-class="btn-hover" hover-stay-time="80">{{item.label}}</view>
+  </view>
+
+  <!-- 勾选态的顶栏。⚠️ 只在勾选态出现，平时不占这一行的位置 -->
+  <view wx:if="{{sel}}" class="sel-bar">
+    <view class="sb-t">已选 <text class="sb-n">{{selCount}}</text> / {{selTotal}} 单</view>
+    <view class="sb-a" bindtap="toggleAll" hover-class="btn-hover" hover-stay-time="80">{{allPicked ? '全不选' : '全选'}}</view>
+  </view>
+
+  <view class="body tight" style="padding-top:16rpx">
+    <block wx:if="{{rows.length}}">
+      <view class="grp">
+        <!-- ⚠️ 只有这一个 bindtap。勾选态下翻勾选、平时进详情，由 onCard 自己分。
+             不做成 bindtap="{{sel ? 'a' : 'b'}}" 那种动态绑定 —— 写错了是静默的。 -->
+        <view wx:for="{{rows}}" wx:key="id"
+              class="bk-card {{sel ? 'pick' : ''}} {{item.locked ? 'lock' : ''}}"
+              data-id="{{item.id}}" bindtap="onCard" hover-class="btn-hover" hover-stay-time="80">
+          <!-- 勾选框自己画，不用原生 <checkbox>：原生那个自带最小尺寸和灰边，
+               跟这套自写 WXSS 打架，而且 .grp 是 overflow:hidden 的，
+               挤出去就变成「看得见点不到」。 -->
+          <view wx:if="{{sel}}" class="ck {{item.checked ? 'on' : ''}}">
+            <text wx:if="{{item.checked}}" class="ck-t">✓</text>
+          </view>
+
+          <view style="flex:1;min-width:0">
+            <view class="bk-top">
+              <text class="bk-ev">{{item.event}}</text>
+              <!-- 顾客的圈名。⚠️ 妆娘认人认的是 CN，不是角色名 ——
+                   角色每单都不一样，认不出「这是不是上次那个人」。 -->
+              <text class="bk-cn">{{item.cn}}</text>
+            </view>
+            <view class="bk-sl">{{item.slot}} · {{item.role}}</view>
+            <!-- ⚠️ 行里【不写】「因为什么勾不上」—— 一屏 3 单未付就是 3 遍，
+                 纯噪声（2026-09-29 用户报的）。理由在被点的那一下浮一次，
+                 见下面的 .pick-warn。灰色 + 空勾选框已经说明它勾不上了。 -->
+            <view class="bk-meta">
+              <!-- 顾客申请取消：这单还在「已确认」里（妆位也还占着），
+                   但要一眼看得出来「它在等人拍板」。 -->
+              <text wx:if="{{item.wantCancel}}" class="bk-badge">顾客申请取消</text>
+              <text class="{{item.depositPaid ? '' : 'tip-warn'}}">{{item.deposit}}</text> · {{item.created}}
+            </view>
+          </view>
+          <view wx:if="{{!sel}}" class="rgo">›</view>
+        </view>
+      </view>
+      <view wx:if="{{!sel}}" class="hint">点开单子查看顾客填写的内容，<br />谈妥后标记定金、加微信。</view>
+      <view wx:else class="hint">勾上的单会被处理，没勾的留在这个 Tab。</view>
+    </block>
+
+    <view wx:else class="body center" style="flex:1;padding:0">
+      <!-- ⚠️ 空态要分三种说法。搜了半天没结果，却告诉她「客人填单后会出现」——
+           那是答非所问，她会以为是自己哪一步做错了。 -->
+      <view wx:if="{{searching}}" class="empty">
+        <text class="ic">🔍</text>
+        <!-- 2026-09-30 用户定的：搜 CN 搜不到人时，要明确说「没有叫这个名字的
+             展子 / CN」，而不是泛泛一句「没找到」。 -->
+        <view class="et">没有叫这个名字的展子 / CN</view>
+        <view style="font-size:26rpx">「{{kw}}」只按顾客 CN 和漫展名找，换个词试试</view>
+        <view class="btn sec sm" style="margin-top:24rpx" bindtap="clearKw"
+              hover-class="btn-hover" hover-stay-time="80">清空搜索</view>
+      </view>
+      <view wx:elif="{{schedId !== 'all'}}" class="empty">
+        <text class="ic">📋</text>
+        <view class="et">这一场的这个状态还没有单</view>
+        <view style="font-size:26rpx">换个场次看看，或者点左上角选「全部」</view>
+      </view>
+      <view wx:else class="empty">
+        <text class="ic">📋</text>
+        <view class="et">这个状态还没有单</view>
+        <view style="font-size:26rpx">客人通过你分享的链接填单后<br />预约单会出现在这里</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部：勾选态是「取消 + 执行」，平时是批量入口。没单时两个都不出现 -->
+  <view wx:if="{{sel}}" class="footbar">
+    <!-- 「这一行勾不上」的说明，浮在底栏上方 1 秒。见 booking.js 的 warn() -->
+    <view wx:if="{{pickWarn}}" class="pick-warn">{{pickWarn}}</view>
+    <view class="btn out" style="flex:1" bindtap="cancelSel" hover-class="btn-hover" hover-stay-time="80">取消</view>
+    <view class="btn {{selCount ? 'pri' : 'dis'}}" style="flex:2"
+          bindtap="applySel" hover-class="btn-hover" hover-stay-time="80">{{selApply}}（{{selCount}}）</view>
+  </view>
+  <view wx:elif="{{footBtns.length}}" class="footbar">
+    <view wx:for="{{footBtns}}" wx:key="mode"
+          class="btn {{item.mode === 'deposit' ? 'out' : 'pri'}}" style="flex:1"
+          data-mode="{{item.mode}}" bindtap="enterSel" hover-class="btn-hover" hover-stay-time="80">{{item.label}}</view>
+  </view>
+</view>

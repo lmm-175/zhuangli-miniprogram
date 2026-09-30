@@ -1,0 +1,66 @@
+<!-- C1 分享落地页（妆位页）· 提审截图 ② · 无需登录
+     落点：分享卡片的 path /pages/landing/landing?artist_id=demo
+
+     本质是「这个化妆师的个人页」，不是作品广场 ——
+     ⛔ 没有点赞、评论、收藏、浏览数、转发数，没有「更多作品」入口（红线 1）
+     ⛔ 没有金额 / 价格 / 定金（红线 2）
+     📌 妆位行只有三样东西：序号 · 时段 · 可约状态。多一个字段都要问自己为什么。 -->
+<view class="app">
+  <nav-bar title="示例的妆位" back="{{true}}">
+    <view slot="right" class="nv-act" bindtap="goMyBookings" hover-class="nv-hover" hover-stay-time="80">我的预约</view>
+  </nav-bar>
+
+  <view class="body">
+    <!-- ① 化妆师信息 -->
+    <view class="card">
+      <view class="row">
+        <view class="ava">示</view>
+        <view style="flex:1;min-width:0">
+          <view style="font-size:32rpx;font-weight:700">{{artist.nickname}}</view>
+          <view class="meta">{{artist.city}} · {{artist.style_text}}</view>
+        </view>
+      </view>
+
+      <!-- ⛔ 只在「展示微信号」开关打开时渲染。
+           关掉时这一行整个不出现 —— 不是变灰，是不存在。 -->
+      <view wx:if="{{contact.wechat_id}}" class="card-div">
+        <view>
+          <view class="lbl">微信号</view>
+          <view class="wxid">{{contact.wechat_id}}</view>
+        </view>
+        <view class="btn sec sm {{copied ? 'dis' : ''}}" bindtap="copyWechat" hover-class="btn-hover" hover-stay-time="80">{{copied ? '已复制' : '复制微信号'}}</view>
+      </view>
+    </view>
+
+    <!-- ② 妆面样片（M0 是占位块）
+         ⚠️ 只用「占位图」三个字，不带编号 —— 任何计数都构成
+            「可枚举的公开内容区」。 -->
+    <view class="sec-ttl">妆面样片</view>
+    <view class="card tight">
+      <view class="work-grid">
+        <view class="work">占位图</view>
+        <view class="work">占位图</view>
+        <view class="work">占位图</view>
+      </view>
+    </view>
+
+    <!-- ③ 可约妆位表 -->
+    <view class="sec-ttl">可约妆位 · {{schedule.name}}</view>
+    <view class="grp">
+      <view wx:for="{{slots}}" wx:key="slot_id" class="slot-row {{item.busy ? 'busy' : ''}}">
+        <view class="sq">{{item.seq}}</view>
+        <view class="tm">{{item.time}}<text class="sub">{{item.busy ? '已被约' : '可约'}}</text></view>
+        <view wx:if="{{item.busy}}" class="btn xs dis">已约</view>
+        <view wx:else class="btn pri xs" data-id="{{item.slot_id}}" bindtap="pickSlot" hover-class="btn-hover" hover-stay-time="80">选这个妆位</view>
+      </view>
+    </view>
+
+    <!-- ④ 预期说明条 · 常驻 · 不可点
+         📌 这是产品必需的，不是装饰：化妆师拒绝顾客时没有任何通道能通知他，
+            必须在落地页就把预期说清楚。它同时替掉了那条发不出去的订阅消息。 -->
+    <view class="noti info">
+      <text>ℹ️</text>
+      <text>提交后化妆师会主动联系你。<text style="font-weight:600">如果你填完很久没人联系，可以直接加化妆师的微信。</text></text>
+    </view>
+  </view>
+</view>

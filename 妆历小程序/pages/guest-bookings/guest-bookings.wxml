@@ -1,0 +1,28 @@
+<!-- 我的预约（约妆端）。顾客自己提交过的预约单。 -->
+<view class="app">
+  <nav-bar title="我的预约" back="{{true}}"></nav-bar>
+
+  <view class="body tight">
+    <block wx:if="{{list.length}}">
+      <view class="grp">
+        <view wx:for="{{list}}" wx:key="id" class="bk-cell">
+          <view style="flex:1;min-width:0">
+            <view class="bk-ev">{{item.event}}</view>
+            <view class="bk-sl">{{item.slot}}</view>
+          </view>
+          <view class="st st-{{item.status}}">{{item.statusText}}</view>
+        </view>
+      </view>
+      <view class="hint">提交后妆娘会主动联系你。<br />如果很久没人联系，可以从妆位页加妆娘的微信。</view>
+    </block>
+
+    <view wx:else class="body center" style="flex:1">
+      <view class="empty">
+        <text class="ic">📋</text>
+        <view class="et">还没有预约单</view>
+        <view style="font-size:26rpx">从妆位页选一个妆位填单后<br />会出现在这里</view>
+      </view>
+      <view class="btn pri" style="margin:0 26rpx" bindtap="goHome" hover-class="btn-hover" hover-stay-time="80">去找妆位</view>
+    </view>
+  </view>
+</view>

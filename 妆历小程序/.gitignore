@@ -1,0 +1,7 @@
+# 微信开发者工具缓存
+node_modules/
+project.private.config.json
+.DS_Store
+.vscode/
+*.log
+miniprogram/npm/

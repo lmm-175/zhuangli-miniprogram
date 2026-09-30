@@ -1,0 +1,38 @@
+<!-- 壳 3 · 我的 · Tab 第 4 位
+     落点：A1「Tab · 我的」。M0 只放静态资料项。
+     ⛔ 绝不放「邀请同行」—— 它最像增长手段，同时是多商户入驻最直接的证据。
+
+     📌 四行全部有真实响应，没有一行是「点了没反应」：
+        「我的作品 0 张」是事实陈述，「还没有上传作品」也是事实陈述，
+        都不是「功能开发中」那类承诺（红线 10）。 -->
+<view class="app">
+  <nav-bar title="我的"></nav-bar>
+
+  <view class="body tight">
+    <view class="card tight row">
+      <view class="ava sm">示</view>
+      <view style="flex:1;min-width:0">
+        <view style="font-size:31rpx;font-weight:700">{{artist.nickname}}</view>
+        <view class="meta">{{artist.city}} · {{artist.style_text}}</view>
+      </view>
+    </view>
+
+    <view class="grp">
+      <view class="cell" bindtap="goProfile" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">我的资料</text><text class="cr">›</text>
+      </view>
+      <view class="cell" bindtap="goWorks" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">我的作品</text><text class="cr">0 张 ›</text>
+      </view>
+      <view class="cell" bindtap="goSettings" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">设置</text><text class="cr">›</text>
+      </view>
+      <view class="cell" bindtap="goAbout" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">关于妆历</text><text class="cr">›</text>
+      </view>
+      <view class="cell" bindtap="switchRole" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">切换身份</text><text class="cr">约妆 / 妆师 ›</text>
+      </view>
+    </view>
+  </view>
+</view>

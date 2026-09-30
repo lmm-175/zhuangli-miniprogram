@@ -1,0 +1,39 @@
+{
+  "pages": [
+    "pages/role-select/role-select",
+    "pages/guest-home/guest-home",
+    "pages/guest-bookings/guest-bookings",
+    "pages/schedule/schedule",
+    "pages/booking/booking",
+    "pages/mine/mine",
+    "pages/settings/settings",
+    "pages/schedule-edit/schedule-edit",
+    "pages/schedule-detail/schedule-detail",
+    "pages/template-list/template-list",
+    "pages/booking-form/booking-form",
+    "pages/booking-detail/booking-detail",
+    "pages/landing/landing"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#F5F6F7",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#8F959E",
+    "selectedColor": "#C0556E",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/schedule/schedule", "text": "档期" },
+      { "pagePath": "pages/booking/booking", "text": "预约单" },
+      { "pagePath": "pages/mine/mine", "text": "我的" }
+    ]
+  },
+  "usingComponents": {
+    "nav-bar": "/components/nav/nav"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

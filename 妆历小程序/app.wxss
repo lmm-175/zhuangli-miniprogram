@@ -1,0 +1,164 @@
+/* ══════════════════════════════════════════════════════════════════
+   妆历 · M0 试提审包 · 全局样式
+   ──────────────────────────────────────────────────────────────────
+   设计令牌逐字沿用《妆历 界面设计与交互说明.html》，
+   与《妆历 M0 试提审包 界面稿.html》共用同一套。
+
+   单位换算：原稿手机框 340px ≈ 375pt 屏；375pt = 750rpx
+             → 1 原稿 px ≈ 2.206rpx，本文件统一取 ×2.2 后取整
+   改令牌要同步改那两份 HTML —— 三处同一套值。
+
+   ⚠️ WXSS 限制（wechat-miniprogram-native-vs-custom.md §三）：
+      不支持 * 选择器、不支持标签嵌套选择器、不能用 px 做响应式布局。
+      下方变量只在 page 上定义一次，靠继承下发到所有页面与自定义组件。
+   ══════════════════════════════════════════════════════════════════ */
+
+page{
+  --brand:#C0556E; --brand-d:#9A3D53; --brand-l:#FDF1F4;
+  --t1:#1F2329; --t2:#646A73; --t3:#8F959E; --t4:#BBBFC4;
+  --bg:#F5F6F7; --white:#fff; --line:#E7E9EB; --line2:#F0F1F2;
+  --danger:#D54941; --danger-l:#FDECEC; --warn:#E37318; --warn-l:#FFF4E8;
+  --ok:#2BA471; --ok-l:#E8F8F2; --info:#4B7BE5; --info-l:#EDF2FD;
+  --r:22rpx; --r-lg:30rpx;
+
+  background:var(--bg);
+  color:var(--t1);
+  font-size:29rpx;
+  line-height:1.6;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* 不支持 * 选择器，逐个列出来 */
+view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
+
+/* ── 页面骨架 ─────────────────────────────────────────────
+   .app 是每页的根容器：导航栏（flex:none）+ .body（flex:1）。
+   navigationStyle:custom 时 100vh = 可见区（不含原生 tabBar），
+   状态栏高度由 <nav-bar> 自己补，页面不用管。
+   ──────────────────────────────────────────────────────── */
+.app{display:flex;flex-direction:column;min-height:100vh;background:var(--bg)}
+.body{flex:1;display:flex;flex-direction:column;gap:20rpx;padding:22rpx}
+.body.tight{gap:13rpx}
+.body.nopad{padding:0}
+.body.center{justify-content:center}
+
+/* ── 导航栏里的动作位（slot 内容渲染在页面作用域，所以必须放全局） ── */
+.nv-act{font-size:30rpx;color:var(--brand);font-weight:600;padding:9rpx 0}
+.nv-act2{font-size:30rpx;color:var(--t2);padding:9rpx 0}
+.nv-hover{opacity:.55}
+
+/* ── 卡片 / 分组 / 行 ─────────────────────────────────── */
+.card{background:#fff;border-radius:var(--r);padding:26rpx;position:relative}
+.card.tight{padding:20rpx 24rpx}
+.grp{background:#fff;border-radius:var(--r);overflow:hidden}
+.row{display:flex;gap:22rpx;align-items:center}
+.cell{display:flex;align-items:center;justify-content:space-between;padding:24rpx 26rpx;background:#fff;gap:22rpx}
+.cell + .cell{border-top:1px solid var(--line2)}
+.cell .cl{font-size:30rpx}
+.cell .cr{font-size:29rpx;color:var(--t3);display:flex;align-items:center;gap:11rpx}
+.sec-ttl{font-size:25rpx;font-weight:700;color:var(--t3);letter-spacing:.4px;padding:9rpx 4rpx 0}
+
+/* ── 按钮体系（5 种，照设计稿） ───────────────────────── */
+.btn{display:flex;align-items:center;justify-content:center;height:92rpx;border-radius:20rpx;
+     font-size:32rpx;font-weight:600;border:none;position:relative;gap:13rpx}
+.btn.pri{background:var(--brand);color:#fff}
+.btn.sec{background:var(--brand-l);color:var(--brand-d);border:1px solid #EFD3DA}
+.btn.out{background:#fff;border:1px solid var(--line);color:var(--t1)}
+.btn.dan{background:var(--danger-l);color:var(--danger);border:1px solid #F5C9C6}
+.btn.sm{height:66rpx;font-size:28rpx;padding:0 26rpx;border-radius:15rpx;display:inline-flex;width:auto}
+.btn.xs{height:55rpx;font-size:25rpx;padding:0 20rpx;border-radius:13rpx;display:inline-flex;width:auto}
+.btn.dis{background:#F0F1F2;color:var(--t4);border-color:transparent}
+.btn-hover{opacity:.82}
+
+/* ── <button> 原生组件重置 ────────────────────────────────
+   ⚠️ open-type="share" 只能挂在 <button> 上，而 <button> 自带
+      border / background / ::after 灰边，会跟 .btn 打架。
+      下面这几行是 §3.1 说的「必写的十几行」。
+   ──────────────────────────────────────────────────────── */
+.btn-share{
+  flex:1;height:92rpx;padding:0;margin:0;line-height:normal;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--brand);color:#fff;
+  border:none;border-radius:20rpx;
+  font-size:32rpx;font-weight:600;font-family:inherit;text-align:center;
+}
+.btn-share::after{border:none}
+.btn-share-hover{opacity:.82}
+
+/* ── 空态 ────────────────────────────────────────────── */
+.empty{text-align:center;padding:75rpx 35rpx;color:var(--t3);font-size:29rpx;line-height:1.9}
+.empty .ic{font-size:70rpx;display:block;margin-bottom:18rpx;opacity:.5}
+.empty .et{font-size:34rpx;font-weight:700;color:var(--t1);margin-bottom:9rpx}
+.hint{text-align:center;font-size:24rpx;color:var(--t3);padding:0 53rpx;line-height:1.7;margin-top:26rpx}
+
+/* ── 提示条 ──────────────────────────────────────────── */
+.noti{display:flex;gap:18rpx;padding:22rpx 26rpx;border-radius:var(--r);font-size:28rpx;line-height:1.7}
+.noti.info{background:var(--info-l);color:#2B4E96}
+.noti.warn{background:var(--warn-l);color:#7A3D08}
+.noti.ok{background:var(--ok-l);color:#14603F}
+
+/* ── 字段行 / 输入 ───────────────────────────────────── */
+.fld{display:flex;align-items:center;gap:22rpx;padding:24rpx 26rpx;background:#fff;
+     border-bottom:1px solid var(--line2);font-size:30rpx}
+.fld .lb{color:var(--t2);flex:0 0 172rpx;font-size:29rpx}
+.fld .vl{flex:1;font-size:29rpx;color:var(--t1)}
+.fld .vl.ph{color:var(--t4)}
+.ip{height:66rpx;line-height:66rpx}
+.ph{color:var(--t4)}
+
+/* ── 开关（照设计稿自绘；原生 <switch> 样式对不上令牌） ──── */
+.sw-row{display:flex;align-items:center;justify-content:space-between;gap:26rpx;
+        padding:29rpx 26rpx;background:#fff;border-radius:var(--r)}
+.sw-tip{font-size:24rpx;color:var(--t3);margin-top:6rpx;line-height:1.6}
+.tip-warn{color:var(--warn)}
+.tip-ok{color:var(--ok)}
+.sw{width:97rpx;height:55rpx;border-radius:29rpx;background:#D6D9DD;position:relative;flex:none}
+.sw::after{content:"";position:absolute;width:46rpx;height:46rpx;border-radius:50%;background:#fff;
+           top:4rpx;left:4rpx;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw.on{background:var(--brand)}
+.sw.on::after{left:47rpx}
+
+/* ── 妆位行 ──────────────────────────────────────────── */
+.slot-row{display:flex;align-items:center;gap:20rpx;padding:20rpx 24rpx;background:#fff;
+          border-bottom:1px solid var(--line2)}
+.slot-row:last-child{border-bottom:none}
+.slot-row .sq{width:53rpx;height:53rpx;border-radius:13rpx;background:var(--brand-l);color:var(--brand-d);
+              display:flex;align-items:center;justify-content:center;font-size:26rpx;font-weight:700;flex:none}
+.slot-row .tm{flex:1;font-size:29rpx}
+.slot-row .tm .sub{display:block;color:var(--t3);font-size:24rpx}
+.slot-row.busy{background:#FAFAFB}
+.slot-row.busy .sq{background:#F0F1F2;color:var(--t3)}
+
+/* ── 妆面样片占位块 ────────────────────────────────────
+   ⚠️ 只用「占位图」三个字，⛔ 不带编号 —— 任何计数都构成
+      「可枚举的公开内容区」（红线 1）。
+   ──────────────────────────────────────────────────── */
+.work-grid{display:flex;flex-wrap:wrap;gap:22rpx}
+.work{width:calc((100% - 44rpx) / 3);height:205rpx;border-radius:18rpx;
+      background:linear-gradient(135deg,#F3E4E8,#E8D2D9);
+      display:flex;align-items:center;justify-content:center;color:#B08D98;font-size:24rpx}
+
+/* ── 化妆师头像 / 信息 ───────────────────────────────── */
+.ava{width:97rpx;height:97rpx;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);
+     flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:29rpx;font-weight:700}
+.ava.sm{width:88rpx;height:88rpx;font-size:26rpx}
+.meta{font-size:25rpx;color:var(--t3);margin-top:4rpx}
+.card-div{margin-top:22rpx;padding-top:22rpx;border-top:1px solid var(--line2);
+          display:flex;align-items:center;justify-content:space-between;gap:18rpx}
+.lbl{font-size:24rpx;color:var(--t3)}
+.wxid{font-size:30rpx;font-weight:600}
+
+/* ── 妆感 chip ───────────────────────────────────────── */
+.chips{display:flex;flex-wrap:wrap;gap:15rpx}
+.chip{display:inline-block;padding:13rpx 29rpx;border-radius:33rpx;border:1px solid var(--line);
+      background:#fff;font-size:28rpx;color:var(--t2)}
+.chip.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d);font-weight:600}
+
+/* ── 底部固定栏 ──────────────────────────────────────── */
+.footbar{padding:22rpx;background:#fff;border-top:1px solid var(--line);display:flex;gap:20rpx;flex:none}
+
+/* ── 「你选的妆位」提示卡（顾客端填表页） ─────────────── */
+.picked{border:1px solid #EFD3DA;background:var(--brand-l)}
+.picked .pt{font-size:24rpx;color:var(--brand-d);opacity:.85}
+.picked .pv{font-size:30rpx;font-weight:600;color:var(--brand-d);margin-top:4rpx}

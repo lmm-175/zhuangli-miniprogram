@@ -1,0 +1,8 @@
+.unit{flex:1;display:flex;align-items:center;gap:13rpx}
+.unit .vl{flex:1;min-width:0}
+.unit .u{font-size:26rpx;color:var(--t3);flex:none}
+.pk{flex:1;min-width:0;display:flex}
+/* 午休那行选的是「第 N 个妆位之后 · 13:30 起」，比别的字段长 ——
+   让它单行省略，别把 .fld 这一行撑高（撑高会带动下面所有行位移）。 */
+.pk .vl{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub.lunch{color:var(--warn)}

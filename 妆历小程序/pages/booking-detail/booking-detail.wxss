@@ -1,0 +1,18 @@
+.d-head{display:flex;align-items:center;gap:20rpx}
+.d-ev{font-size:31rpx;font-weight:700}
+.d-sl{font-size:27rpx;color:var(--t2);margin-top:5rpx}
+.d-meta{font-size:24rpx;color:var(--t3);margin-top:14rpx}
+.st{flex:none;font-size:24rpx;padding:7rpx 20rpx;border-radius:26rpx}
+.st-pending{background:var(--warn-l);color:var(--warn)}
+.st-confirmed{background:var(--info-l);color:var(--info)}
+.st-done{background:var(--ok-l);color:var(--ok)}
+.st-rejected,.st-cancelled{background:#F0F1F2;color:var(--t3)}
+/* 顾客申请取消 —— 用危险色，跟待处理区分开：待处理是「有活干」，
+   这个是「有人在等你回话」，性质不一样，混成一个颜色就看不出来了。 */
+.st-cancel_requested{background:var(--danger-l);color:var(--danger)}
+
+/* 「妆位还占着」这句提示。⚠️ 必须显眼：妆娘很容易以为「顾客申请了 = 位置
+   已经空了」，转头把这一位口头答应给别人 —— 而她还没点同意。 */
+.hold-tip{margin-top:14rpx;padding:16rpx 20rpx;border-radius:var(--r);
+          background:var(--danger-l);border:1px solid #F5C9C6;
+          color:var(--danger);font-size:24rpx;line-height:1.5}

@@ -1,0 +1,77 @@
+{
+  "description": "妆历 · M0 试提审包（2 人天）",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true,
+    "coverView": true,
+    "nodeModules": false,
+    "autoAudits": false,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "useCompilerModule": true,
+    "userConfirmedUseCompilerModuleSwitch": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "ignoreUploadUnusedFiles": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    },
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "latest",
+  "appid": "wxf57007687f89e205",
+  "projectname": "妆历",
+  "condition": {
+    "miniprogram": {
+      "list": [
+        {
+          "name": "入口 · 角色选择（约妆 / 妆师）",
+          "pathName": "pages/role-select/role-select",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "约妆端首页",
+          "pathName": "pages/guest-home/guest-home",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "C1 落地页（审核员走的路径）",
+          "pathName": "pages/landing/landing",
+          "query": "artist_id=demo",
+          "scene": 1007
+        },
+        {
+          "name": "壳 5 新建档期（分享入口在这）",
+          "pathName": "pages/schedule-edit/schedule-edit",
+          "query": "",
+          "scene": null
+        }
+      ]
+    }
+  },
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
+}

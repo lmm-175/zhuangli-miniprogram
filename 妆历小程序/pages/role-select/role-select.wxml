@@ -1,0 +1,33 @@
+<!-- 入口 · 角色选择 —— 进小程序第一屏。
+     一进小程序先选「我是谁」：妆师（排班接单）或 约妆（找妆娘）。
+     选完进各自那一端的页面。已选过 → 顶部提示上次身份，可一键续用。 -->
+<view class="app">
+  <nav-bar title="妆历"></nav-bar>
+
+  <view class="body">
+    <view class="head">
+      <view class="logo">妆</view>
+      <view class="slogan">妆娘的排班本 + 接单本</view>
+    </view>
+
+    <view class="role-card" hover-class="btn-hover" hover-stay-time="80" bindtap="chooseArtist">
+      <view class="r-ic">💄</view>
+      <view style="flex:1;min-width:0">
+        <view class="r-t">我是妆师</view>
+        <view class="r-d">排妆位 · 存模板 · 收预约单</view>
+      </view>
+      <view class="r-go">›</view>
+    </view>
+
+    <view class="role-card alt" hover-class="btn-hover" hover-stay-time="80" bindtap="chooseGuest">
+      <view class="r-ic">🧾</view>
+      <view style="flex:1;min-width:0">
+        <view class="r-t">我是约妆</view>
+        <view class="r-d">选妆位 · 填预约单 · 等妆娘联系</view>
+      </view>
+      <view class="r-go">›</view>
+    </view>
+
+    <view wx:if="{{lastRole}}" class="last">上次以「{{lastLabel}}」身份进入，可重新选择</view>
+  </view>
+</view>

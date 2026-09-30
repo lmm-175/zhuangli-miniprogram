@@ -1,0 +1,99 @@
+<!-- 档期详情 · 妆师端 · 妆位时段表
+
+     ── 时间规则（2026-09-29 真机调试后定的，纯函数在 utils/schedule.js）──
+     ① 改时长 → 顺延，但【顺延到第一个「已预订」妆位为止】。
+        已预订的妆位是锚点：它自己、以及它后面所有妆位的时间都不许动 ——
+        跟客人已经约好的时间，不能被一次排班调整悄悄改掉。
+     ② 删妆位 / 插妆位 → 后面妆位的时间【一律不动】。
+        删掉留一段空档，「＋」只能把新妆位塞进空档里。
+     ③ 午休是独立一行（浅蓝），能改起点+时长、能取消。
+        延长午休前的妆位 → 只推午休的【起始】，结束不动（午休被压短）；
+        缩短 → 先问「要不要提前午休」，确认才把起止一起提前。
+
+     ── 布局纪律（上一版踩过的坑，别重犯）──────────────────────────────
+     ⚠️ .slot-row 是【不换行】的 flex 行，父级 .grp 带 overflow:hidden。
+        编辑态一旦新增一行、或把行撑宽，右侧按钮会被裁到可视区外 ——
+        表现就是「确认」看得见、点不到。所以编辑态一律【原地替换】：
+        输入框占住原来那行「N 分钟」的盒，两个按钮定宽 96rpx，
+        点「改」前后整行的高度、位置、按钮坐标完全不变。
+     ⚠️ wx:if 与 wx:else 之间不要插注释 —— 注释若参与兄弟节点判定，
+        wx:else 会失效变成无条件渲染，一行会冒出四个按钮。 -->
+<view class="app" wx:if="{{s}}">
+  <nav-bar title="{{s.name}}" back="{{true}}"></nav-bar>
+
+  <view class="body tight">
+    <view class="card tight">
+      <view class="d-name">{{s.name}}</view>
+      <view class="d-meta">{{s.date}} · {{s.slots.length}} 个妆位 · {{rangeText}}</view>
+    </view>
+
+    <view class="sec-ttl">妆位时段</view>
+    <view class="grp">
+      <block wx:for="{{rows}}" wx:key="key">
+
+        <view wx:if="{{item.type === 'lunch'}}" class="slot-row lunch-row">
+          <view class="sq sq-lunch">休</view>
+          <view class="tm">
+            <view class="lt">午休 {{item.start}} – {{item.end}}</view>
+            <block wx:if="{{editingKey === item.key}}">
+              <view class="sub edit-sub">
+                <picker mode="time" value="{{editStart}}" bindchange="onEditStart">
+                  <view class="t-pick-v">{{editStart}}</view>
+                </picker>
+                <input class="min-ip" type="number" value="{{editMin}}"
+                       bindinput="onEditInput" bindconfirm="confirmLunch"
+                       confirm-type="done" hold-keyboard="{{true}}" />
+                <text class="unit">分钟</text>
+              </view>
+            </block>
+            <text wx:else class="sub">休息 {{item.minutes}} 分钟</text>
+          </view>
+          <view wx:if="{{editingKey === item.key}}" class="row act">
+            <view class="btn xs out" bindtap="cancelEdit" hover-class="btn-hover" hover-stay-time="80">取消</view>
+            <view class="btn xs pri" bindtap="confirmLunch" hover-class="btn-hover" hover-stay-time="80">确认</view>
+          </view>
+          <view wx:else class="row act">
+            <view class="btn xs sec" data-key="{{item.key}}" bindtap="onEdit" hover-class="btn-hover" hover-stay-time="80">改</view>
+            <view class="btn xs dan" bindtap="cancelLunch" hover-class="btn-hover" hover-stay-time="80">取消</view>
+          </view>
+        </view>
+
+        <view wx:else class="slot-row">
+          <view class="sq">{{item.seq}}</view>
+          <view class="tm">{{item.start}} – {{item.end}}<text wx:if="{{item.booked}}" class="tag-bk">已预订</text>
+            <block wx:if="{{editingKey === item.key}}">
+              <view class="sub edit-sub">
+                <input class="min-ip" type="number" value="{{editMin}}"
+                       bindinput="onEditInput" bindconfirm="confirmEdit"
+                       confirm-type="done" hold-keyboard="{{true}}" />
+                <text class="unit">分钟</text>
+              </view>
+            </block>
+            <text wx:else class="sub">{{item.minutes}} 分钟</text>
+          </view>
+          <view wx:if="{{editingKey === item.key}}" class="row act">
+            <view class="btn xs out" bindtap="cancelEdit" hover-class="btn-hover" hover-stay-time="80">取消</view>
+            <view class="btn xs pri" bindtap="confirmEdit" hover-class="btn-hover" hover-stay-time="80">确认</view>
+          </view>
+          <view wx:else class="row act">
+            <view class="btn xs sec" data-key="{{item.key}}" bindtap="onEdit" hover-class="btn-hover" hover-stay-time="80">改</view>
+            <view class="btn xs dan" data-seq="{{item.seq}}" bindtap="cancelSlot" hover-class="btn-hover" hover-stay-time="80">取消</view>
+          </view>
+        </view>
+
+        <view class="add-bar" data-key="{{item.key}}" bindtap="onInsert"
+              hover-class="add-hover" hover-stay-time="60">＋</view>
+
+      </block>
+    </view>
+
+    <view class="hint">点「改」在该行原位置改时长，点「确认」后面时段自动顺延；顶到【已预订】的妆位就停住，它和它后面都不动。<br />点「＋」在这一行下面插一个妆位，只能插进空档里；删妆位同理，后面妆位时间一律不动，只留一段空档。</view>
+  </view>
+
+  <!-- ⛔ 这一页【没有】「取消这一场」的入口了（2026-09-30 用户定的）。
+       整场的取消挪到【档期列表卡片】上，漫展名右边。
+       ⚠️ 别在这里加回第二个入口 —— 上一版两个入口时，底栏那个键在真机上
+          「只有它点不动」，而且留两处入口会让「到底哪个才算数」变成常驻疑问。
+       这一页只负责【一行一个妆位】的增删改：每行的「取消」是删那一行，
+       跟取消整场不是一回事。 -->
+</view>

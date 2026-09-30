@@ -1,0 +1,37 @@
+.sched-card{display:flex;align-items:center;gap:20rpx;padding:26rpx;background:#fff}
+.sched-card + .sched-card{border-top:1px solid var(--line2)}
+
+/* ══ 名称行 ══════════════════════════════════════════════════════════
+   2026-09-30 用户定的几何：名字最多 8 个中文字符 → 空一个字符 →「取消场次」。
+   ⚠️ 名字写成【定宽 8em】而不是让它自己撑满：这样按钮的横坐标不随名字长短
+      浮动，是个稳定的靶子（用户上一版被「按钮位置飘忽、点不中」坑过一轮）。
+      em 跟着 font-size 走，以后改字号，8 字槽和那一个字符的间距一起跟着变。 */
+.s-name-row{display:flex;align-items:center;min-height:88rpx}
+.s-name{
+  font-size:31rpx;font-weight:700;flex:none;
+  width:8em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+/* ⚠️⚠️ 那个「隔一个字符」的间距写成【壳的 padding-left】，⛔ 绝不能写成按钮的
+   margin-left —— margin 是【点不到的空白】。
+   整张卡片是 bindtap="goDetail"，手指落在那个缝里进的是【详情页】，
+   妆娘的说法就是「点了取消场次没取消」—— 这就是 2026-09-30 查了三轮的那个 bug
+   （README 第 21 条）。壳把「间距 + 小签」一起圈进命中区，缝里也点得到。
+   ⚠️ min-height:88rpx + align-self:stretch 是微信的点击区建议。小签自己只有
+      五十几 rpx 高，单靠它命中面积不够 —— 那一轮「有时点得中、有时没动静」
+      就是这个原因（能点中就是命中了，没动静就是手指落偏了）。
+   ⚠️ 这里的 font-size:31rpx 不是给小签用的（下面 .s-cancel 自己会覆盖），
+      它只是把 1em 定义成【名字的一个中文字】那么宽。 */
+.s-cancel-hit{
+  display:flex;align-items:center;align-self:stretch;
+  font-size:31rpx;padding-left:1em;min-height:88rpx;
+}
+.s-cancel{
+  font-size:23rpx;line-height:1.35;color:var(--danger);
+  background:var(--danger-l);border-radius:10rpx;padding:13rpx 18rpx;
+}
+
+.s-meta{font-size:25rpx;color:var(--t3);margin-top:6rpx}
+/* 「N 人已预约」—— 蓝色，跟「已预订」那类蓝色信息同族（--info） */
+.s-bk{color:var(--info)}
+.rgo{font-size:34rpx;color:var(--t3)}

@@ -1,0 +1,7 @@
+.grp-sec{margin-top:14rpx}
+.grp-tag{font-size:24rpx;color:var(--t3);margin:9rpx 4rpx 4rpx}
+.guard-row{display:flex;align-items:center;gap:18rpx;background:#fff;border-radius:var(--r);
+           padding:22rpx 26rpx;margin-top:13rpx}
+.ck{width:44rpx;height:44rpx;border-radius:12rpx;border:2rpx solid var(--line);flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:26rpx;color:#fff}
+.ck.on{background:var(--brand);border-color:var(--brand)}

@@ -1,0 +1,31 @@
+.tpl-card{display:flex;align-items:center;gap:20rpx;padding:24rpx 26rpx;background:#fff}
+.tpl-card + .tpl-card{border-top:1px solid var(--line2)}
+.tpl-name{font-size:30rpx;font-weight:600}
+.tpl-meta{font-size:24rpx;color:var(--t3);margin-top:5rpx}
+.tpl-slots{display:flex;flex-wrap:wrap;gap:10rpx;margin-top:13rpx}
+.tpl-s{font-size:22rpx;color:var(--t2);background:var(--line2);padding:5rpx 16rpx;border-radius:8rpx}
+
+/* 「应用」外面套的那层 picker（选日期用）。
+   picker 自己默认是块级、会撑满，而这里要跟旁边的「删除」并排成小按键，
+   所以显式收成 inline-flex。按钮的样式仍由 .btn.xs 给。 */
+.pk{display:inline-flex}
+
+/* 列表底部多留一截 —— 圆钮初始就停在右下角，不多留的话，最后一张卡片的
+   「删除 / 应用」正好压在它底下。圆钮拖走之后这一截是白留的，认了。
+   （只在有模板时才挂这个类，空态是居中的引导，留白会把它顶上去。） */
+.pad-fab{padding-bottom:190rpx}
+
+/* ── 可拖动的圆形「＋」（新建模板） ────────────────────────────
+   位置和尺寸都由 wxml 的 style 给 px —— 拖动是物理位移，不能用 rpx。
+   加号用两根小条画，不用文字「＋」：各平台字体里那个字符的字重和基线
+   都不一样，画出来两根的粗细对不齐。
+   ⚠️ 两根小条必须自己 translate 居中：绝对定位的子元素在 flex 容器里
+      不参与 flex 排布，static position 落在内容盒的左上角，不会自动居中。 */
+.fab{
+  position:fixed;z-index:60;border-radius:50%;background:var(--brand);
+  box-shadow:0 6px 18px rgba(192,85,110,.38);
+}
+.fab-on{transform:scale(.93);opacity:.92}
+.fp{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:2px}
+.fp-h{width:44%;height:2px}
+.fp-v{width:2px;height:44%}

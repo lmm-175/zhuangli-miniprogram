@@ -1,0 +1,55 @@
+<!-- 壳 1 · 档期列表 · Tab 第 2 位
+     展示妆师自己建好的档期（每个档期 → 点进时段表，可改特殊妆位时间并顺延）。 -->
+<view class="app">
+  <!-- 「模板」「新建」放【左上角】：右上角是微信自己的胶囊按钮，动作贴过去会被误当成
+       微信的按键点到。动作全挪到左边之后右边只剩胶囊，标题也就该对齐整屏中心
+       —— 所以同时传 center="screen"（道理见 components/nav/nav.wxss 里 .nv.cs）。 -->
+  <nav-bar title="档期" center="screen">
+    <view slot="left" style="display:flex;gap:26rpx">
+      <view class="nv-act" bindtap="goTemplates" hover-class="nv-hover" hover-stay-time="80">模板</view>
+      <view class="nv-act" bindtap="goNew" hover-class="nv-hover" hover-stay-time="80">新建</view>
+    </view>
+  </nav-bar>
+
+  <view class="body tight">
+    <block wx:if="{{schedules.length}}">
+      <view class="grp">
+        <view wx:for="{{schedules}}" wx:key="id" class="sched-card"
+              data-id="{{item.id}}" bindtap="goDetail" hover-class="btn-hover" hover-stay-time="80">
+          <view style="flex:1;min-width:0">
+
+            <!-- 名称行：名字固定占 8 个中文字的宽 → 隔一个字符 → 「取消场次」。
+                 ⚠️ 「取消场次」必须用 catchtap：整张卡片是 bindtap="goDetail"，
+                    用 bindtap 会冒泡成「又开详情、又弹取消框」，两个都做了。
+                 ⚠️ 间距写在【壳的 padding-left】上、而不是按钮的 margin-left ——
+                    margin 是【点不到的空白】，手指落在那个缝里进的是详情页。
+                    详见 schedule.wxss 里 .s-cancel-hit 的注释。 -->
+            <view class="s-name-row">
+              <view class="s-name">{{item.name}}</view>
+              <view class="s-cancel-hit" data-id="{{item.id}}" catchtap="onCancelSchedule">
+                <view class="s-cancel" hover-class="btn-hover" hover-stay-time="80">取消场次</view>
+              </view>
+            </view>
+
+            <!-- 时长右边接「N 人已预约」，蓝色。N 和拦住她时说的张数同源。 -->
+            <view class="s-meta">{{item.date}} · {{item.count}} 个妆位 · {{item.range}}<text class="s-bk"> · {{item.booked}} 人已预约</text></view>
+          </view>
+          <view class="rgo">›</view>
+        </view>
+      </view>
+      <view class="hint">点开档期看每个妆位时段，<br />特殊妆位可改时间，后续时段自动顺延</view>
+    </block>
+
+    <view wx:else class="body center" style="flex:1">
+      <!-- 空态 = 新手引导（新人进来必然没有档期，看到的就是这一屏）。
+           主句是「点新建就能建档期」—— 直接给动作，不写产品定调。 -->
+      <view class="empty">
+        <text class="ic">📅</text>
+        <view class="et">还没有档期</view>
+        <view style="font-size:26rpx">点下面的「新建档期」就能建立你的第一个档期，<br />排好妆位后把链接发给客人</view>
+      </view>
+      <view class="btn pri" style="margin:13rpx 26rpx 0;height:84rpx;font-size:30rpx"
+            bindtap="goNew" hover-class="btn-hover" hover-stay-time="80">新建档期</view>
+    </view>
+  </view>
+</view>

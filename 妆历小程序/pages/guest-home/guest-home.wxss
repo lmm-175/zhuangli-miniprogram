@@ -1,0 +1,3 @@
+.hello{font-size:38rpx;font-weight:700}
+.hello-sub{font-size:27rpx;color:var(--t3);margin-top:12rpx;line-height:1.8}
+.m-name{font-size:32rpx;font-weight:700}

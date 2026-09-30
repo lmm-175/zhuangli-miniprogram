@@ -1,0 +1,116 @@
+<!-- 预约单详情 · 妆娘端
+     看顾客填的全部内容 + 标记定金 + 加微信（方案草案 §4.1 · 预约单详情）。
+     档案字段是提交那一刻的快照（§5.3 / §11）。 -->
+<view class="app" wx:if="{{b}}">
+  <nav-bar title="预约单详情" back="{{true}}"></nav-bar>
+
+  <view class="body tight">
+    <!-- 预约信息 -->
+    <view class="card tight">
+      <view class="d-head">
+        <view style="flex:1;min-width:0">
+          <view class="d-ev">{{b.event}} · {{b.date}}</view>
+          <view class="d-sl">第 {{b.seq}} 位 · {{b.slot_time}}</view>
+        </view>
+        <view class="st st-{{b.status}}">{{statusText}}</view>
+      </view>
+      <view class="d-meta">提交于 {{b.created_at}}{{b.created_by === 'artist' ? ' · 妆师代填' : ''}}</view>
+      <!-- ⚠️ 这句非写不可：妆娘很容易把「顾客申请取消」当成「位置已经空了」，
+           转头口头答应给别人 —— 但她还没点同意，妆位其实还占着。
+           等她点了「同意取消」，这一屏就退回列表了，这句也跟着没了。 -->
+      <view wx:if="{{b.status === 'cancel_requested'}}" class="hold-tip">
+        顾客申请取消，等你回话。<br />在下面点「同意取消」之前，这个妆位还占着，先别答应给别人。
+      </view>
+    </view>
+
+    <!-- 顾客档案快照 -->
+    <view class="sec-ttl">顾客档案（提交时快照）</view>
+    <view class="grp">
+      <!-- CN 排最前（2026-09-29 加）：它是【这个客人是谁】，其余几行都是她的
+           条件。妆娘认人也认的是 CN —— 角色名每单都不一样，认不出「是不是
+           上次那个人」。填写时也是最先填它。 -->
+      <view class="fld"><text class="lb">CN（圈名）</text><text class="vl">{{b.cn}}</text></view>
+      <view class="fld"><text class="lb">眼型</text><text class="vl">{{b.eye.join(' / ')}}</text></view>
+      <view class="fld"><text class="lb">肤质</text><text class="vl">{{b.skin.join(' / ')}}</text></view>
+      <view class="fld"><text class="lb">性别</text><text class="vl">{{b.gender}}</text></view>
+      <view class="fld"><text class="lb">未成年</text><text class="vl">{{b.is_minor ? '是' : '否'}}</text></view>
+    </view>
+
+    <!-- 本次填写 -->
+    <view class="sec-ttl">本次填写</view>
+    <view class="grp">
+      <view class="fld"><text class="lb">角色名</text><text class="vl">{{b.role}}</text></view>
+      <view class="fld"><text class="lb">妆感</text><text class="vl">{{b.styles.join(' / ')}}</text></view>
+      <view class="fld" wx:if="{{b.extra.length}}">
+        <text class="lb">另需服务</text>
+        <text class="vl">
+          <text wx:for="{{b.extra}}" wx:key="name">{{item.name}}{{item.price ? '（+¥' + item.price + '）' : ''}}<text wx:if="{{index < b.extra.length - 1}}"> / </text></text>
+        </text>
+      </view>
+      <view class="fld"><text class="lb">备注</text><text class="vl">{{b.note || '—'}}</text></view>
+    </view>
+
+    <!-- 联系方式：只对化妆师可见 -->
+    <view class="sec-ttl">联系方式</view>
+    <view class="grp">
+      <view class="fld">
+        <text class="lb">微信号</text>
+        <view class="row" style="flex:1;min-width:0">
+          <text class="vl" style="flex:1">{{b.wechat}}</text>
+          <view class="btn sec sm" bindtap="copyWechat" hover-class="btn-hover" hover-stay-time="80">复制去加</view>
+        </view>
+      </view>
+      <view class="fld"><text class="lb">紧急联系</text><text class="vl">{{b.phone}}</text></view>
+    </view>
+
+    <!-- 定金 -->
+    <view class="sec-ttl">定金</view>
+    <view class="card tight" bindtap="toggleDeposit" hover-class="btn-hover" hover-stay-time="80">
+      <view style="flex:1">
+        <view style="font-size:30rpx">定金 ¥{{b.deposit_amount}}</view>
+        <view class="tip-ok" style="font-size:24rpx;color:var(--t3);margin-top:4rpx">{{b.deposit_paid ? '已付定金' : '未付定金'}} · 点一下切换</view>
+      </view>
+      <view class="sw {{b.deposit_paid ? 'on' : ''}}"></view>
+    </view>
+
+    <!-- 状态动作（M0 mock；M1 落库） -->
+    <view class="footbar">
+      <!-- 刚点完「标记已确认」/「顾客取消预约」，正在退回列表。⛔ 这一屏【不许】
+           出现「标记已完成」—— 它和「标记已确认」长在同一个位置上。
+           leaving 是一句话（不是 true），两种情况各说各的。 -->
+      <block wx:if="{{leaving}}">
+        <view class="btn dis" style="flex:1">{{leaving}}</view>
+      </block>
+
+      <block wx:elif="{{b.status === 'pending'}}">
+        <view class="btn out" style="flex:1" data-act="reject" bindtap="mark" hover-class="btn-hover" hover-stay-time="80">拒绝并释放</view>
+        <view class="btn pri" style="flex:1" data-act="confirm" bindtap="mark" hover-class="btn-hover" hover-stay-time="80">标记已确认</view>
+      </block>
+
+      <block wx:elif="{{b.status === 'confirmed'}}">
+        <!-- 定金没付就点不了「标记已完成」。⛔ 不做成「点了再弹个提示」——
+             直接灰掉、按钮上就把原因写出来，用户不用先试一次才知道。
+             ⚠️ 这里【没有】「顾客取消预约」键了（2026-09-29 改成两步）：
+                顾客没开口，妆娘不该替她做这个决定。要取消得顾客自己先申请。 -->
+        <view wx:if="{{b.deposit_paid}}" class="btn pri" style="flex:1"
+              data-act="done" bindtap="mark" hover-class="btn-hover" hover-stay-time="80">标记已完成</view>
+        <view wx:else class="btn dis" style="flex:1">未付定金，不能标已完成</view>
+      </block>
+
+      <!-- 顾客申请取消 → 等妆娘表态（2026-09-29 加的两步里的第二步）。
+           ⚠️ 妆位这会儿【还占着】—— 她只是申请，没退成。所以「不同意」
+              要真的写清楚是「保留」，不然妆娘会以为不点就等于放人。 -->
+      <block wx:elif="{{b.status === 'cancel_requested'}}">
+        <view class="btn out" style="flex:1" data-act="rejectCancel" bindtap="mark" hover-class="btn-hover" hover-stay-time="80">不同意，继续保留</view>
+        <!-- ⚠️ 会先弹一下确认（见 mark()）：这一下真把客人的位置拿掉了，
+             而她人不在现场，妆娘事后得自己去微信上解释。 -->
+        <view class="btn" style="flex:1;background:var(--danger);color:#fff;border-color:transparent"
+              data-act="agreeCancel" bindtap="mark" hover-class="btn-hover" hover-stay-time="80">同意取消</view>
+      </block>
+
+      <block wx:else>
+        <view class="btn dis" style="flex:1">该单已结束</view>
+      </block>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,35 @@
+<!-- 壳 4 · 设置
+     落点：A1 导航栏右「设置」+ 我的页「设置」行。
+
+     📌 这个开关是本产品的政策核心，两条提示缺一不可：
+        只说「关掉不影响功能」，化妆师不敢关；
+        只说「会被看到」，她不敢开。
+     ⚠️「用户隐私保护指引」入口是提审必需项，M0 就要挂上。 -->
+<view class="app">
+  <nav-bar title="设置" back="{{true}}"></nav-bar>
+
+  <view class="body tight">
+    <view class="sw-row" bindtap="toggleWechat" hover-class="btn-hover" hover-stay-time="80">
+      <view style="flex:1">
+        <view style="font-size:30rpx">在分享页展示我的微信号</view>
+        <view class="sw-tip">
+          打开后，<text class="tip-warn">所有拿到链接的人（含被转发后）都能看到</text><br />
+          <text class="tip-ok">关掉不减少任何功能</text>，客人仍能提交预约单
+        </view>
+      </view>
+      <view class="sw {{showWechat ? 'on' : ''}}"></view>
+    </view>
+
+    <view class="grp">
+      <view class="cell" bindtap="goProfile" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">我的资料</text><text class="cr">›</text>
+      </view>
+      <view class="cell" bindtap="openPrivacy" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">用户隐私保护指引</text><text class="cr">›</text>
+      </view>
+      <view class="cell" bindtap="goAbout" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">关于妆历</text><text class="cr">版本 0.1.0 ›</text>
+      </view>
+    </view>
+  </view>
+</view>

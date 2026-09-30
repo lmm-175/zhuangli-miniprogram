@@ -1,0 +1,16 @@
+.head{padding:26rpx 10rpx 34rpx;display:flex;flex-direction:column;align-items:center;gap:13rpx}
+.logo{width:126rpx;height:126rpx;border-radius:34rpx;background:linear-gradient(135deg,#E8C9D2,#C0556E);
+      display:flex;align-items:center;justify-content:center;color:#fff;font-size:66rpx;font-weight:700}
+.slogan{font-size:26rpx;color:var(--t3)}
+
+.role-card{display:flex;align-items:center;gap:24rpx;background:#fff;border-radius:var(--r);
+           padding:34rpx 30rpx;margin-top:20rpx;border:1px solid transparent}
+.role-card.alt{border-color:var(--line)}
+.role-card .r-ic{width:88rpx;height:88rpx;border-radius:22rpx;background:var(--brand-l);
+                 display:flex;align-items:center;justify-content:center;font-size:46rpx;flex:none}
+.role-card.alt .r-ic{background:var(--info-l)}
+.role-card .r-t{font-size:34rpx;font-weight:700}
+.role-card .r-d{font-size:25rpx;color:var(--t3);margin-top:5rpx}
+.role-card .r-go{font-size:36rpx;color:var(--t3)}
+
+.last{text-align:center;font-size:24rpx;color:var(--t3);margin-top:34rpx}

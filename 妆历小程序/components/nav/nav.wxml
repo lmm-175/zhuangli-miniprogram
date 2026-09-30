@@ -1,0 +1,22 @@
+<view class="nv-wrap">
+  <!-- 状态栏占位：把内容顶到系统状态栏下面 -->
+  <view class="nv-gap" style="height:{{statusH}}px"></view>
+
+  <view class="nv {{cs ? 'cs' : ''}}" style="height:{{navH}}px;padding-right:{{capsulePad}}px">
+    <view class="nv-l">
+      <view wx:if="{{back}}" class="nv-back" bindtap="onBack" hover-class="nv-hover" hover-stay-time="80">‹ 返回</view>
+      <slot name="left"></slot>
+    </view>
+
+    <!-- center="screen" 时给标题一根 max-width 的缰绳，别让它钻到胶囊底下
+         （为什么必须脱流，见 nav.wxss 里 .nv.cs 那一段） -->
+    <view class="nv-t" style="{{cs ? 'max-width:' + titleMax + 'px' : ''}}">{{title}}</view>
+
+    <!-- 让开右上角胶囊按钮的 padding 挂在整条 .nv 上，不在 .nv-r 里 ——
+         原因见 nav.wxss 里那段算式：挂在 .nv-r 上会把右段的最小宽度顶到 175px，
+         超过它在 375px 屏上的等分宽度 153.5px，整条就会往右溢出。 -->
+    <view class="nv-r">
+      <slot name="right"></slot>
+    </view>
+  </view>
+</view>

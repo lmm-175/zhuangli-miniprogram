@@ -1,0 +1,66 @@
+.d-name{font-size:34rpx;font-weight:700}
+.d-meta{font-size:25rpx;color:var(--t3);margin-top:7rpx}
+
+/* ── 行内编辑：原地换、零位移 ─────────────────────────────────────────
+   ⚠️ .slot-row 是【不换行】的 flex 行，父级 .grp 又带 overflow:hidden。
+      编辑态只要新增一行、或把行撑宽，右侧按钮就会被裁到可视区外 ——
+      表现就是「确认」看得见、点不到。所以这里只做「原地替换」：
+      ① 输入框占住原来那行「N 分钟」的盒；
+      ② 两个动作按钮定宽 96rpx —— 点「改」前后按钮位置一动不动。
+   行高全部写成显式的 38rpx（.tm / .sub / .lt / .edit-sub 四处），
+   这样编辑态与非编辑态是同一个数，不会有 1~2rpx 的上下抖动。 */
+.slot-row .tm{line-height:38rpx}
+.slot-row .tm .sub{display:block;line-height:38rpx;color:var(--t3);font-size:24rpx}
+.slot-row .btn.xs{width:96rpx;padding:0;flex:none;white-space:nowrap}
+.row.act{gap:13rpx;flex:none}
+
+/* 编辑行：与常态的 <text class="sub"> 同高、同行位 */
+.slot-row .tm .sub.edit-sub{display:flex;align-items:center;gap:8rpx;height:38rpx;line-height:38rpx}
+.slot-row .tm .sub.edit-sub .unit{flex:none}
+
+/* 时间框：闪烁的指示标（下边框 + 淡底交替），提示「这里可以改」 */
+.min-ip{
+  width:88rpx;height:38rpx;min-height:38rpx;line-height:38rpx;
+  padding:0 4rpx;text-align:center;
+  font-size:26rpx;font-weight:700;color:var(--brand-d);
+  background:var(--brand-l);border:none;border-bottom:2rpx solid var(--brand);
+  animation:ip-blink 1s linear infinite;
+}
+@keyframes ip-blink{
+  0%   {border-bottom-color:var(--brand);background:var(--brand-l)}
+  49%  {border-bottom-color:var(--brand);background:var(--brand-l)}
+  50%  {border-bottom-color:transparent;background:transparent}
+  100% {border-bottom-color:transparent;background:transparent}
+}
+
+/* 已预订的妆位：只挂一个小标，不整行变灰 —— 它照样能改能删，
+   只是改它（或改它前面的妆位）时会作为「锚点」拦住顺延。
+   inline-block + 26rpx 行高 < 38rpx 的 strut，所以加了标也不会撑高这一行。 */
+.tag-bk{
+  display:inline-block;margin-left:10rpx;padding:2rpx 10rpx;
+  font-size:20rpx;line-height:26rpx;color:var(--brand-d);
+  background:var(--brand-l);border-radius:6rpx;vertical-align:middle;
+}
+
+/* ── 午休：独立一行，浅蓝，比妆位显眼 ──────────────────────────────── */
+.lunch-row{background:var(--info-l)}
+.lunch-row .sq{background:#D6E4FB;color:#2B4E96;font-size:24rpx}
+.lunch-row .tm .lt{
+  display:block;font-size:29rpx;font-weight:700;line-height:38rpx;color:#2B4E96;
+}
+.lunch-row .tm .sub{color:#4B7BE5}
+/* 午休的起点：点开原生时间选择器，所以做成一个看得出来的「块」 */
+.t-pick-v{
+  height:38rpx;line-height:38rpx;padding:0 10rpx;
+  font-size:26rpx;font-weight:700;color:#2B4E96;
+  background:#D6E4FB;border-radius:8rpx;
+}
+
+/* ── 「＋」：插在每一行下面，把新妆位塞进这一行之后的空档 ─────────────── */
+.add-bar{
+  display:flex;align-items:center;justify-content:center;
+  height:46rpx;background:#fff;color:var(--t3);font-size:30rpx;
+  border-bottom:1px solid var(--line2);
+}
+.add-bar:last-child{border-bottom:none}
+.add-hover{background:var(--brand-l);color:var(--brand)}

@@ -1,0 +1,37 @@
+<!-- 约妆端首页。
+     约妆（顾客）的角色首页：不需要排班本，只有两件事 ——
+     ① 找妆位约妆（进示例妆位页）
+     ② 看我的预约
+     ⛔ 无金额（红线 2）、无「浏览所有妆娘」广场（红线 1）。 -->
+<view class="app">
+  <nav-bar title="妆历 · 约妆">
+    <view slot="right" class="nv-act" bindtap="switchRole" hover-class="nv-hover" hover-stay-time="80">切换身份</view>
+  </nav-bar>
+
+  <view class="body">
+    <view class="card">
+      <view class="hello">你好，来约妆吧</view>
+      <view class="hello-sub">选一个妆位，填一张预约单<br />妆娘看到后会主动联系你</view>
+    </view>
+
+    <view class="sec-ttl">可约妆位</view>
+    <view class="card tight slot-card" hover-class="btn-hover" hover-stay-time="80" bindtap="goLanding">
+      <view class="row">
+        <view class="ava">示</view>
+        <view style="flex:1;min-width:0">
+          <view class="m-name">{{artist.nickname}}</view>
+          <view class="meta">{{artist.city}} · {{artist.style_text}}</view>
+          <view class="meta">{{schedule.name}} · {{schedule.date}} · {{slots.length}} 个妆位</view>
+        </view>
+        <view class="btn pri xs">查看</view>
+      </view>
+    </view>
+
+    <view class="sec-ttl">我的</view>
+    <view class="grp">
+      <view class="cell" bindtap="goMyBookings" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">我的预约</text><text class="cr">›</text>
+      </view>
+    </view>
+  </view>
+</view>

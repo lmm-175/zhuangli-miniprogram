@@ -1,0 +1,109 @@
+<!-- 壳 5 · 新建档期 / 新建模板（可编辑表单）
+     · 所有参数可调：名称 / 日期 / 起始时间 / 妆位时长 / 休息间隔 / 妆位数 / 午休
+     · 午休选中后实时给出预期开始与结束时间（如「午休 13:00 – 14:00」）
+     · 午休结束后的第一个妆位直接从午休结束时间开始，后续妆位保留休息间隔
+     · 保存按钮在底部，与「存为模板」同一行
+     · 分享只走微信小程序原生（右上角「···」菜单），不做自定义分享按钮 -->
+<view class="app">
+  <nav-bar title="{{title}}">
+    <view slot="left" class="nv-act2" bindtap="goBack" hover-class="nv-hover" hover-stay-time="80">取消</view>
+  </nav-bar>
+
+  <view class="body nopad tight">
+    <view class="grp">
+      <view class="fld">
+        <text class="lb">名称</text>
+        <input class="vl ip" value="{{form.name}}" placeholder="如：示例漫展" placeholder-class="ph"
+               bindinput="onInput" data-k="name" />
+      </view>
+      <view class="fld" bindtap="openDate" hover-class="btn-hover" hover-stay-time="80">
+        <text class="lb">日期</text>
+        <picker mode="date" class="pk" value="{{form.date}}" bindchange="onDate">
+          <view class="vl">{{form.date}}</view>
+        </picker>
+      </view>
+      <view class="fld">
+        <text class="lb">起始时间</text>
+        <picker mode="time" class="pk" value="{{form.startTime}}" bindchange="onStartTime">
+          <view class="vl">{{form.startTime}}</view>
+        </picker>
+      </view>
+      <view class="fld">
+        <text class="lb">妆位时长</text>
+        <view class="unit">
+          <input type="number" class="vl ip" value="{{form.slotMin}}" bindinput="onInput" data-k="slotMin" />
+          <text class="u">分钟</text>
+        </view>
+      </view>
+      <view class="fld">
+        <text class="lb">休息间隔</text>
+        <view class="unit">
+          <input type="number" class="vl ip" value="{{form.gapMin}}" bindinput="onInput" data-k="gapMin" />
+          <text class="u">分钟</text>
+        </view>
+      </view>
+      <view class="fld">
+        <text class="lb">妆位数</text>
+        <view class="unit">
+          <input type="number" class="vl ip" value="{{form.count}}" bindinput="onInput" data-k="count" />
+          <text class="u">个</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 午休（长间隔） -->
+    <view class="card tight" style="margin-top:20rpx" bindtap="toggleLunch" hover-class="btn-hover" hover-stay-time="80">
+      <view style="flex:1">
+        <view style="font-size:30rpx">午休</view>
+        <view style="font-size:24rpx;color:var(--t3);margin-top:4rpx">
+          <block wx:if="{{lunch && lunch.start}}">预期 <text style="color:var(--brand-d);font-weight:600">{{lunch.start}} – {{lunch.end}}</text>，结束后直接衔接下一个妆位</block>
+          <block wx:else>任意一个妆位后面都能插一段长休息，后续时段自动顺延</block>
+        </view>
+      </view>
+      <view class="sw {{form.lunchEnabled ? 'on' : ''}}"></view>
+    </view>
+
+    <view wx:if="{{form.lunchEnabled}}" class="grp">
+      <view class="fld">
+        <text class="lb">午休时长</text>
+        <view class="unit">
+          <input type="number" class="vl ip" value="{{form.lunchMin}}" bindinput="onInput" data-k="lunchMin" />
+          <text class="u">分钟</text>
+        </view>
+      </view>
+      <!-- 选项是【跟着妆位数走的】：妆位数改小，选项跟着少，
+           而且每项都直接写出几点开始 —— 光看「第 3 个之后」不知道是几点。 -->
+      <view class="fld">
+        <text class="lb">在第几个后</text>
+        <picker mode="selector" class="pk" range="{{lunchOptions}}" range-key="label"
+                value="{{lunchAfterIndex}}" bindchange="onLunchAfter">
+          <view class="vl">{{lunchLabel}}</view>
+        </picker>
+      </view>
+    </view>
+
+    <!-- 实时预览（午休以注释附在午休前妆位，不单独成行） -->
+    <view class="sec-ttl" style="padding:20rpx 22rpx 0">生成预览 · {{preview.length}} 个妆位 · {{rangeText}}</view>
+    <view class="grp">
+      <view wx:for="{{slotsView}}" wx:key="seq" class="slot-row">
+        <view class="sq">{{item.seq}}</view>
+        <view class="tm">{{item.start}} – {{item.end}}
+          <text class="sub">{{item.minutes}} 分钟</text>
+          <text wx:if="{{item.lunchAfter}}" class="sub lunch">{{item.lunchAfter}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="hint" style="text-align:left;padding:0 22rpx 22rpx">保存后档期表会出现在「档期」列表里，每个妆位都能看、能改。</view>
+  </view>
+
+  <!-- 保存按钮在底部，与「存为模板」同一行；不设分享按钮（走微信右上角） -->
+  <view class="footbar">
+    <block wx:if="{{isTemplate}}">
+      <view class="btn pri" style="flex:1" bindtap="onSave" hover-class="btn-hover" hover-stay-time="80">保存模板</view>
+    </block>
+    <block wx:else>
+      <view class="btn out" style="flex:1" bindtap="onSaveTemplate" hover-class="btn-hover" hover-stay-time="80">存为模板</view>
+      <view class="btn pri" style="flex:1" bindtap="onSave" hover-class="btn-hover" hover-stay-time="80">保存</view>
+    </block>
+  </view>
+</view>

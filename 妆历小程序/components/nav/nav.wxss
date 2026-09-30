@@ -1,0 +1,57 @@
+/* 自定义组件的宿主元素默认是 inline，要显式改成 flex item */
+:host{display:block;flex:none}
+
+.nv-wrap{background:#fff}
+.nv-gap{background:#fff}
+
+/* ── 三段式：左段 / 标题 / 右段，各占各的盒，谁也压不到谁 ─────────────
+   ⚠️ 上一版这里是 `justify-content:space-between` + 标题 `position:absolute`
+      横跨整条。一旦右侧动作那一组宽过导航栏（胶囊避让宽度取歪、或屏太窄），
+      space-between 在「空间为负」时会退化成从起点排 —— 右侧动作整组掉到
+      左上角，正好压住绝对定位的居中标题。真机上踩过（档期页「模板 / 新建」）。
+   现在：左右两段 `flex:1 1 0` 等分撑开，标题在【正常流】里居中，
+        超长就省略号。右段永远在右边，标题永远压不住，任何机型都成立。
+
+   ⚠️ 胶囊避让的 padding 必须挂在【整条 .nv】上（见 nav.wxml），不能挂在 .nv-r 里。
+      挂在 .nv-r 里的话，右段的最小宽度 = 动作宽 73px + 避让 102px = 175px，
+      而它在 375px 屏上的等分宽度只有 (375-22-46)/2 ≈ 153.5px —— flex 项的
+      min-width:auto 不允许它缩到 175 以下，于是整条往右溢出 21.5px，
+      标题会被挤到离「模板」只剩 1.5px。挂在 .nv 上，两段的等分是在
+      【让开胶囊之后的可用宽度】里分的，永远不会触发这个下限。
+      代价是标题居中于「可用区」而非「整屏」，左偏约半个避让宽 ——
+      自定义导航栏的通行做法，两段也因此在任何宽度下都稳稳放得下。 */
+.nv{
+  display:flex;align-items:center;
+  background:#fff;border-bottom:1px solid var(--line);
+  position:relative;padding:0 22rpx;
+}
+.nv-l,.nv-r{flex:1 1 0;display:flex;align-items:center;gap:13rpx}
+.nv-l{justify-content:flex-start}
+.nv-r{justify-content:flex-end}   /* ⛔ 别给这两段加 min-width:0 —— 分不到宽度时不会换行，
+                                     只会让内容越过自己的盒压到标题上（右段尤其）。 */
+.nv-t{
+  flex:none;padding:0 13rpx;text-align:center;
+  font-size:33rpx;font-weight:600;color:var(--t1);
+  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  pointer-events:none;   /* 标题不挡左右两侧的点击 */
+}
+.nv-back{font-size:30rpx;color:var(--t2);padding:9rpx 0}
+
+/* ── center="screen"：动作放左上角的页面，标题改居中于【整屏】 ─────────
+   为什么要脱流 —— 这跟「标题能不能居中」的直觉不一样，算一遍：
+     .nv-l / .nv-r 是 flex:1 1 0，flex 布局是拿【内容最小宽度】当起点、
+     再把剩余空间等分的。左边 73px 动作、右边空着，于是
+        .nv-l = 73 + 余/2，  .nv-r = 0 + 余/2
+     标题中心 = 左边距 + .nv-l + 标题宽/2，减掉屏宽/2 之后，
+     余 和 左右留白 全都约掉了，只剩【动作宽/2】—— 也就是说，
+     只要标题留在流里，「左右各留一样宽的空白」也救不了它，
+     恒偏 36.5px（375px 屏），跟屏宽、跟留白多少都无关。
+     自测第③段有一条断言专门算这个数。
+   ⚠️ 这里绝对定位是安全的，别拿「上一版绝对定位出过事」来否定它：
+     当初坏的是【右段】—— 它的最小宽度（动作 73 + 避让 102 = 175px）
+     能撑爆整条，把绝对定位的标题顶开。现在标题位置只由 left:50% 决定，
+     左边那组动作再怎么长也推不动它，长标题则由 titleMax 缰绳兜住。 */
+.nv.cs .nv-t{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  padding:0 13rpx;
+}

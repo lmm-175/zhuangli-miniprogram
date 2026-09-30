@@ -1,0 +1,12 @@
+.bk-cell{display:flex;align-items:center;gap:20rpx;padding:24rpx 26rpx;background:#fff}
+.bk-cell + .bk-cell{border-top:1px solid var(--line2)}
+.bk-ev{font-size:30rpx;font-weight:600}
+.bk-sl{font-size:25rpx;color:var(--t3);margin-top:5rpx}
+.st{flex:none;font-size:24rpx;padding:7rpx 20rpx;border-radius:26rpx}
+.st-pending{background:var(--warn-l);color:var(--warn)}
+.st-confirmed{background:var(--info-l);color:var(--info)}
+.st-done{background:var(--ok-l);color:var(--ok)}
+.st-rejected,.st-cancelled{background:#F0F1F2;color:var(--t3)}
+/* 申请取消中 —— 危险色。⛔ 不要跟「已取消」共用灰色：一个还在等回话、
+   一个已经结束，混成一个颜色顾客就分不出自己到底退没退成。 */
+.st-cancel_requested{background:var(--danger-l);color:var(--danger)}

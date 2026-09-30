@@ -1,0 +1,64 @@
+<!-- 档期模板管理 · 妆师端（方案草案 §4.1 · 档期模板管理）
+     把排好的妆位时段存成模板，下一场漫展一键应用。
+     左上角「‹ 返回」退回「档期」列表；新建模板走右下角那个可拖动的圆形「＋」。 -->
+<view class="app">
+  <nav-bar title="档期模板" back="{{true}}"></nav-bar>
+
+  <!-- 有模板时底部多留一截：圆钮初始停在右下角，不留的话最后一张卡片的
+       「删除 / 应用」正好压在它底下。空态不用留 —— 那里中间是一整块引导，
+       留白只会把引导顶上去。 -->
+  <view class="body tight {{templates.length ? 'pad-fab' : ''}}">
+    <block wx:if="{{templates.length}}">
+      <view class="grp">
+        <view wx:for="{{templates}}" wx:key="template_id" class="tpl-card">
+          <view style="flex:1;min-width:0">
+            <view class="tpl-name">{{item.name}}</view>
+            <view class="tpl-meta">{{item.slots.length}} 个妆位 · 更新于 {{item.updated}}</view>
+            <view class="tpl-slots">
+              <text wx:for="{{item.slotLabels}}" wx:key="*this" class="tpl-s">{{item}}</text>
+            </view>
+          </view>
+          <view class="row" style="align-items:center">
+            <view class="btn xs out" data-id="{{item.template_id}}" bindtap="del" hover-class="btn-hover" hover-stay-time="80">删除</view>
+            <!-- ⚠️ picker 包着按钮，按钮本身不能挂 bindtap ——
+                 微信的原生 picker 只能由用户点开，程序叫不动它。想让「应用」
+                 顺手把日期问了，就得让这个键【自己就是】picker：
+                 点它 → 弹日期 → 确认时才触发 bindchange（= apply）。
+                 后面还要再问一句这场叫什么（可输入的弹框，预填模板名）——
+                 同一场模板会套到不同漫展上，名字不能锁死在模板里。 -->
+            <picker class="pk" mode="date" value="{{today}}" data-id="{{item.template_id}}" bindchange="apply">
+              <view class="btn xs pri" hover-class="btn-hover" hover-stay-time="80">应用</view>
+            </picker>
+          </view>
+        </view>
+      </view>
+      <view class="hint">排好一次档期 → 存为模板 →<br />下一场漫展一键生成整套时段</view>
+    </block>
+
+    <view wx:else class="body center" style="flex:1">
+      <view class="empty">
+        <text class="ic">🗂️</text>
+        <view class="et">还没有模板</view>
+        <view style="font-size:26rpx">新建档期时点「存为模板」<br />下一场漫展就能一键应用</view>
+      </view>
+      <view class="btn pri" style="margin:0 26rpx" bindtap="goNew" hover-class="btn-hover" hover-stay-time="80">新建模板</view>
+    </view>
+  </view>
+
+  <!-- 可拖动的圆形「＋」＝ 新建模板。
+       为什么不放导航栏右上角：那是微信胶囊的地盘，贴过去会被误当成微信自己的
+       按键点到（档期 / 预约单两页就是为此把动作挪到左边的）。
+       为什么能拖：它浮在列表上，挡住哪一条由用户自己说了算；拖到哪儿记进 storage，
+       下次进来还在那儿。范围由 utils/navbar.js 的 fabBounds 夹住 ——
+       ⚠️ 上沿不许越过导航栏下沿，否则就把标题和「‹ 返回」盖住了。
+       位置走 style 里的 px，不能用 rpx：拖动是物理位移，不跟屏宽缩放。
+       ⚠️ 拖动那一下必须是 catchtouchmove 而不是 bindtouchmove ——
+          bind 只是"听一下"，页面照样跟着滚；catch 才把默认滚动拦下来。 -->
+  <view wx:if="{{fab.ready}}" class="fab"
+        style="left:{{fab.x}}px;top:{{fab.y}}px;width:{{fab.size}}px;height:{{fab.size}}px"
+        bindtouchstart="onFabStart" catchtouchmove="onFabMove" bindtouchend="onFabEnd"
+        hover-class="fab-on" hover-start-time="0" hover-stay-time="120">
+    <view class="fp fp-h"></view>
+    <view class="fp fp-v"></view>
+  </view>
+</view>

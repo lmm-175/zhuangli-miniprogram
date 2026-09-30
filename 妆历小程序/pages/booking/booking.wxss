@@ -1,0 +1,148 @@
+/* ── 场次 + 搜索条（2026-09-29 加；2026-09-30 按用户要求合成一条）───────
+   左起：当前场次 · 输入框 · 下拉箭头 · 放大镜。
+   用户原话：「不要横向滚动，我要左上角的下拉条」+「把输入框直接和下拉菜单
+   放到一列，用户点击那一列即可输入 cn/展名，点击图标/回车键进行搜索」。 */
+/* ⚠️ 这层是【定位上下文】，不是排版用的。面板绝对定位挂在这上面，
+   它决定面板从哪儿展开。z-index 是给「盖住 Tab / 列表 / 底栏」用的。 */
+.sched-wrap{position:relative;flex:none;z-index:30}
+/* gap 收窄到 12rpx：这一行现在要塞四件东西，还留 20rpx 的话输入框没剩多宽。 */
+/* ⚠️ position+z-index 是为了压在 .sp-mask（z-index:19）上面 ——
+   面板开着的时候那一层铺满全屏，条子要是被它盖住，输入框就点不着了。
+   输入框现在长在这条条子上，点不着是硬伤。
+   （面板挂在这条下面、跟它不重叠，所以压过 20 也不会挡到面板本身。） */
+.sched-bar{display:flex;align-items:center;gap:12rpx;
+           background:#fff;border-bottom:1px solid var(--line);
+           padding:16rpx 22rpx;position:relative;z-index:21}
+/* ⚠️ 场次名那块【不参与伸缩】（flex:none + 上限 300rpx）——
+   让它 flex:1 的话它会把输入框挤到没宽度，而「正在打字」的那一格
+   才是这一行里最需要宽度的地方。名字长了末尾省略号，下面面板里看得全。 */
+.sb-pick{display:flex;align-items:center;flex:none;max-width:300rpx;
+         padding:10rpx 20rpx;border-radius:14rpx;background:var(--line2)}
+.sb-lb{font-size:27rpx;color:var(--t1);font-weight:600;
+       overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 输入框常驻在条子上（不是在面板里）。高度跟场次名那块对齐。 */
+.sb-ip{flex:1;min-width:0;height:68rpx;font-size:27rpx;color:var(--t1);
+       padding:0 20rpx;border-radius:14rpx;background:var(--line2)}
+.sb-ph{color:var(--t4)}
+
+/* 下拉箭头【用两条边画的】，⛔ 不用文字「▾」/「∨」——
+   字形和基线各平台不一，同一个道理见圆钮那两根小条。 */
+/* ⚠️ 箭头本身只有 14rpx，直接挂 bindtap 命中区太小（描不准就是没反应）。
+   所以外面这层 56rpx 的方块才是点击区，箭头只是它的内容。 */
+.sb-arw{width:56rpx;height:64rpx;flex:none;
+        display:flex;align-items:center;justify-content:center}
+.sb-ar{width:14rpx;height:14rpx;flex:none;
+       border-right:3rpx solid var(--t3);border-bottom:3rpx solid var(--t3);
+       transform:rotate(45deg) translate(-3rpx,-3rpx)}
+.sb-ar.up{transform:rotate(-135deg) translate(-3rpx,-3rpx)}
+
+/* 放大镜：一个圆圈 + 一根斜柄。同样不用 emoji。 */
+.sb-find{width:64rpx;height:64rpx;flex:none;position:relative}
+.mg-c{position:absolute;left:9rpx;top:9rpx;width:24rpx;height:24rpx;
+      border:3rpx solid var(--t2);border-radius:50%}
+.mg-h{position:absolute;left:31rpx;top:31rpx;width:3rpx;height:13rpx;
+      background:var(--t2);border-radius:2rpx;transform:rotate(-45deg);
+      transform-origin:top center}
+
+/* 「搜索中：跨全部场次 · 清空」。⚠️ 它在【条子下面、面板外面】——
+   搜完面板立刻就收起了（不收就盖住结果第一屏），这句话要是留在面板里
+   就永远不会被人看到。 */
+.sb-tip{display:flex;align-items:center;justify-content:space-between;gap:16rpx;
+        padding:10rpx 22rpx;background:var(--brand-l);border-bottom:1px solid #EFD3DA;
+        position:relative;z-index:21}
+.sb-tip-t{font-size:23rpx;color:var(--brand-d);flex:1;min-width:0}
+.sb-tip-x{font-size:23rpx;font-weight:600;color:var(--brand);
+          padding:6rpx 12rpx;flex:none}
+
+/* 点面板以外的地方收起它。⚠️ 铺满整屏的透明层，z-index 要比面板低一档。 */
+.sp-mask{position:fixed;left:0;right:0;top:0;bottom:0;z-index:19}
+
+/* 下拉面板。⚠️ 绝对定位浮在 Tab 和列表上面，⛔ 不占流 ——
+   占流的话展开/收起会把下面整块内容顶下去又拉回来，而用户正盯着它选。
+   ⚠️ top:100% = .sched-wrap 的下沿（条子，或者搜索中时再加那条提示）。
+      它挂在 .sched-wrap 上（上面那条 position:relative）。 */
+.sched-panel{position:absolute;left:0;right:0;top:100%;z-index:20;
+             background:#fff;border-bottom:1px solid var(--line);
+             box-shadow:0 12rpx 28rpx rgba(0,0,0,.10);
+             max-height:640rpx;overflow:hidden;display:flex;flex-direction:column}
+/* 面板里已经没有搜索框了（它搬到了条子上），所以上沿自己留一点空 */
+.sp-list{overflow-y:auto;padding:12rpx 0}
+.sp-item{display:flex;align-items:center;justify-content:space-between;gap:16rpx;
+         padding:24rpx 26rpx;font-size:28rpx;color:var(--t1)}
+.sp-item + .sp-item{border-top:1px solid var(--line2)}
+.sp-item.on{color:var(--brand);font-weight:700;background:var(--brand-l)}
+.sp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-sub{flex:none;font-size:22rpx;color:var(--t4);font-weight:400}
+.sp-item.on .sp-sub{color:var(--brand-d)}
+.sp-none{padding:26rpx;font-size:25rpx;color:var(--t3);text-align:center}
+
+.b-tabs{display:flex;background:#fff;border-bottom:1px solid var(--line);flex:none}
+.b-tab{flex:1;text-align:center;padding:24rpx 0;font-size:29rpx;color:var(--t2);position:relative}
+.b-tab.on{color:var(--brand);font-weight:700}
+.b-tab.on::after{content:"";position:absolute;left:50%;bottom:-1rpx;transform:translateX(-50%);
+                 width:44rpx;height:6rpx;border-radius:3rpx;background:var(--brand)}
+
+.bk-card{display:flex;align-items:center;gap:20rpx;padding:24rpx 26rpx;background:#fff}
+.bk-card + .bk-card{border-top:1px solid var(--line2)}
+/* 第一行：漫展名 + 顾客 CN。
+   ⚠️ 漫展名可能很长（红线 3 说它是自由文本，没人拦着她写多长），
+      所以让它 flex:1 + 省略号，CN 固定不缩 —— 反过来的话长名字会把
+      CN 挤没，而「这一单是谁的」恰恰是不能丢的那半个信息。 */
+.bk-top{display:flex;align-items:center;gap:14rpx}
+.bk-ev{flex:1;min-width:0;font-size:30rpx;font-weight:600;
+       overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 顾客的圈名。⚠️ 妆娘认人认的是 CN，不是角色名 —— 角色每单都不一样。
+   ⛔ 不加「CN」两个字的前缀：一屏 5 单就是 5 遍，而 C 端用户看到
+      一个紧挨着漫展名的浅红小签，配合下面那行的角色名，含义是清楚的。 */
+.bk-cn{flex:none;font-size:22rpx;color:var(--brand-d);background:var(--brand-l);
+       border:1px solid #EFD3DA;border-radius:8rpx;padding:3rpx 12rpx;
+       max-width:220rpx;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bk-sl{font-size:26rpx;color:var(--t2);margin-top:6rpx}
+.bk-meta{font-size:24rpx;color:var(--t3);margin-top:6rpx}
+/* 「顾客申请取消」—— 这一单在等人拍板（妆位还占着）。
+   ⚠️ 和 .bk-cn 同一个形状但换成危险色：一个说「这是谁」，一个说「要你动手」。
+   ⚠️ 它是 <text>（行内），得显式 inline-block —— 行内元素的上下的 padding
+      不参与行盒高度，那 2rpx 的上下内边距会跟上下两行叠在一起。 */
+.bk-badge{display:inline-block;font-size:22rpx;color:var(--danger);background:var(--danger-l);
+          border:1px solid #F5C9C6;border-radius:8rpx;padding:2rpx 10rpx;margin-right:10rpx}
+.rgo{font-size:34rpx;color:var(--t3)}
+
+/* ── 批量勾选态 ───────────────────────────────────────────────
+   顶栏（已选 N / M 单 + 全选）在 Tab 下面，执行条在页面底部 ——
+   中间是列表，符合「上面看状态、下面按执行」的读法。
+   顶栏用品牌浅底 + 品牌字，跟平时的白底列表一眼分得开，
+   不会让人以为「咦怎么少了几个键」。 */
+.sel-bar{display:flex;align-items:center;justify-content:space-between;gap:20rpx;
+         padding:16rpx 26rpx;background:var(--brand-l);border-bottom:1px solid #EFD3DA;flex:none}
+.sb-t{font-size:27rpx;color:var(--brand-d)}
+.sb-n{font-size:32rpx;font-weight:700}
+.sb-a{font-size:27rpx;font-weight:600;color:var(--brand);background:#fff;
+      border:1px solid #EFD3DA;border-radius:13rpx;padding:7rpx 22rpx}
+
+/* 勾选框。⛔ 不用原生 <checkbox>（自带最小尺寸和灰边，跟自写 WXSS 打架）；
+   也 ⛔ 不用文字「✓」以外的任何字符 —— 各平台字体对不齐。 */
+.ck{width:44rpx;height:44rpx;border-radius:11rpx;border:2px solid var(--line);
+    background:#fff;flex:none;display:flex;align-items:center;justify-content:center}
+.ck.on{background:var(--brand);border-color:var(--brand)}
+.ck-t{color:#fff;font-size:26rpx;font-weight:700;line-height:1}
+
+/* 勾选态下卡片左边是勾选框，不用再留右边那个「›」 */
+.bk-card.pick{padding-left:22rpx}
+
+/* 勾不上的行（未付定金 → 进不了已完成）：整行压暗 + 空勾选框。
+   ⚠️ 行里【不再写】理由文案了（一屏 3 单就是 3 遍「未付定金」，纯噪声）。
+      压暗 + 勾不上本身就是通用信号，解释在被点的那一下给一次。 */
+.bk-card.lock{opacity:.5}
+.bk-card.lock .ck{background:var(--line2);border-color:var(--line)}
+
+/* 「这一行勾不上」的说明，出现在底栏正上方、1 秒后自己消失（见 booking.js 的 warn()）。
+   ⚠️ 【绝对定位】浮着，不占流 —— 占流的话列表会在它出现/消失时上下跳一下，
+      而这时候用户正盯着某一行准备动手。
+   ⚠️ 也不用 wx.showToast：Toast 是屏幕正中的一个黑块，离刚点的那一行远，
+      而且会盖住列表。这句要贴着用户手指所在的区域浮出来。
+   挂 .footbar 需要它是定位上下文，所以下面那条 position:relative 是必须的。 */
+.footbar{position:relative}
+.pick-warn{position:absolute;left:22rpx;right:22rpx;bottom:100%;margin-bottom:12rpx;
+           padding:16rpx 22rpx;border-radius:var(--r);
+           background:var(--danger-l);border:1px solid #F5C9C6;
+           color:var(--danger);font-size:25rpx;line-height:1.45;text-align:center}
