@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>妆历 · M0 试提审包 界面稿</title>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   以下 :root 到 body 的令牌，逐字复制自 `妆历 界面设计与交互说明.html`
+   —— 两份文件共用同一套设计令牌，改一处要同步另一处
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --brand:#C0556E; --brand-d:#9A3D53; --brand-l:#FDF1F4;
+  --t1:#1F2329; --t2:#646A73; --t3:#8F959E; --t4:#BBBFC4;
+  --bg:#F5F6F7; --white:#fff; --line:#E7E9EB; --line2:#F0F1F2;
+  --danger:#D54941; --danger-l:#FDECEC; --warn:#E37318; --warn-l:#FFF4E8;
+  --ok:#2BA471; --ok-l:#E8F8F2; --info:#4B7BE5; --info-l:#EDF2FD;
+  --r:10px; --r-lg:14px;
+  --sh:0 4px 20px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:#EEF0F2;color:var(--t1);font-size:14px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1240px;margin:0 auto;padding:0 20px 80px}
+
+.hero{background:linear-gradient(135deg,#3A2730 0%,#5C3743 55%,#8E4A5C 100%);color:#fff;padding:44px 20px 38px;margin-bottom:0}
+.hero .in{max-width:1240px;margin:0 auto;padding:0 20px}
+.hero h1{font-size:30px;font-weight:700;letter-spacing:-.5px;margin-bottom:10px}
+.hero .sub{font-size:15px;color:#F0D8DE;max-width:760px;line-height:1.75}
+.hero .meta{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+.hero .pill{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:5px 14px;font-size:12.5px;color:#fff}
+.hero .pill.hot{background:rgba(213,73,65,.9);border-color:rgba(255,255,255,.3);font-weight:600}
+
+.sticky{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.sticky .in{max-width:1240px;margin:0 auto;padding:0 20px;display:flex;gap:6px;overflow-x:auto}
+.sticky a{padding:13px 13px;font-size:13px;color:var(--t2);text-decoration:none;white-space:nowrap;border-bottom:2px solid transparent;font-weight:500}
+.sticky a:hover{color:var(--brand);border-bottom-color:var(--brand)}
+
+section{padding-top:44px}
+h2.sec{font-size:22px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:10px}
+h2.sec .n{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;font-size:14px;font-weight:700;flex:none}
+h3.sub{font-size:16px;font-weight:700;margin:26px 0 12px;padding-left:10px;border-left:3px solid var(--brand)}
+.lead{color:var(--t2);margin-bottom:20px;max-width:900px;line-height:1.8}
+.note{background:#fff;border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:0 var(--r) var(--r) 0;padding:13px 16px;margin:14px 0;font-size:13.5px;color:var(--t2);line-height:1.8}
+.note.red{border-left-color:var(--danger);background:var(--danger-l);color:#8A2B25}
+.note.warn{border-left-color:var(--warn);background:var(--warn-l);color:#7A3D08}
+.note.ok{border-left-color:var(--ok);background:var(--ok-l);color:#14603F}
+.note b{color:var(--t1)}
+.note.red b{color:#7A1F1A}
+
+.rl-bar{background:var(--danger);color:#fff;border-radius:var(--r);padding:14px 18px;margin:16px 0;font-size:13.5px;line-height:1.8}
+.rl-bar b{color:#FFE0DD}
+
+.dev{display:flex;gap:22px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.dev-l{flex:0 0 340px}
+.dev-r{flex:1;min-width:0}
+.dev-hd{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:11px;border-bottom:1px solid var(--line2)}
+.dev-hd .nm{font-size:16px;font-weight:700}
+.dev-hd .id{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:var(--brand-l);color:var(--brand-d);padding:2px 8px;border-radius:5px;font-weight:700}
+.dev-hd .tg{font-size:11.5px;padding:2px 9px;border-radius:999px;background:var(--bg);color:var(--t2);border:1px solid var(--line)}
+.dev-hd .tg.g{background:var(--ok-l);color:#14603F;border-color:#BFE7D8}
+.dev-hd .tg.r{background:var(--danger-l);color:#8A2B25;border-color:#F5C9C6}
+.dev-desc{font-size:13px;color:var(--t2);margin-bottom:14px;line-height:1.75}
+
+.phone{
+  width:340px;min-height:560px;background:var(--bg);border-radius:24px;
+  border:1px solid #D5D9DD;box-shadow:var(--sh);overflow:hidden;
+  display:flex;flex-direction:column;font-size:13px;color:var(--t1);
+}
+.statusbar{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:11px;color:var(--t2);background:#fff;flex:none}
+.statusbar .dot{letter-spacing:1px}
+.nav{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:#fff;border-bottom:1px solid var(--line);flex:none;position:relative}
+.nav .ttl{font-size:15px;font-weight:600;position:absolute;left:0;right:0;text-align:center;pointer-events:none}
+.nav .lft,.nav .rgt{position:relative;z-index:2;font-size:13.5px;color:var(--t2);padding:4px 6px;border-radius:6px;min-width:34px}
+.nav .rgt{color:var(--brand);font-weight:600;text-align:right}
+.pb{padding:10px;display:flex;flex-direction:column;gap:9px;flex:1}
+.pb.tight{gap:6px}
+.pb.nopad{padding:0}
+.spacer{flex:1}
+.footbar{padding:10px;background:#fff;border-top:1px solid var(--line);display:flex;gap:9px;flex:none}
+.tabbar{height:50px;background:#fff;border-top:1px solid var(--line);display:flex;flex:none}
+.tabbar .tb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;color:var(--t3)}
+.tabbar .tb.on{color:var(--brand);font-weight:600}
+.tabbar .tb .ic{font-size:16px;line-height:1}
+
+.card{background:#fff;border-radius:var(--r);padding:12px;position:relative}
+.card.tight{padding:9px 11px}
+.cell{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:#fff;border-radius:var(--r);gap:10px;position:relative}
+.cell+.cell{border-top:1px solid var(--line2);border-radius:0}
+.cell:first-child{border-radius:var(--r) var(--r) 0 0}
+.cell:last-child{border-radius:0 0 var(--r) var(--r)}
+.cell .cl{font-size:13.5px}
+.cell .cr{font-size:13px;color:var(--t3);display:flex;align-items:center;gap:5px}
+.grp{background:#fff;border-radius:var(--r);overflow:hidden}
+.sec-ttl{font-size:11.5px;font-weight:700;color:var(--t3);letter-spacing:.4px;padding:4px 2px 0}
+.btn{display:flex;align-items:center;justify-content:center;height:42px;border-radius:9px;font-size:14.5px;font-weight:600;border:none;position:relative;gap:6px;cursor:default}
+.btn.pri{background:var(--brand);color:#fff}
+.btn.sec{background:var(--brand-l);color:var(--brand-d);border:1px solid #EFD3DA}
+.btn.out{background:#fff;border:1px solid var(--line);color:var(--t1)}
+.btn.dan{background:var(--danger-l);color:var(--danger);border:1px solid #F5C9C6}
+.btn.ghost{background:transparent;color:var(--t2);font-weight:500;height:34px;font-size:13px}
+.btn:disabled,.btn.dis{background:#F0F1F2;color:var(--t4);border-color:transparent}
+.btn.sm{height:30px;font-size:12.5px;padding:0 12px;border-radius:7px;display:inline-flex;width:auto;font-weight:600}
+.btn.xs{height:25px;font-size:11.5px;padding:0 9px;border-radius:6px;display:inline-flex;width:auto;font-weight:600}
+.chip{display:inline-block;padding:6px 13px;border-radius:15px;border:1px solid var(--line);background:#fff;font-size:12.5px;color:var(--t2);position:relative}
+.chip.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600;line-height:1.6}
+.tag.wait{background:var(--warn-l);color:var(--warn)}
+.tag.done{background:var(--ok-l);color:var(--ok)}
+.tag.gray{background:var(--bg);color:var(--t3)}
+.tag.red{background:var(--danger-l);color:var(--danger)}
+.tag.brand{background:var(--brand-l);color:var(--brand-d)}
+.fld{display:flex;align-items:center;gap:10px;padding:11px 12px;background:#fff;border-bottom:1px solid var(--line2);font-size:13.5px}
+.fld:last-child{border-bottom:none}
+.fld .lb{color:var(--t2);flex:0 0 78px;font-size:13px}
+.fld .vl{flex:1;color:var(--t4);font-size:13px}
+.fld .vl.filled{color:var(--t1)}
+.mk{position:absolute;display:flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:#141414;color:#fff;font-size:11px;font-weight:700;border:1.5px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.35);z-index:30;font-family:ui-monospace,Consolas,monospace}
+.rel{position:relative;overflow:visible}
+.slot-row{display:flex;align-items:center;gap:9px;padding:9px 11px;background:#fff;border-bottom:1px solid var(--line2);position:relative}
+.slot-row:last-child{border-bottom:none}
+.slot-row .sq{width:24px;height:24px;border-radius:6px;background:var(--brand-l);color:var(--brand-d);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+.slot-row .tm{flex:1;font-size:13px;font-variant-numeric:tabular-nums}
+.slot-row .tm small{display:block;color:var(--t3);font-size:11px}
+.slot-row.busy{background:#FAFAFB}
+.slot-row.busy .sq{background:#F0F1F2;color:var(--t3)}
+.work{width:calc(33.333% - 7px);aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#F3E4E8,#E8D2D9);display:flex;align-items:center;justify-content:center;color:#B08D98;font-size:11px;position:relative}
+.work-grid{display:flex;flex-wrap:wrap;gap:10px}
+.empty{text-align:center;padding:34px 16px;color:var(--t3);font-size:13px;line-height:1.9}
+.empty .ic{font-size:32px;display:block;margin-bottom:8px;opacity:.5}
+.sw-row{display:flex;align-items:center;justify-content:space-between;padding:13px 12px;background:#fff;gap:12px;position:relative}
+.sw{width:44px;height:25px;border-radius:13px;background:#D6D9DD;position:relative;flex:none}
+.sw::after{content:"";position:absolute;width:21px;height:21px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:.2s}
+.sw.on{background:var(--brand)}
+.sw.on::after{left:21px}
+.stepbar{display:flex;align-items:center;gap:4px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line)}
+.stepbar .st{flex:1;height:3px;border-radius:2px;background:var(--line)}
+.stepbar .st.on{background:var(--brand)}
+.noti{display:flex;gap:8px;padding:10px 12px;border-radius:var(--r);font-size:12.5px;line-height:1.7;position:relative}
+.noti.warn{background:var(--warn-l);color:#7A3D08}
+.noti.red{background:var(--danger-l);color:#8A2B25}
+.noti.info{background:var(--info-l);color:#2B4E96}
+.noti.ok{background:var(--ok-l);color:#14603F}
+.tl{display:flex;gap:10px;padding:8px 0;position:relative}
+.tl .dt{width:9px;height:9px;border-radius:50%;background:var(--line);margin-top:6px;flex:none}
+.tl .dt.on{background:var(--brand)}
+.tl .dc{font-size:12.5px;color:var(--t2);line-height:1.7}
+.tl .dc b{color:var(--t1);font-weight:600}
+.big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+
+table.spec{width:100%;border-collapse:collapse;font-size:13px}
+table.spec th{text-align:left;padding:9px 10px;background:var(--bg);color:var(--t2);font-weight:600;font-size:12px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.spec td{padding:9px 10px;border-bottom:1px solid var(--line2);vertical-align:top;line-height:1.65}
+table.spec tr:last-child td{border-bottom:none}
+table.spec td.no{font-family:ui-monospace,Consolas,monospace;font-weight:700;color:var(--brand-d);width:30px}
+table.spec td.nm{font-weight:600;white-space:nowrap}
+table.spec td.ps{color:var(--t2);font-size:12.5px}
+table.spec tr.rl td{background:var(--danger-l)}
+table.spec tr.rl td.no{color:var(--danger)}
+.k{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:600;font-family:ui-monospace,Consolas,monospace;background:var(--bg);color:var(--t2);border:1px solid var(--line)}
+.k.pri{background:var(--brand-l);color:var(--brand-d);border-color:#EFD3DA}
+.k.gr{background:var(--ok-l);color:#14603F;border-color:#BFE7D8}
+.k.rd{background:var(--danger-l);color:#8A2B25;border-color:#F5C9C6}
+.k.or{background:var(--warn-l);color:#7A3D08;border-color:#F5D9B8}
+
+.allbtn{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-top:16px}
+.allbtn .hd{padding:13px 16px;background:var(--bg);font-weight:700;font-size:13.5px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.allbtn .hd .ct{font-size:12px;color:var(--t3);font-weight:500}
+
+.flow{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:16px 0}
+.flow .n2{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 13px;font-size:12.5px;font-weight:600}
+.flow .n2.p{background:var(--brand);color:#fff;border-color:var(--brand)}
+.flow .ar{color:var(--t4);font-size:15px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.dev{flex-direction:column}.dev-l{flex:none;width:100%}.grid2{grid-template-columns:1fr}}
+
+/* ═══════════════════════════════════════════════════════════════
+   M0 追加样式 —— 只新增，不改动上方任何一条令牌
+   ═══════════════════════════════════════════════════════════════ */
+.phone{position:relative}
+.mk.ok{background:var(--ok)}
+.mk.rd{background:var(--danger)}
+[data-goto]{cursor:pointer}
+@keyframes m0flash{
+  0%{box-shadow:0 0 0 0 rgba(192,85,110,.5),0 1px 3px rgba(0,0,0,.04)}
+  70%{box-shadow:0 0 0 12px rgba(192,85,110,0),0 1px 3px rgba(0,0,0,.04)}
+  100%{box-shadow:0 0 0 0 rgba(192,85,110,0),0 1px 3px rgba(0,0,0,.04)}
+}
+.dev.flash,.shell-card.flash{animation:m0flash 1.4s ease-out 2;border-color:#E7BCC7}
+.legend{display:flex;flex-wrap:wrap;gap:16px;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;font-size:12.5px;color:var(--t2);align-items:center;margin:14px 0}
+.legend i{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:#141414;color:#fff;font-size:11px;font-weight:700;font-family:ui-monospace,Consolas,monospace;font-style:normal;margin-right:6px;vertical-align:-4px;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.legend i.ok{background:var(--ok)}
+.legend i.rd{background:var(--danger)}
+.shell-grid{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.shell-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;width:330px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.shell-card .sh-hd{display:flex;align-items:center;gap:8px;margin-bottom:11px;padding-bottom:10px;border-bottom:1px solid var(--line2);flex-wrap:wrap}
+.shell-card .sh-hd .id{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;background:var(--brand-l);color:var(--brand-d);padding:2px 7px;border-radius:5px;font-weight:700}
+.shell-card .sh-hd .nm{font-size:14px;font-weight:700}
+.shell-card .sh-note{font-size:12px;color:var(--t2);line-height:1.7;margin-top:11px}
+.shell-card .sh-note b{color:var(--t1)}
+.shell-card .phone{width:100%;min-height:0;border-radius:20px}
+.shell-card .statusbar{height:22px;font-size:10px}
+.shell-card .nav{height:38px}
+.shell-card .nav .ttl{font-size:13.5px}
+.toastbox{background:rgba(20,20,20,.86);color:#fff;border-radius:8px;padding:9px 15px;font-size:12.5px;display:inline-block;font-weight:500}
+.toast{position:absolute;left:50%;transform:translateX(-50%);bottom:66px;background:rgba(20,20,20,.86);color:#fff;font-size:12px;padding:8px 14px;border-radius:8px;z-index:40;white-space:nowrap;box-shadow:0 3px 14px rgba(0,0,0,.25)}
+.chk{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-top:16px}
+.chk .hd{padding:13px 16px;background:var(--bg);font-weight:700;font-size:13.5px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.chk .hd .ct{font-size:12px;color:var(--t3);font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="in">
+    <h1>妆历 · M0 试提审包 界面稿</h1>
+    <p class="sub">
+      这是 <b>M0（2 人天试提审包）</b>的界面稿 —— 只为回答一个问题：<b>个人主体 + 这套形态，审核能不能过。</b><br>
+      设计令牌逐字沿用 <b>《妆历 界面设计与交互说明》</b>（品牌色 <code>#C0556E</code> / 手机框 340px / <code>.mk</code> 编号标记），
+      内容换成 M0 实际要交付的两屏 + 撑住「点哪里都不崩」的 6 个壳页面。
+    </p>
+    <div class="meta">
+      <span class="pill">v1.0 · 2026-09-30</span>
+      <span class="pill">2 人天</span>
+      <span class="pill">2 屏 + 6 个壳</span>
+      <span class="pill hot">⛔ 顾客端零金额</span>
+      <span class="pill">本页可点击走查</span>
+    </div>
+  </div>
+</div>
+
+<nav class="sticky"><div class="in">
+  <a href="#howto">这份文件怎么用</a>
+  <a href="#a1">屏 1 · A1 工作台空态</a>
+  <a href="#c1">屏 2 · C1 分享落地页</a>
+  <a href="#c1">🔴 分享：用原生的</a>
+  <a href="#shells">壳页面（6）</a>
+  <a href="#clicks">可点性清单</a>
+  <a href="#toasts">Toast 文案</a>
+  <a href="#redlines">红线自查</a>
+  <a href="#data">假数据预置</a>
+</div></nav>
+
+<div class="wrap">
+
+<!-- ══════════════════ 1 怎么用 ══════════════════ -->
+<section id="howto">
+  <h2 class="sec"><span class="n">1</span>这份文件怎么用</h2>
+  <p class="lead">
+    照着敲代码用。<b>两张主屏是提审截图要拍的，6 个壳页面是让审核员点不白的。</b>
+    真正的工量不在画页面，在 §5 可点性清单 —— 每一个能点的地方都要有合理响应。
+  </p>
+
+  <div class="rl-bar">
+    📌 <b>M0 的交付标准（唯一一条）</b><br>
+    <b>「审核员能走完一条完整路径，中途没有任何一处白屏、崩溃或死链。」</b><br>
+    ⚠️ 提审最常见的驳回理由之一是「功能不完整」。审核员点到空白页 = 态度问题，<b>不是「功能少」的问题</b>。
+  </div>
+
+  <h3 class="sub">1.1 M0 一共 8 个界面 —— 2 张脸 + 6 个落点</h3>
+  <div class="flow">
+    <span class="n2 p">A1 工作台空态</span><span class="ar">→</span>
+    <span class="n2">新建档期（壳）</span><span class="ar">→</span>
+    <span class="n2">档期列表空态</span>
+  </div>
+  <div class="flow">
+    <span class="n2" style="border-style:dashed">📤 分享我的妆位</span><span class="ar">←</span>
+    <span style="font-size:12.5px;color:var(--t2);margin-right:8px">微信<b>原生</b>转发，我们不做分享 UI（见 §3.1）</span>
+    <span class="ar">→</span>
+    <span class="n2 p">C1 分享落地页</span><span class="ar">→</span>
+    <span class="n2">填写预约单（壳）</span><span class="ar">→</span>
+    <span class="n2">我的预约空态</span>
+  </div>
+  <div class="flow">
+    <span class="n2">我的</span><span class="ar">·</span>
+    <span class="n2">设置</span>
+    <span style="font-size:12.5px;color:var(--t2);margin-left:6px">← A1 导航栏右「设置」和 Tab 4 的落点</span>
+  </div>
+
+  <div class="legend">
+    <span><i>1</i>可点元素（黑色 = 壳，有合理响应即可）</span>
+    <span><i class="ok">2</i>M0 必须真响应（真跳转 / 真功能）</span>
+    <span><i class="rd">⛔</i>类目红线（此屏不允许出现）</span>
+    <span style="margin-left:auto;color:var(--t3)">📌 本页所有带编号的控件<b>都可以点</b>，会滚到它的真实落点并高亮</span>
+  </div>
+
+  <h3 class="sub">1.2 两道防线（M0 同样生效，不因「最小版本」放宽）</h3>
+  <div class="grid2">
+    <div class="note red" style="margin:0">
+      <b>防线 ① · 全顾客端零金额</b><br>
+      落地页 / 填表页 / 我的预约，<b>一个 ¥ 都不许有。</b><br>
+      个人主体可以有金额（「记账」就是消费记录），违规的是「<b>构成一次服务要约</b> + <b>分享给顾客看</b>」。<br>
+      → 妆位表不带价格字段，定金只标「已收 / 未收」。
+    </div>
+    <div class="note red" style="margin:0">
+      <b>防线 ② · 零社交特征</b><br>
+      妆面样片区<b>没有点赞、评论、收藏、浏览数、转发数</b>，<b>没有「更多作品」入口</b>。<br>
+      个人主体没有「社交」类目，而「工具-图片处理」明写「如提供传播和公开访问服务，属于社交范畴」。<br>
+      → 落地页的叙事是「<b>这个化妆师的个人页</b>」，不是作品广场。
+    </div>
+  </div>
+
+  <div class="note warn">
+    ⚠️ <b>M0 最容易犯的三个错</b>（因为它们都长得像「正常功能」）：<br>
+    ① 加「<b>邀请同行</b>」——多商户入驻最直接的证据，<b>M0 更容易犯，因为它最像增长手段</b>；<br>
+    ② 加「<b>浏览所有化妆师</b>」入口——立刻是平台；<br>
+    ③ 提审备注里写「<b>平台</b>」二字——<b>这就是上次驳回的直接根因</b>。
+  </div>
+</section>
+
+<!-- ══════════════════ 2 A1 ══════════════════ -->
+<section id="a1">
+  <h2 class="sec"><span class="n">2</span>屏 1 · A1 工作台（空态）</h2>
+  <p class="lead">
+    化妆师打开小程序看到的第一屏。<b>空态是刻意的</b> —— 审核员第一眼读到的必须是「这是一个排班工具」。
+  </p>
+
+  <div class="dev" id="p-a1">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav">
+          <span class="lft"></span>
+          <span class="ttl">妆历</span>
+          <span class="rgt rel" data-goto="p-settings">设置<span class="mk ok" style="left:20px;top:-8px">1</span></span>
+        </div>
+        <div class="pb" style="justify-content:center;gap:4px">
+          <div class="empty" style="padding:18px 16px 4px">
+            <span class="ic">📅</span>
+            <div style="font-size:15.5px;font-weight:700;color:var(--t1);margin-bottom:9px">欢迎使用妆历</div>
+            <div>这是你的排班本。<br>排好妆位，把链接发给客人，<br>预约单就记在这里。</div>
+          </div>
+          <div class="btn pri rel" style="margin:10px 12px 0" data-goto="p-new">
+            新建第一个档期
+            <span class="mk ok" style="left:-9px;top:-9px">2</span>
+          </div>
+          <div style="text-align:center;font-size:11px;color:var(--t3);padding:0 24px;line-height:1.7;margin-top:12px">
+            客人不需要下载、不需要注册<br>点开链接就能看到你的妆位
+          </div>
+        </div>
+        <div class="tabbar">
+          <span class="tb on rel"><span class="ic">🏠</span>工作台<span class="mk ok" style="left:6px;top:-9px">3</span></span>
+          <span class="tb rel" data-goto="p-sched"><span class="ic">📅</span>档期<span class="mk ok" style="left:6px;top:-9px">4</span></span>
+          <span class="tb rel" data-goto="p-orders"><span class="ic">📋</span>预约单<span class="mk ok" style="left:6px;top:-9px">5</span></span>
+          <span class="tb rel" data-goto="p-me"><span class="ic">👤</span>我的<span class="mk ok" style="left:6px;top:-9px">6</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">A1</span>
+        <span class="nm">工作台（空态）</span>
+        <span class="tg g">M0 主屏</span>
+        <span class="tg">提审截图 ①</span>
+      </div>
+      <div class="dev-desc">
+        结构 = <b>导航栏 + 居中空态 + 主按钮 + 4 个 Tab</b>，仅此四件。<b>没有「快捷操作」分组</b> ——
+        那一组（档期管理 / 预约单 / 新建 / 分享）在 M1 出现，且<b>只在已有 ≥1 个档期时渲染</b>。
+      </div>
+
+      <table class="spec">
+        <thead><tr><th>#</th><th>控件</th><th>位置</th><th>类型</th><th>点击后</th></tr></thead>
+        <tbody>
+          <tr><td class="no">1</td><td class="nm">设置</td><td class="ps">导航栏右 · 文字</td><td><span class="k pri">ghost</span></td><td class="ps">→ 设置页（壳）。页内含<b>微信号展示开关</b> + 用户隐私保护指引入口</td></tr>
+          <tr><td class="no">2</td><td class="nm">新建第一个档期</td><td class="ps">空态中央 · 通栏</td><td><span class="k pri">pri</span></td><td class="ps">→ 新建档期页（表单壳）。<b>本屏唯一主按钮</b></td></tr>
+          <tr><td class="no">3</td><td class="nm">Tab · 工作台</td><td class="ps">Tabbar 第 1 位</td><td><span class="k pri">选中</span></td><td class="ps">当前页，无跳转</td></tr>
+          <tr><td class="no">4</td><td class="nm">Tab · 档期</td><td class="ps">Tabbar 第 2 位</td><td><span class="k">tab</span></td><td class="ps">→ 档期列表空态（「还没有档期」）</td></tr>
+          <tr><td class="no">5</td><td class="nm">Tab · 预约单</td><td class="ps">Tabbar 第 3 位</td><td><span class="k">tab</span></td><td class="ps">→ 预约单列表空态（「还没有预约单」）</td></tr>
+          <tr><td class="no">6</td><td class="nm">Tab · 我的</td><td class="ps">Tabbar 第 4 位</td><td><span class="k">tab</span></td><td class="ps">→ 我的（静态资料项）</td></tr>
+          <tr class="rl"><td class="no">⛔</td><td class="nm">「待处理预约单」渐变大卡</td><td class="ps">—</td><td><span class="k rd">本屏不渲染</span></td><td class="ps">计数为 0 时<b>整张卡不出现</b>（全景稿 A1 里那张卡是 M1 的有数据态）</td></tr>
+          <tr class="rl"><td class="no">⛔</td><td class="nm">浏览所有化妆师 / 排行榜 / 推荐位</td><td class="ps">—</td><td><span class="k rd">禁止</span></td><td class="ps">立刻是平台。<b>个人主体没有平台类目可申请 = 无解</b></td></tr>
+          <tr class="rl"><td class="no">⛔</td><td class="nm">邀请同行 / 邀请有奖</td><td class="ps">—</td><td><span class="k rd">禁止</span></td><td class="ps">「多商户入驻」最直接的证据。它是最自然的增长手段，也正因如此要忍住</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note ok" style="margin-bottom:0">
+        ✅ <b>审核员在这一屏读到的：这是一个排班工具。</b><br>
+        空态文案「排好妆位，把链接发给客人，预约单就记在这里」一句话把三件事说清：<b>它是给谁用的</b>（你的）、<b>怎么用</b>（排 + 发）、<b>产出是什么</b>（预约单）。<br>
+        ⛔ 全屏<b>没有任何「浏览妆娘」入口</b>，也<b>没有任何金额</b>。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 3 C1 ══════════════════ -->
+<section id="c1">
+  <h2 class="sec"><span class="n">3</span>屏 2 · C1 分享落地页</h2>
+  <p class="lead">
+    化妆师分享卡片的落地页，<b>也是顾客唯一入口</b>。全部用假数据（「示例」/ <code>demo_makeup</code> / 占位图）。
+  </p>
+
+  <div class="dev" id="p-c1">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav">
+          <span class="lft">‹ 返回</span>
+          <span class="ttl">示例的妆位</span>
+          <span class="rgt rel" data-goto="p-orders">我的预约<span class="mk ok" style="left:20px;top:-8px">7</span></span>
+        </div>
+        <div class="pb">
+          <!-- 化妆师信息 -->
+          <div class="card">
+            <div style="display:flex;gap:10px;align-items:center">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">示</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700">示例</div>
+                <div style="font-size:11.5px;color:var(--t3);margin-top:2px">上海 · 建模感 / 浓系 / 展妆</div>
+              </div>
+            </div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div>
+                <div style="font-size:11px;color:var(--t3)">微信号</div>
+                <div style="font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums">demo_makeup</div>
+              </div>
+              <span class="btn sec sm rel" style="cursor:pointer" data-goto="p-toast">复制微信号<span class="mk ok" style="left:-9px;top:-9px">8</span></span>
+            </div>
+          </div>
+
+          <!-- 妆面样片 -->
+          <div class="sec-ttl">妆面样片</div>
+          <div class="card tight">
+            <div class="work-grid">
+              <div class="work">占位图 1</div><div class="work">占位图 2</div><div class="work">占位图 3</div>
+            </div>
+          </div>
+
+          <!-- 妆位表 -->
+          <div class="sec-ttl">可约妆位 · 示例漫展</div>
+          <div class="grp">
+            <div class="slot-row busy">
+              <span class="sq">1</span>
+              <span class="tm">09:00 – 10:20<small>已被约</small></span>
+              <span class="btn xs dis">已约</span>
+            </div>
+            <div class="slot-row">
+              <span class="sq">2</span>
+              <span class="tm">10:30 – 11:50<small>可约</small></span>
+              <span class="btn pri xs rel" style="cursor:pointer" data-goto="p-form">选这个妆位<span class="mk ok" style="left:58px;top:-10px">9</span></span>
+            </div>
+            <div class="slot-row">
+              <span class="sq">3</span>
+              <span class="tm">13:00 – 14:20<small>可约</small></span>
+              <span class="btn pri xs rel" style="cursor:pointer" data-goto="p-form">选这个妆位<span class="mk ok" style="left:58px;top:-10px">10</span></span>
+            </div>
+          </div>
+
+          <div class="noti info rel">
+            <span>ℹ️</span>
+            <span>提交后化妆师会主动联系你。<b>如果你填完很久没人联系，可以直接加化妆师的微信。</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">C1</span>
+        <span class="nm">分享落地页（妆位页）</span>
+        <span class="tg g">M0 主屏</span>
+        <span class="tg">无需登录</span>
+        <span class="tg">提审截图 ②</span>
+      </div>
+      <div class="dev-desc">
+        结构 = <b>化妆师信息 + 妆面样片 + 可约妆位表 + 预期说明条</b>。<br>
+        本质是「<b>这个化妆师的个人页</b>」，不是作品广场 —— 没有点赞、没有评论、没有浏览数、没有「更多作品」。
+      </div>
+
+      <table class="spec">
+        <thead><tr><th>#</th><th>控件</th><th>位置</th><th>类型</th><th>点击后</th></tr></thead>
+        <tbody>
+          <tr><td class="no">—</td><td class="nm">‹ 返回</td><td class="ps">导航栏左</td><td><span class="k">系统</span></td><td class="ps">返回微信上一屏，无需实现</td></tr>
+          <tr><td class="no">7</td><td class="nm">我的预约</td><td class="ps">导航栏右 · 文字</td><td><span class="k pri">ghost</span></td><td class="ps">→ 我的预约列表（空态）。<br><b>⛔ 空态里绝不放「浏览化妆师」按钮</b> —— 那是收藏关系</td></tr>
+          <tr><td class="no">8</td><td class="nm">复制微信号</td><td class="ps">化妆师卡片第 2 行 · 行尾</td><td><span class="k pri">sec-sm</span></td><td class="ps"><b>✅ 真功能（约 10 行）</b>：复制到剪贴板 → Toast「微信号已复制」<br><b>⛔ 条件显示</b>：只在化妆师的「展示微信号」开关打开时渲染。关闭时<b>这一行整个不出现</b></td></tr>
+          <tr><td class="no">9</td><td class="nm">选这个妆位</td><td class="ps">妆位表第 2 行 · 行尾</td><td><span class="k pri">pri-xs</span></td><td class="ps">携 <span class="k">slot_id</span> → 填写预约单页。<b>提交前不锁定</b>，只在提交时才做并发校验</td></tr>
+          <tr><td class="no">10</td><td class="nm">选这个妆位</td><td class="ps">妆位表第 3 行 · 行尾</td><td><span class="k pri">pri-xs</span></td><td class="ps">同上（同一控件的第 2 行）</td></tr>
+          <tr><td class="no">—</td><td class="nm">已约妆位</td><td class="ps">妆位表第 1 行 · 行尾</td><td><span class="k gr">禁用态</span></td><td class="ps">灰色「已约」，<b>不可点</b>。<br>判定 = 该妆位存在 <span class="k">status ∈ {pending, confirmed}</span> 的单</td></tr>
+          <tr><td class="no">—</td><td class="nm">预期说明条</td><td class="ps">妆位表下方 · 常驻</td><td><span class="k">静态</span></td><td class="ps">不可点。<b>这是产品必需的，不是装饰</b>：化妆师拒绝顾客时没有任何通道能通知他，必须在落地页就把预期说清楚</td></tr>
+          <tr class="rl"><td class="no">⛔</td><td class="nm">点赞 / 评论 / 收藏 / 浏览数 / 转发数</td><td class="ps">妆面样片区</td><td><span class="k rd">禁止</span></td><td class="ps"><b>红线 1</b>：社交特征。个人主体没有「社交」类目</td></tr>
+          <tr class="rl"><td class="no">⛔</td><td class="nm">「更多作品」/ 作品列表页入口</td><td class="ps">妆面样片区</td><td><span class="k rd">禁止</span></td><td class="ps"><b>红线 1</b>：可枚举入口</td></tr>
+          <tr class="rl"><td class="no">⛔</td><td class="nm">金额 / 价格 / 定金 ¥X</td><td class="ps">全页任意位置</td><td><span class="k rd">禁止</span></td><td class="ps"><b>红线 2</b>：金额不得出现在顾客端</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note red" style="margin-bottom:0">
+        🔴 <b>本屏最容易被驳回的两处，都不在「少做了什么」，而在「多做了什么」。</b><br>
+        ① 妆面样片区一旦出现任何一个计数（哪怕是「3 张图」这种无害的数字），就构成<b>可枚举的公开内容区</b>；<br>
+        ② 妆位表一旦带上价格或「定金 ¥100」，就从<b>排班信息</b>变成<b>一次服务要约</b> —— 这是类目红线 2 的原文口径。<br>
+        → 妆位行<b>只有三样东西</b>：序号 · 时段 · 可约状态。多一个字段都要问自己为什么。
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────── 3.1 分享 ────────── -->
+  <h3 class="sub">3.1 分享：只用微信自带的，我们不做任何分享 UI</h3>
+
+  <div class="note ok">
+    ✅ <b>不做自定义分享面板。</b>微信原生分享（右上角「···」→ 转发，或页面里一个 <span class="k">&lt;button open-type="share"&gt;</span>）已经包含选聊天、转发、生成图片等全部能力。
+    <b>自己画一个只会更差，而且审核看到「诱导分享」还会额外找麻烦。</b><br>
+    📌 所以规格书里那 4 处「分享」（A1 快捷操作 / A4 卡片行尾 ×2 / A5 底栏）<b>本来也只是触发按钮，没有一处是要画面板的</b>。
+  </div>
+
+  <table class="spec">
+    <thead><tr><th>项</th><th>口径</th></tr></thead>
+    <tbody>
+      <tr><td class="nm">触发方式</td><td class="ps">① 用户点右上角「···」→ 转发；② 页面里放一个 <span class="k">&lt;button open-type="share"&gt;</span>，用户点它。<br>⚠️ <b>小程序没有能从 JS 主动唤起转发的 API</b>（<span class="k">wx.shareAppMessage</span> 是<b>小游戏</b>的，小程序里不适用）→ <b>所以按钮必须存在，否则只能靠用户自己去点右上角</b>。</td></tr>
+      <tr><td class="nm">「写那个代码」写在哪</td><td class="ps"><b>页面级 JS，不是云函数</b>：<br><span class="k">Page({ onShareAppMessage() { return { title, path, imageUrl } } })</span><br>唯一算后端活的只有 <span class="k">path</span> 里那个 <span class="k">artist_id</span> —— 由 C1 拿去调云函数拉 <span class="k">artists</span> / <span class="k">slots</span>。</td></tr>
+      <tr><td class="nm">卡片返回什么</td><td class="ps"><span class="k">title</span> =「示例的妆位 · 示例漫展」<br><span class="k">path</span> = <code>/pages/landing/landing?artist_id=demo</code><br><span class="k">imageUrl</span> = 第一张样片，比例 <b>5:4</b></td></tr>
+      <tr><td class="nm">按钮样式</td><td class="ps"><span class="k">&lt;button&gt;</span> 是<b>原生组件</b>，自带的 border / background / <span class="k">::after</span> 会给按钮套一层灰边，跟我们的 <span class="k">.btn</span> 打架，<b>必须重置</b>：<br><span class="k">border:none;background:transparent;line-height:normal</span> + <span class="k">button::after{border:none}</span>。这十几行是必写的。</td></tr>
+    </tbody>
+  </table>
+
+  <div class="note warn">
+    ⚠️ <b>原生分享带来一个 M0 必须解决的问题：审核员怎么走到 C1？</b><br>
+    C1 是提审截图要拍的屏，可它的唯一入口是分享卡片 —— <b>没有谁能分享给审核员</b>。<br>
+    <b>解法正好是原生分享</b>：审核员以化妆师身份进小程序 → 新建档期 → 点【分享我的妆位】→ <b>转发给「文件传输助手」</b> → 从聊天里点开卡片 → 进 C1。<br>
+    这是<b>自助的</b>，不依赖我们的任何自定义 UI。<br>
+    → 代价：<b>M0 里必须有一个 <span class="k">open-type="share"</span> 按钮</b>（已加在壳 5 底栏，见 <a href="#clicks" style="color:inherit">§6</a> 第 14 项）。<br>
+    → 📌 同时在<b>提审备注里写明顾客端页面路径</b> <code>/pages/landing/landing?artist_id=demo</code>，双保险。
+  </div>
+
+  <div class="note red">
+    🔴 <b>M0 明确不做 <span class="k">onShareTimeline</span>（分享到朋友圈）—— 这不是省事，是避坑。</b><br>
+    朋友圈点开进的是<b>「小程序单页模式」</b>，在那个模式下：<br>
+    ① <b>所有路由 API 被禁用</b>（<span class="k">navigateTo / redirectTo / switchTab / reLaunch / navigateBack</span>）→ <b>【选这个妆位】点不动</b>，只会弹「请前往小程序使用完整服务」；<br>
+    ② <b>没有登录态</b>，<span class="k">wx.login</span> 不可用，<b>云开发资源要开「未登录访问」才读得到</b> → C1 是要拉 <span class="k">artists</span> / <span class="k">slots</span> 的，<b>会白屏</b>（进单页模式时场景值 <span class="k">1154</span>）。<br>
+    → 这<b>正好同时踩中 M0 最怕的两件事：点了没反应 + 白屏。</b><br>
+    → 真要朋友圈，得单独做一个「单页模式展示版」落地页。<b>M0 不做，M1 之后再评估。</b>
+  </div>
+</section>
+
+<!-- ══════════════════ 4 壳页面 ══════════════════ -->
+<section id="shells">
+  <h2 class="sec"><span class="n">4</span>壳页面（6 个）</h2>
+  <p class="lead">
+    <b>这 6 屏不是可选项，是 M0 交付标准的一半。</b>上面两屏的每一个可点元素，落点都在这里 ——
+    它们可以只会「进得去 + 显示一句话 + 能退回来」，但<b>不能是白屏</b>。
+  </p>
+
+  <div class="shell-grid">
+
+    <!-- 壳 1 -->
+    <div class="shell-card" id="p-sched">
+      <div class="sh-hd"><span class="id">壳 1</span><span class="nm">档期列表 · 空态</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft" data-goto="p-a1">‹ 返回</span><span class="ttl">档期</span><span class="rgt" data-goto="p-new">新建</span></div>
+        <div class="pb" style="justify-content:center">
+          <div class="empty" style="padding:20px 14px">
+            <span class="ic">📅</span>
+            <div style="font-weight:600;color:var(--t1);margin-bottom:4px">还没有档期</div>
+            <div style="font-size:12px">新建一个档期，排好妆位<br>就能把链接发给客人了</div>
+          </div>
+          <div class="btn pri" style="margin:6px 12px 0;height:38px;font-size:13.5px" data-goto="p-new">新建档期</div>
+        </div>
+      </div>
+      <div class="sh-note">
+        落点：A1 <b>Tab · 档期</b>。<br>
+        <b>空态也必须有出口</b> —— 「新建」和「新建档期」都通到表单壳，避免审核员在这一屏走进死路。
+      </div>
+    </div>
+
+    <!-- 壳 2 -->
+    <div class="shell-card" id="p-orders">
+      <div class="sh-hd"><span class="id">壳 2</span><span class="nm">预约单列表 · 空态</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft" data-goto="p-a1">‹ 返回</span><span class="ttl">预约单</span><span class="rgt"></span></div>
+        <div class="pb" style="justify-content:center">
+          <div class="empty" style="padding:20px 14px">
+            <span class="ic">📋</span>
+            <div style="font-weight:600;color:var(--t1);margin-bottom:4px">还没有预约单</div>
+            <div style="font-size:12px">客人通过你分享的链接填单后<br>预约单会出现在这里</div>
+          </div>
+        </div>
+      </div>
+      <div class="sh-note">
+        落点：A1 <b>Tab · 预约单</b> + C1 <b>我的预约</b>（同一个列表，化妆师看到自己的单、顾客看到自己的单）。<br>
+        ⛔ <b>空态里绝不放「浏览化妆师」按钮</b> —— 那是收藏关系，红线。
+      </div>
+    </div>
+
+    <!-- 壳 3 -->
+    <div class="shell-card" id="p-me">
+      <div class="sh-hd"><span class="id">壳 3</span><span class="nm">我的</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft"></span><span class="ttl">我的</span><span class="rgt"></span></div>
+        <div class="pb tight">
+          <div class="card tight" style="display:flex;gap:10px;align-items:center">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">示</div>
+            <div style="flex:1">
+              <div style="font-size:14px;font-weight:700">示例</div>
+              <div style="font-size:11px;color:var(--t3);margin-top:1px">上海 · 建模感 / 浓系 / 展妆</div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="cell"><span class="cl">我的资料</span><span class="cr">›</span></div>
+            <div class="cell"><span class="cl">我的作品</span><span class="cr">0 张 ›</span></div>
+            <div class="cell" data-goto="p-settings"><span class="cl">设置</span><span class="cr">›</span></div>
+            <div class="cell"><span class="cl">关于妆历</span><span class="cr">›</span></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <span class="tb" data-goto="p-a1"><span class="ic">🏠</span>工作台</span>
+          <span class="tb" data-goto="p-sched"><span class="ic">📅</span>档期</span>
+          <span class="tb" data-goto="p-orders"><span class="ic">📋</span>预约单</span>
+          <span class="tb on"><span class="ic">👤</span>我的</span>
+        </div>
+      </div>
+      <div class="sh-note">
+        落点：A1 <b>Tab · 我的</b>。<br>
+        M0 只放静态资料项。<b>⛔ 绝不放「邀请同行」</b> —— 它最像增长手段，同时是多商户入驻最直接的证据。
+      </div>
+    </div>
+
+    <!-- 壳 4 -->
+    <div class="shell-card" id="p-settings">
+      <div class="sh-hd"><span class="id">壳 4</span><span class="nm">设置</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft" data-goto="p-a1">‹ 返回</span><span class="ttl">设置</span><span class="rgt"></span></div>
+        <div class="pb tight">
+          <div class="sw-row">
+            <div style="flex:1">
+              <div style="font-size:13.5px">在分享页展示我的微信号</div>
+              <div style="font-size:11px;color:var(--t3);margin-top:3px;line-height:1.6">
+                打开后，<b style="color:var(--warn)">所有拿到链接的人（含被转发后）都能看到</b><br>
+                <b style="color:var(--ok)">关掉不减少任何功能</b>，客人仍能提交预约单
+              </div>
+            </div>
+            <span class="sw on"></span>
+          </div>
+          <div class="grp">
+            <div class="cell"><span class="cl">我的资料</span><span class="cr">›</span></div>
+            <div class="cell"><span class="cl">用户隐私保护指引</span><span class="cr">›</span></div>
+            <div class="cell"><span class="cl">关于妆历</span><span class="cr">版本 0.1.0 ›</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sh-note">
+        落点：A1 导航栏右<b>「设置」</b> + 我的页「设置」行。<br>
+        📌 <b>这个开关是本产品的政策核心，两条提示缺一不可</b>：只说「关掉不影响功能」，化妆师不敢关；只说「会被看到」，她不敢开。<br>
+        ⚠️ 「用户隐私保护指引」入口<b>是提审必需项</b>，M0 就要挂上。
+      </div>
+    </div>
+
+    <!-- 壳 5 -->
+    <div class="shell-card" id="p-new">
+      <div class="sh-hd"><span class="id">壳 5</span><span class="nm">新建档期（表单壳）</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft" data-goto="p-a1">取消</span><span class="ttl">新建档期</span><span class="rgt" data-goto="p-toast">保存</span></div>
+        <div class="pb nopad">
+          <div class="fld"><span class="lb">日期</span><span class="vl filled">2026-05-02</span></div>
+          <div class="fld"><span class="lb">名称</span><span class="vl filled">示例漫展</span></div>
+          <div class="fld"><span class="lb">起始时间</span><span class="vl filled">09:00</span></div>
+          <div class="fld"><span class="lb">妆位时长</span><span class="vl filled">80 分钟</span></div>
+          <div class="fld"><span class="lb">休息间隔</span><span class="vl filled">10 分钟</span></div>
+          <div class="fld"><span class="lb">妆位数</span><span class="vl filled">3 个</span></div>
+          <div class="note warn" style="margin:9px;font-size:11.5px;line-height:1.65">
+            ⚠️ <b>「名称」必须是自由文本</b>（红线 3）。个人主体没有「文娱 / 资讯」类目，做成平台维护的枚举字典或「展会页」= 双违规。
+          </div>
+        </div>
+        <div class="footbar">
+          <div class="btn pri" style="flex:1;position:relative" data-goto="p-c1">📤 分享我的妆位<span class="mk ok" style="left:-9px;top:-9px">14</span></div>
+        </div>
+      </div>
+      <div class="sh-note">
+        落点：A1 <b>【新建第一个档期】</b> + 档期列表的「新建」。<br>
+        <b>M0 深度</b>：表单壳 + 导航栏「保存」给成功 Toast 即可。<br>
+        ⚠️ 「保存」之后要有响应 —— 弹 Toast 再退回档期列表（空态），<b>不要停在原页什么都不发生</b>。<br>
+        <br>
+        🔴 <b>底栏【分享我的妆位】是 M0 的必需件，不是锦上添花。</b><br>
+        它是<b>审核员走到 C1 的唯一自助路径</b>（转发给「文件传输助手」再点开）。实现 = <span class="k">&lt;button open-type="share"&gt;</span> + 页面里的 <span class="k">onShareAppMessage</span>，
+        <b>零额外 UI</b>，见 §3.1。<br>
+        ⚠️ 点它会走原生分享（不是跳页）—— 这里指向 C1 只是让走查看得见因果。
+      </div>
+    </div>
+
+    <!-- 壳 6 -->
+    <div class="shell-card" id="p-form">
+      <div class="sh-hd"><span class="id">壳 6</span><span class="nm">填写预约单</span><span class="tag red">M0 最关键落点</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft" data-goto="p-c1">‹ 返回</span><span class="ttl">填写预约单</span><span class="rgt"></span></div>
+        <div class="pb tight">
+          <div class="card tight" style="border:1px solid #EFD3DA;background:var(--brand-l)">
+            <div style="font-size:11px;color:var(--brand-d);opacity:.85">你选的妆位</div>
+            <div style="font-size:13.5px;font-weight:600;color:var(--brand-d);margin-top:2px">示例漫展 · 第 2 位 · 10:30 – 11:50</div>
+          </div>
+          <div class="grp">
+            <div class="fld"><span class="lb">角色名</span><span class="vl filled">示例角色</span></div>
+            <div class="fld"><span class="lb">微信号</span><span class="vl filled">demo_guest</span></div>
+            <div class="fld"><span class="lb">备注</span><span class="vl">选填</span></div>
+          </div>
+          <div class="sec-ttl" style="padding-top:2px">妆感（可多选）</div>
+          <div class="chips">
+            <span class="chip on">建模感</span><span class="chip on">浓系</span><span class="chip">展妆</span>
+            <span class="chip">日常妆</span><span class="chip">正片妆</span><span class="chip">古风妆</span>
+            <span class="chip">韩妆</span><span class="chip">其他</span>
+          </div>
+          <div style="font-size:11px;color:var(--t3);line-height:1.65;padding:2px">
+            ⚠️ 妆感是<b>封闭枚举</b>（15 项），化妆师勾的选项直接变成这一排 chip。<br>
+            纯工具版没有搜索了，<b>但仍必须封闭 —— 理由从「要能筛」变成「用户要能读懂」</b>。
+          </div>
+        </div>
+        <div class="footbar">
+          <div class="btn pri" style="flex:1" data-goto="p-toast">提交预约单</div>
+        </div>
+      </div>
+      <div class="sh-note">
+        落点：C1 <b>【选这个妆位】</b>。<br>
+        🔴 <b>这是整份文件最关键的一行。</b>审核员一定会点它 —— 点进去看到白屏就是「功能不完整」驳回。<br>
+        <b>它必须是真跳转</b>，哪怕落地页只是表单壳。<br>
+        📌 <b>建议做到「能提交」</b>：比做到「能看」多不了多少工作，但审核员点「提交」得到成功反馈，比得到「功能开发中」强得多。<br>
+        <b>M0 深度二选一</b>：① 压成一步 + 真写库（推荐）；② 保留 5 步进度条，只做第 1 步 + 「下一步」给 Toast。
+        <br><br>
+        📌 <b>提交按钮上还挂着一个「只能挂在这里」的东西</b>：<span class="k">wx.requestSubscribeMessage</span>（订「预约提醒」模板）。<br>
+        官方规定<b>必须在用户点击行为里调起</b> —— 全流程只有「提交」这一次机会。<b>所以它是界面结构级的约束，不是后端细节。</b>
+        M0 可以先不实现，但<b>按钮的位置和时机要给它留出来</b>（见 §5 第 12 项）。
+        <br><br>
+        ⚠️ <b>若「提交」真写库</b>：顾客填的角色名 / 备注就是落库的 UGC，按微信要求要过 <span class="k">security.msgSecCheck</span>。
+        <b>M0 要么不落库（纯前端假成功，最省），要么落库前过检。</b>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="note warn">
+    ⚠️ <b>壳不等于随便。</b>一个合格的壳 = <b>进得去（不是白屏）+ 有一句像样的话 + 能退回来（导航栏左「‹ 返回」永远在）</b>。<br>
+    最容易被忽略的是第三条：审核员点进「我的作品」发现只有一片空白且没有返回，会以为卡死了。
+  </div>
+</section>
+
+<!-- ══════════════════ 5 可点性清单 ══════════════════ -->
+<section id="clicks">
+  <h2 class="sec"><span class="n">5</span>可点性清单【M0 的真正工作量】</h2>
+  <p class="lead">
+    <b>每一个可点元素都必须有响应。这张表就是 M0 的验收标准 —— 逐行点过去，没有一处白屏就过关。</b>
+  </p>
+
+  <div class="chk">
+    <div class="hd"><span>✅ 全部可点元素 · 14 个</span><span class="ct">按「先主屏、后壳内」的顺序排</span></div>
+    <table class="spec">
+      <thead><tr><th>#</th><th>屏</th><th>可点元素</th><th>M0 响应</th><th>做不做真功能</th></tr></thead>
+      <tbody>
+        <tr><td class="no">1</td><td class="ps">A1</td><td class="nm">设置</td><td class="ps">进「设置」页，页内含微信号开关 + 隐私指引入口</td><td><span class="k or">壳</span></td></tr>
+        <tr><td class="no">2</td><td class="ps">A1</td><td class="nm">新建第一个档期</td><td class="ps">进档期编辑页（表单壳 +「保存」给 Toast）</td><td><span class="k or">壳</span></td></tr>
+        <tr><td class="no">3</td><td class="ps">A1</td><td class="nm">Tab · 工作台</td><td class="ps">当前页，无跳转</td><td><span class="k">—</span></td></tr>
+        <tr><td class="no">4</td><td class="ps">A1</td><td class="nm">Tab · 档期</td><td class="ps">进档期列表（空态：「还没有档期」）</td><td><span class="k or">壳</span></td></tr>
+        <tr><td class="no">5</td><td class="ps">A1</td><td class="nm">Tab · 预约单</td><td class="ps">进预约单列表（空态：「还没有预约单」）</td><td><span class="k or">壳</span></td></tr>
+        <tr><td class="no">6</td><td class="ps">A1</td><td class="nm">Tab · 我的</td><td class="ps">进「我的」页（静态资料项）</td><td><span class="k or">壳</span></td></tr>
+        <tr><td class="no">7</td><td class="ps">C1</td><td class="nm">我的预约</td><td class="ps">进「我的预约」（空态，<b>⛔ 不放「浏览化妆师」按钮</b>）</td><td><span class="k or">壳</span></td></tr>
+        <tr><td class="no">8</td><td class="ps">C1</td><td class="nm">复制微信号</td><td class="ps">真复制 + Toast「微信号已复制」</td><td><span class="k gr">✅ 真功能（约 10 行）</span></td></tr>
+        <tr><td class="no">9</td><td class="ps">C1</td><td class="nm">选这个妆位（第 2 行）</td><td class="ps">🔴 <b>必须能进填表页</b> —— 审核员一定会点</td><td><span class="k rd">壳，但必须是真跳转</span></td></tr>
+        <tr><td class="no">10</td><td class="ps">C1</td><td class="nm">选这个妆位（第 3 行）</td><td class="ps">同上，携带各自 <span class="k">slot_id</span></td><td><span class="k rd">壳，但必须是真跳转</span></td></tr>
+        <tr><td class="no">—</td><td class="ps">C1</td><td class="nm">已约妆位</td><td class="ps">灰色禁用态，<b>不可点</b></td><td><span class="k">—</span></td></tr>
+        <tr><td class="no">11</td><td class="ps">壳 1/5</td><td class="nm">保存（新建档期）</td><td class="ps">Toast「档期已保存」→ 退回档期列表</td><td><span class="k or">壳</span></td></tr>
+        <tr><td class="no">12</td><td class="ps">壳 6</td><td class="nm">提交预约单 / 下一步</td><td class="ps">成功反馈 → 进「我的预约」。<b>推荐真写库</b></td><td><span class="k gr">壳 或 真</span></td></tr>
+        <tr><td class="no">13</td><td class="ps">全部壳</td><td class="nm">‹ 返回</td><td class="ps">返回上一屏。<b>每一屏都必须有</b></td><td><span class="k">导航</span></td></tr>
+        <tr><td class="no">14</td><td class="ps">壳 5</td><td class="nm">📤 分享我的妆位</td><td class="ps">🔴 唤起<b>微信原生转发</b>（<span class="k">&lt;button open-type="share"&gt;</span>）<br><b>它是审核员走到 C1 的唯一自助路径</b> —— 见 §3.1</td><td><span class="k gr">✅ 真功能（零额外 UI）</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="rl-bar">
+    🔴 <b>最关键的一行是 #9 / #10。【选这个妆位】。</b><br>
+    审核员点进去看到白屏 = 「功能不完整」驳回。它必须是真跳转，哪怕落地页只是表单壳。
+  </div>
+
+  <h3 class="sub">5.1 走查路径（照这个顺序点一遍，全过 = M0 可提审）</h3>
+
+  <div class="sec-ttl">路径 1 · 化妆师自己用</div>
+  <div class="flow">
+    <span class="n2 p">打开小程序</span><span class="ar">→</span>
+    <span class="n2">工作台空态</span><span class="ar">→</span>
+    <span class="n2">新建第一个档期</span><span class="ar">→</span>
+    <span class="n2">保存</span><span class="ar">→</span>
+    <span class="n2">档期列表</span><span class="ar">→</span>
+    <span class="n2">返回工作台</span>
+  </div>
+
+  <div class="sec-ttl" style="margin-top:14px">路径 2 · 顾客端（也是审核员看到 C1 的唯一路径）</div>
+  <div class="flow">
+    <span class="n2 p">新建档期页</span><span class="ar">→</span>
+    <span class="n2">📤 分享我的妆位</span><span class="ar">→</span>
+    <span class="n2">转发给「文件传输助手」</span><span class="ar">→</span>
+    <span class="n2">从聊天点开卡片</span><span class="ar">→</span>
+    <span class="n2 p">C1 落地页</span><span class="ar">→</span>
+    <span class="n2">选这个妆位</span><span class="ar">→</span>
+    <span class="n2">填表 → 提交</span><span class="ar">→</span>
+    <span class="n2">我的预约</span><span class="ar">→</span>
+    <span class="n2">返回</span>
+  </div>
+
+  <div class="note ok">
+    ✅ <b>两条路径走完，一共经过 8 个界面，没有任何一处白屏 = M0 的交付标准达成。</b><br>
+    📌 建议在提审前<b>自己用真机走三遍</b>，每一遍都会发现一两个「点了没反应」的地方 —— 那就是驳回点。<br>
+    ⚠️ <b>路径 2 的第一步不能省</b>：审核员没有别的办法进 C1，这一整条链子就是他的入口。
+  </div>
+</section>
+
+<!-- ══════════════════ 6 Toast ══════════════════ -->
+<section id="toasts">
+  <h2 class="sec"><span class="n">6</span>Toast 文案清单（照抄）</h2>
+  <p class="lead">
+    M0 一共只需要 3 条 Toast。<b>文案要一次定死</b> —— 审核员会看到它，它也是「功能是完整的」这个印象的一部分。
+  </p>
+
+  <div class="shell-grid" style="margin-bottom:4px">
+
+    <div class="shell-card" id="p-toast">
+      <div class="sh-hd"><span class="id">C1</span><span class="nm">复制微信号 · Toast</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft">‹ 返回</span><span class="ttl">示例的妆位</span><span class="rgt">我的预约</span></div>
+        <div class="pb" style="justify-content:flex-end">
+          <div class="card">
+            <div style="display:flex;gap:10px;align-items:center">
+              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">示</div>
+              <div style="flex:1"><div style="font-size:13.5px;font-weight:700">示例</div>
+                <div style="font-size:11px;color:var(--t3);margin-top:1px">上海 · 建模感 / 浓系 / 展妆</div></div>
+            </div>
+            <div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div>
+                <div style="font-size:10.5px;color:var(--t3)">微信号</div>
+                <div style="font-size:13px;font-weight:600">demo_makeup</div>
+              </div>
+              <span class="btn sec sm" style="background:#E8DDE0;color:var(--t3)">已复制</span>
+            </div>
+          </div>
+        </div>
+        <div class="toast">微信号已复制</div>
+      </div>
+      <div class="sh-note">
+        <b>停留原页，不跳转。</b>按钮短暂变「已复制」再复原。<br>
+        📌 不要用「跳去微信」的引导弹窗 —— 小程序<b>无法唤起微信加好友</b>，那个弹窗一定是死路。
+      </div>
+    </div>
+
+    <div class="shell-card">
+      <div class="sh-hd"><span class="id">壳 5</span><span class="nm">保存档期 · Toast</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft">取消</span><span class="ttl">新建档期</span><span class="rgt">保存</span></div>
+        <div class="pb nopad" style="justify-content:flex-end">
+          <div class="fld"><span class="lb">日期</span><span class="vl filled">2026-05-02</span></div>
+          <div class="fld"><span class="lb">名称</span><span class="vl filled">示例漫展</span></div>
+          <div class="fld"><span class="lb">妆位数</span><span class="vl filled">3 个</span></div>
+        </div>
+        <div class="toast">档期已保存</div>
+      </div>
+      <div class="sh-note">
+        <b>Toast 结束后退回档期列表。</b><br>
+        ⚠️ 不要停在原页什么都不发生 —— 审核员会连点三次「保存」，然后判定按钮坏了。
+      </div>
+    </div>
+
+    <div class="shell-card">
+      <div class="sh-hd"><span class="id">壳 6</span><span class="nm">提交预约单 · Toast</span></div>
+      <div class="phone">
+        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
+        <div class="nav"><span class="lft">‹ 返回</span><span class="ttl">填写预约单</span><span class="rgt"></span></div>
+        <div class="pb tight" style="justify-content:flex-end">
+          <div class="card tight" style="border:1px solid #EFD3DA;background:var(--brand-l)">
+            <div style="font-size:10.5px;color:var(--brand-d);opacity:.85">你选的妆位</div>
+            <div style="font-size:12.5px;font-weight:600;color:var(--brand-d);margin-top:2px">示例漫展 · 第 2 位 · 10:30 – 11:50</div>
+          </div>
+          <div class="grp">
+            <div class="fld"><span class="lb">角色名</span><span class="vl filled">示例角色</span></div>
+            <div class="fld"><span class="lb">微信号</span><span class="vl filled">demo_guest</span></div>
+          </div>
+        </div>
+        <div class="toast">预约单已提交，化妆师会联系你</div>
+      </div>
+      <div class="sh-note">
+        <b>之后进「我的预约」</b>（真写库的话，这里会看到刚提交的 1 条）。<br>
+        📌 这条文案把「<b>谁来联系 · 怎么联系</b>」说清了 —— 它同时替掉了那条发不出去的订阅消息。
+      </div>
+    </div>
+
+  </div>
+
+  <div class="note warn">
+    ⚠️ <b>Toast 的统一规格</b>：居中偏下（距底 ~66px，避开底部安全区）· 深色半透明底 · 1.5–2 秒自动消失 · <b>同一时刻只显示一条</b>。
+    三处文案<b>不要各写各的</b>——统一放一个常量文件。
+  </div>
+
+  <div class="note red">
+    ⛔ <b>M0 禁止出现的提示</b>：<br>
+    「功能开发中」「敬请期待」「该功能即将上线」—— 审核员看到这类文案，等于你主动告诉他「功能不完整」。<br>
+    <b>宁可把壳做得再浅一点，也不要写这句话。</b>
+  </div>
+</section>
+
+<!-- ══════════════════ 7 红线自查 ══════════════════ -->
+<section id="redlines">
+  <h2 class="sec"><span class="n">7</span>M0 红线自查（提审前逐条打勾）</h2>
+  <p class="lead">
+    <b>§1.5 的 10 条红线 + PRD §5.2 的 13 条，在 M0 同样生效。</b>
+    不因为它是「最小版本」就可以放宽 —— 恰恰相反，<b>M0 就是拿来看这些红线会不会触发的</b>。
+  </p>
+
+  <div class="chk">
+    <div class="hd"><span>⛔ 逐条确认「没有做」</span><span class="ct">任何一条打不了勾，就不要提交</span></div>
+    <table class="spec">
+      <thead><tr><th>#</th><th>⛔ 不能做的事</th><th>为什么</th></tr></thead>
+      <tbody>
+        <tr><td class="no">1</td><td class="nm">「邀请同行」/「邀请有奖」</td><td class="ps"><b>多商户入驻最直接的证据。</b>M0 更容易犯 —— 因为它最像「增长手段」</td></tr>
+        <tr><td class="no">2</td><td class="nm">「浏览所有化妆师」入口</td><td class="ps">立刻是平台。<b>个人主体没有平台类目可申请 = 无解</b></td></tr>
+        <tr><td class="no">3</td><td class="nm">顾客端出现任何金额</td><td class="ps"><b>红线 2</b>。妆位不带价格字段，定金只标「已收 / 未收」</td></tr>
+        <tr><td class="no">4</td><td class="nm">点赞 / 评论 / 收藏 / 浏览数</td><td class="ps"><b>红线 1</b>。个人主体无「社交」类目</td></tr>
+        <tr><td class="no">5</td><td class="nm">「更多作品」/ 作品列表页入口</td><td class="ps"><b>红线 1</b>。可枚举入口 = 公开内容区</td></tr>
+        <tr><td class="no">6</td><td class="nm">漫展名做成平台维护的枚举字典</td><td class="ps"><b>红线 3</b>。必须是自由文本。做成「展会页」= 双违规</td></tr>
+        <tr><td class="no">7</td><td class="nm">备注里写「平台」二字</td><td class="ps"><b>上次驳回的直接根因。</b>对外文案「撮合 / 平台 / 交易」三词一律删除，改「展示 / 预约 / 咨询」</td></tr>
+        <tr><td class="no">8</td><td class="nm">用「订单」这个词</td><td class="ps">个人版「信息查询」比非个人版<b>少了「订单」二字</b> → 全站用「<b>预约单</b>」</td></tr>
+        <tr><td class="no">9</td><td class="nm">用真实化妆师的照片和信息</td><td class="ps"><b>审核期是公开可查的。</b>全部用「示例」/ <code>demo_makeup</code> / 占位图</td></tr>
+        <tr><td class="no">10</td><td class="nm">「功能开发中」类提示文案</td><td class="ps">等于主动承认功能不完整</td></tr>
+        <tr><td class="no">11</td><td class="nm">开启 <span class="k">onShareTimeline</span>（分享到朋友圈）</td><td class="ps"><b>M0 禁止</b>：朋友圈打开进「小程序单页模式」，路由 API 全禁用 + <span class="k">wx.login</span> 不可用 → <b>【选这个妆位】点不动 + C1 拉不到数据会白屏</b>。见 §3.1</td></tr>
+        <tr><td class="no">12</td><td class="nm">诱导分享（分享得奖励 / 必须先分享才能继续）</td><td class="ps">微信明令禁止，且是「邀请有奖」的变体 —— <b>它同时踩平台规则和类目红线</b></td></tr>
+        <tr><td class="no">13</td><td class="nm">自定义分享面板 / 分享图自己画</td><td class="ps">原生转发已经全有。<b>自己画只会更差，还多一个「诱导分享」的嫌疑面</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>对外文案红线（本文件已全部遵守，照着抄即可）：</b><br>
+    「妆娘」→ 一律写「<b>化妆师</b>」 · 「戳 / 戳一下」→ 属内部代号，对外写「<b>询问档期</b>」 · 「撮合 / 平台 / 交易」→ 一律删除，改「<b>展示 / 预约 / 咨询</b>」。
+  </div>
+</section>
+
+<!-- ══════════════════ 8 假数据 ══════════════════ -->
+<section id="data">
+  <h2 class="sec"><span class="n">8</span>假数据预置（照这个建）</h2>
+  <p class="lead">
+    M0 只需要 4 条假数据就能撑起两屏。<b>全部用明显是示例的数据</b> —— 审核期是公开可查的。
+  </p>
+
+  <div class="chk">
+    <div class="hd"><span>🗃 假数据 · 4 项</span><span class="ct">建完就不用再动了</span></div>
+    <table class="spec">
+      <thead><tr><th>表 / 位置</th><th>记录</th><th>关键字段值</th></tr></thead>
+      <tbody>
+        <tr><td class="ps"><span class="k">artists</span></td><td class="nm">1 条（示意化妆师）</td><td class="ps">昵称「<b>示例</b>」 · 城市「上海」 · 妆感标签「建模感 / 浓系 / 展妆」 · <span class="k">wechat_id</span> = <code>demo_makeup</code> · 展示开关 = <b>开</b></td></tr>
+        <tr><td class="ps"><span class="k">schedules</span></td><td class="nm">1 条（示例漫展）</td><td class="ps">名称「<b>示例漫展</b>」（自由文本） · 日期 2026-05-02</td></tr>
+        <tr><td class="ps"><span class="k">slots</span></td><td class="nm">3 条</td><td class="ps">① 09:00–10:20 <b>已约</b> · ② 10:30–11:50 可约 · ③ 13:00–14:20 可约<br>「已约」= 存在一条 <span class="k">status ∈ {pending, confirmed}</span> 的预约单</td></tr>
+        <tr><td class="ps">云存储</td><td class="nm">3 张占位图</td><td class="ps">纯色块或「占位图」字样。<b>不要用真人照片，避免肖像权问题</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note warn">
+    ⚠️ <b>假数据的一个隐藏作用：它同时也是「微信号不会泄漏」这条的实现验证。</b><br>
+    <span class="k">artists.wechat_id</span> <b>绝不能出现在主页接口的返回值里</b>，只能由 <span class="k">showContact</span> 这类云函数校验后单独返回 ——
+    <b>这是全项目最容易写错、也最致命的一处</b>。M0 只有 1 条假数据，是把它写对的最好时机。
+  </div>
+
+  <h3 class="sub">8.1 🔴 M0 提审的两件「后台动作」——跟代码无关，但漏了就提不了审</h3>
+
+  <div class="note warn">
+    ① <b>《用户隐私保护指引》要配置并发布</b> —— 填表页收集微信号 / 紧急联系方式，属于采集用户信息。<br>
+    ② <b>提审时「是否采集用户隐私」必须勾「采集」</b> —— 官方文档写明：<b>勾了「未采集隐私」或未声明隐私协议，平台会回收接口调用权限</b>。
+    报错长这样：<span class="k">fail appid privacy api banned</span>（权限被回收）；<span class="k">errno 112</span>（用了某个隐私类型但没在指引里声明，补齐后约 5 分钟生效）。
+  </div>
+
+  <div class="note ok">
+    ✅ <b>好消息：M0 不需要画「隐私授权弹窗」，不加屏。</b><br>
+    那个弹窗只在调用<b>隐私接口 / 组件</b>（<span class="k">chooseMedia</span> / <span class="k">chooseAvatar</span> / <span class="k">getLocation</span> 等）时才触发；
+    M0 全是手输 <span class="k">&lt;input&gt;</span> + 假数据，<b>一个都不碰</b>。<br>
+    ⚠️ 但 M1 一旦做化妆师上传头像 / 样片（<span class="k">chooseMedia</span>），弹窗就必须做 —— 那时要注册 <span class="k">wx.onNeedPrivacyAuthorization</span> 自己画，或用平台默认弹窗。
+  </div>
+
+  <div class="note ok" style="margin-bottom:0">
+    ✅ <b>M0 做完之后，回头看的顺序</b>：<br>
+    ① 真机走 §5.1 那两条路径各三遍 → ② 逐条打勾 §8 的 13 条红线 → ③ 配好 §8.1 那两件后台动作 → ④ 拍 A1 + C1 两张截图 → ⑤ 提交。<br>
+    <b>⚠️ 提醒：类目通过之前提不了审</b>（版本提审用的是已生效的类目），所以类目审核的等待时间和 M0 的 2 天是同一个窗口，可以并行。
+  </div>
+</section>
+
+</div>
+
+<script>
+/* M0 界面稿的走查辅助：点带 data-goto 的控件 → 滚到真实落点并高亮。
+   只用于这份稿子的自查，与小程序实现无关。 */
+document.querySelectorAll('[data-goto]').forEach(function (el) {
+  el.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var target = document.getElementById(el.getAttribute('data-goto'));
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.classList.remove('flash');
+    void target.offsetWidth;          /* 强制重排，让动画能重播 */
+    target.classList.add('flash');
+    setTimeout(function () { target.classList.remove('flash'); }, 2900);
+  });
+});
+</script>
+
+</body>
+</html>
