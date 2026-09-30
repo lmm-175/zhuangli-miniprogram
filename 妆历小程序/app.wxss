@@ -181,6 +181,36 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
       background:#fff;font-size:28rpx;color:var(--t2)}
 .chip.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d);font-weight:600}
 
+/* ── 接妆风格页：可自填的词（2026-09-30 第十八处）──────────────────
+   🔴 `.style-chips .chip{min-height:88rpx}` 用的是【微信的点击区建议值】，
+      ⛔ 别照着视觉缩回去 —— Request O 那三轮翻车（README 第 21 条）的
+      根因就是那颗小签只有五十几 rpx，手指十次有三四次落在它旁边的
+      空白里，而那空白属于另一个动作（卡片＝进详情）。
+      这一页的 chip 是「点一下就改变状态」的键，一个都不能小。
+   ⚠️ 命中区一律用 padding 圈，⛔ 不用 margin —— margin 是点不到的空白。
+   ⚠️ `.style-chips` 是本页专用的一层壳（这一页没有自己的 .wxss），
+      ⛔ 别把 min-height 写进 `.chip` 本身：那会连累预约单那些 chip。 */
+.style-chips .chip{display:inline-flex;align-items:center;min-height:88rpx}
+
+/* 她自己加的词：本体＝勾选，右边那颗 ✕＝删。
+   ⚠️ 左边留 29rpx（跟预设 chip 的内边距一致），右边不留 —— 右边整块给 ✕。 */
+.chip.mine{padding:0 0 0 29rpx}
+.cx{display:flex;align-items:center;justify-content:center;align-self:stretch;
+    min-width:64rpx;padding:0 18rpx;font-size:26rpx;opacity:.6}
+/* 选中的词，✕ 也一起变实：让她一眼看出「这颗亮的、能删」。 */
+.chip.mine.on .cx{opacity:1}
+
+/* 「＋ 自定义」的入口。⚠️ 画成虚线的、浅色的 —— ⛔ 不能长得跟词一样，
+   不然她会去点它来"选中"它（那正是「点了没反应」的一种长相）。 */
+.chip.cb{border-style:dashed;color:var(--brand-d)}
+
+/* 打开态那一行：输入框 + 添加 + 丢掉。
+   ⚠️ 添加/丢掉直接用全局的 `.btn.sm`（⛔ 不另造一个小键的壳）。 */
+.addrow{display:flex;align-items:center;gap:16rpx;padding:16rpx 4rpx 0}
+.addip{flex:1;min-width:0;height:76rpx;line-height:76rpx;box-sizing:border-box;
+       background:#fff;border:1px solid var(--line);border-radius:15rpx;
+       padding:0 22rpx;font-size:28rpx}
+
 /* ── chip 组的分组小标题（「妆感」那 5 组、「接妆风格」那 5 组）────────
    ⚠️ 2026-09-30（第十七处）：这两条原先只长在
       pages/booking-form/booking-form.wxss 里。style-edit 页要用**同一套长相**，

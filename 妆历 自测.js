@@ -3055,8 +3055,13 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('★ 去重', AS.buildStyleText(['展妆', '展妆', '自然感']), '自然感 / 展妆')
   eq('★ 空数组不炸、返回空串', AS.buildStyleText([]), '')
   eq('★ 喂 undefined 也不炸', AS.buildStyleText(undefined), '')
-  eq('★ 词表外的词沉到最后（不该有，但不能崩）',
+  /* 📌 第十八处：自填词就是「词表外的词」，它现在是**正常数据**了，
+     所以这条断言的措辞从「不该有，但不能崩」改成「其余按入参顺序排在预设词后面」。
+     ⚠️ 行为一个字没变（显式拼接取代了原来靠 sort 稳定性的写法）。 */
+  eq('★ 预设词在前、其余按入参顺序跟在后',
     AS.buildStyleText(['没这个词', '展妆']), '展妆 / 没这个词')
+  eq('★ 两个词表外的词，按入参顺序（⛔ 不重排）',
+    AS.buildStyleText(['乙词', '展妆', '甲词']), '展妆 / 乙词 / 甲词')
 
   // 反推（只用来兜底不完整的旧数据）
   eq('★ 反推：一句话拆回标签',
@@ -3077,13 +3082,21 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('★ 全是空格也兜底', AS.initialOf('   '), '妆')
   eq('★ 喂 undefined 也兜底', AS.initialOf(undefined), '妆')
 
-  const opts = AS.toStyleOptions(['展妆'])
+  /* 📌 第十八处：`toStyleOptions(picked)` → `toStyleView(presets, custom)`。
+     新签名一次给出**勾选态 + 扁平并集**（旧版页面上要自己再算一份 picked，
+     两处算同一个东西，迟早有一处先烂掉）。下面这几条的具体期望值原样不变。 */
+  const viewB = AS.toStyleView(['展妆'], [])
+  const opts = viewB.groups
   eq('★ 勾选态：5 组', opts.length, 5)
   eq('★ 只有已存的那个词是勾上的',
     opts.reduce((a, g) => a + g.items.filter((i) => i.on).length, 0), 1)
   eq('★ 勾上的是展妆',
     opts.reduce((a, g) => a.concat(g.items.filter((i) => i.on).map((i) => i.name)), []).join(','),
     '展妆')
+  eq('🔴★ 一次调用同时给出扁平并集 picked（⛔ 页面不许自己再算一份）',
+    viewB.picked.join(','), '展妆')
+  eq('★ 没有自填词时，每组的 custom 都是空的',
+    opts.filter((g) => g.custom.length).length, 0)
   /* ⛔ 唯一一处「已存标签 → 勾选态」的映射。页面再自己 map 一遍的话，
      两次实现迟早有一次先烂掉，而且是静默烂。 */
   eq('🔴★ toggleTag 不改入参（纯函数，返回新数组）',
@@ -3111,13 +3124,17 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     AS.validateIntro('第一段\n\n第二段').value, '第一段\n\n第二段')
   eq('★ 简介首尾的空白 trim 掉（留着会让 landing 的 wx:if 对纯空白成立）',
     AS.validateIntro('\n  正文  \n').value, '正文')
-  eq('★ 风格一个没选 → 拦住', AS.validateStyleTags([]).ok, false)
-  eq('★ 风格一个没选的话术', AS.validateStyleTags([]).error,
+  /* 📌 第十八处：`validateStyleTags(arr)` → `validateStyles(presets, custom)`。
+     ⚠️ 期望值一个都没变 —— 尤其下面那条「词表外的词要拦住」：
+        它现在防的是【写坏了的数据 / 别的调用方】，⛔ 不是防页面
+        （妆娘的自填词走的是另一条通道，根本不会进这个入参）。 */
+  eq('★ 风格一个没选 → 拦住', AS.validateStyles([], []).ok, false)
+  eq('★ 风格一个没选的话术', AS.validateStyles([], []).error,
     '至少选一个接妆风格，客人靠它知道你能接什么妆')
-  eq('🔴 词表外的词 → 拦住（⛔ 不放进 storage）',
-    AS.validateStyleTags(['展妆', '自创词']).ok, false)
+  eq('🔴 预设通道里的词表外词 → 拦住（⛔ 不放进 storage）',
+    AS.validateStyles(['展妆', '自创词'], []).ok, false)
   eq('★ 拦住的话术里点名是哪个词',
-    AS.validateStyleTags(['展妆', '自创词']).error, '「自创词」不在可选风格里，请从上面选')
+    AS.validateStyles(['展妆', '自创词'], []).error, '「自创词」不在可选风格里，请从上面选')
 
   // ── D. 🔴 白名单：这一层永远没有 wechat_id ──────────────────────────
   eq('★ getArtist() 的键就是那 7 个', Object.keys(AS.getArtist()).sort().join(','),
@@ -3141,9 +3158,9 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     'style_text' in JSON.parse(store10['zhuangli_artist']), false)
   eq('🔴★ initial 也没有落进 storage',
     'initial' in JSON.parse(store10['zhuangli_artist']), false)
-  eq('★ 存的就那 5 个键',
+  eq('★ 存的就那 6 个键（第十八处多了 style_custom）',
     Object.keys(JSON.parse(store10['zhuangli_artist'])).sort().join(','),
-    'artist_id,city,intro,nickname,style_tags')
+    'artist_id,city,intro,nickname,style_custom,style_tags')
   eq('★ 改了昵称，头像首字当场跟着变',
     AS.saveArtist({ nickname: '洛霞' }).artist.initial, '洛')
   eq('★ 四个键都能各自保存', AS.saveArtist({ city: '北京' }).artist.city, '北京')
@@ -3164,8 +3181,13 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     artist_id: 'demo', nickname: '旧数据', city: '上海',
     style_text: '建模感 / 浓系 / 展妆', intro: ''
   })
+  /* 📌 第十八处改了这条的期望值：读模型里的 style_tags 现在是
+     **并集**（allStyleWords 的产物），所以它跟 style_text 同口径 ——
+     都是词表顺序。⛔ 不是"顺手改到能过"：这正是让
+     `style_text === buildStyleText(style_tags)` 结构性成立的那一步
+     （见下面 V 段那条断言）。三个词一个没少，只是排序统一了。 */
   eq('🔴★ 老数据缺 style_tags → 从 style_text 反推回来（⛔ 不显示成空的）',
-    AS.getArtist().style_tags.join(','), '建模感,浓系,展妆')
+    AS.getArtist().style_tags.join(','), '建模感,展妆,浓系')
   /* ⚠️ 反推回来之后**再过一遍派生**，所以展示顺序会被规整成词表顺序。
      这不是 bug —— 三个词一个没少，只是排序统一了。 */
   eq('🔴★ 反推之后展示顺序被规整成词表顺序（三个词一个没少）',
@@ -3190,7 +3212,7 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('🔴★ 已经存过就不重播（改了昵称不会被 mock 盖回去）',
     AS.getArtist().nickname, '改过')
   store10['zhuangli_artist'] = JSON.stringify({
-    artist_id: 'demo', nickname: '', city: '', style_tags: [], intro: ''
+    artist_id: 'demo', nickname: '', city: '', style_tags: [], style_custom: [], intro: ''
   })
   eq('🔴★ 也不靠「值看着空」判 —— 空记录也照样读出来、不重播',
     AS.getArtist().nickname, '')
@@ -3329,9 +3351,15 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     ['自然感', '建模感', '古早感', '混血感', '超精妆', '蕾系', '成男妆', '古风妆', '韩妆']
       .filter((w) => styleJs.indexOf(w) >= 0 || styleWxml.indexOf(w) >= 0), [])
   eq('★ 它从 artistStore 拿勾选态和点选',
-    /toStyleOptions/.test(styleJs) && /toggleTag/.test(styleJs), true)
+    /toStyleView/.test(styleJs) && /toggleTag/.test(styleJs), true)
+  /* ⚠️ 这一条要的是「两个风格通道一起交给 saveArtist，页面自己不校验」。
+     🔴 先切出那次调用的正文再断言，⛔ 不再用「`saveArtist({` 之后 N 个字符内
+        必须出现 style_custom 和 `}`」这种窄正则 —— 它已经被页面的换行坑过两次
+        （一次 60、一次 20，都是窗口差几个字符，看着像页面写错）。 */
+  const saveCall10 = styleJs.slice(styleJs.indexOf('saveArtist({'),
+    styleJs.indexOf('})', styleJs.indexOf('saveArtist({')) + 2)
   eq('🔴★ 校验不预判、不自己拼话术（规矩 11：一处实现）',
-    /saveArtist\(\{[\s\S]{0,40}style_tags[\s\S]{0,60}\}/.test(styleJs) &&
+    /style_tags/.test(saveCall10) && /style_custom/.test(saveCall10) &&
     /r\.error/.test(styleJs), true)
   eq('★ 一个词都没选 → 不保存、不退出（store 返回失败就只出声）',
     /if\s*\(!r\.ok\)[\s\S]{0,120}return/.test(styleJs), true)
@@ -3420,6 +3448,368 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('🔴★ 代填生成的单定金默认 0（¥0 = 没谈定金，⛔ 不许瞎填一个 50）',
     /deposit_amount:\s*Number\(p\.deposit_amount\)\s*\|\|\s*0/.test(
       stripJs(fs.readFileSync(R('妆历小程序/utils/bookingStore.js'), 'utf8'))), true)
+
+  /* ══════════════════════════════════════════════════════════════════
+     U/V/W 第十八处（2026-09-30）· 接妆风格可自填
+
+     用户原话：
+       「接妆风格除了我列出的那些选项，妆面质感，场合，浓度 题材 其他
+         妆娘可以自填选项，你只给了选项，用不着顾客搜，顾客搜不着就搜不着吧」
+     后半句是【豁免】也是【明确的不做】：
+       ⛔ 不许给顾客端加按风格搜索/筛选去"补上"这个洞。
+     ══════════════════════════════════════════════════════════════════ */
+  const custom = (names, group, on) => [{
+    group: group || '浓度',
+    items: (names instanceof Array ? names : [names]).map((n) => ({ name: n, on: on !== false }))
+  }]
+  const seed6 = () => {
+    store10['zhuangli_artist'] = JSON.stringify({
+      artist_id: 'demo', nickname: '示例', city: '上海',
+      style_tags: ['建模感', '浓系', '展妆'], style_custom: [], intro: ''
+    })
+  }
+
+  // ── U. 自填词：一颗词的闸 ───────────────────────────────────────────
+  eq('★ 上限常量：6 个 / 每个 10 字', AS.CUSTOM_MAX + '/' + AS.CUSTOM_MAX_LEN, '6/10')
+  eq('🔴★ 兜底组名是 STYLE_GROUPS 里的一个【真组名】（⛔ 归到一个不存在的组）',
+    STYLE_GROUPS.filter((g) => g.group === AS.GROUP_FALLBACK).length, 1)
+  eq('★ A1 空词 → 拦住', AS.validateCustomWord('').ok, false)
+  eq('★ A1 纯空格 → 拦住，且话术是「先打个词再加进来」',
+    AS.validateCustomWord('   ').error, '先打个词再加进来')
+  eq('🔴★ A2 含「/」→ 拦住（它是分隔符，会被反推拆成两个词 = 静默损坏）',
+    AS.validateCustomWord('cos/古风').error, '风格词里不能用「/」，它是分隔符')
+  eq('★ A3 正好 10 字 → 放行', AS.validateCustomWord('一二三四五六七八九十').ok, true)
+  eq('★ A3 11 字 → 拦住', AS.validateCustomWord('一二三四五六七八九十甲').ok, false)
+  eq('🔴★ A3 话术带【实际字数】和那个词（不然她不知道该删几个字）',
+    AS.validateCustomWord('一二三四五六七八九十甲').error,
+    '一个风格词最多 10 个字，「一二三四五六七八九十甲」有 11 个字')
+  /* 🔴 两个占位符的填充顺序：先 N 后 X。反过来的话，她打的词里只要有一个
+     大写 N，第二个 replace 会把她词里那个 N 换成数字。 */
+  eq('🔴★ A3 占位符顺序：先 N 后 X（词里带 N 也不会被吃掉）',
+    AS.validateCustomWord('NANA' + '妆'.repeat(7)).error,
+    '一个风格词最多 10 个字，「NANA' + '妆'.repeat(7) + '」有 11 个字')
+  eq('★ A4 打的正是预设词 → 拦住', AS.validateCustomWord('展妆').ok, false)
+  eq('🔴★ A4 的话【给出一条出路】（词就在屏幕上，直接点它）',
+    AS.validateCustomWord('展妆').error, '「展妆」已经是下面的选项了，直接点它就行')
+  eq('★ A4 先 trim 再比（「  展妆  」照样撞预设词）',
+    AS.validateCustomWord('  展妆  ').ok, false)
+  eq('★ A5 和另一颗自填词重名 → 拦住',
+    AS.validateCustomTag('特效妆', custom('特效妆', '题材')).ok, false)
+  eq('🔴★ A5 的话和 A4 的话【必须是不同的两句】'
+    + '（撞预设＝去点它；撞自填＝去改那颗 ✕。混成一句就把出路说丢了）',
+    AS.validateCustomTag('特效妆', custom('特效妆', '题材')).error
+      !== AS.validateCustomWord('展妆').error, true)
+  eq('🔴★ A5 重名【按大小写不敏感】比（「COS妆」撞「cos妆」）',
+    AS.validateCustomTag('COS妆', custom('cos妆', '题材')).ok, false)
+  eq('🔴★ A5 跨组也算重名（「浓度」里的词，在「题材」组里再加一次要拦住）',
+    AS.validateCustomTag('特效妆', custom('特效妆', '浓度')).ok, false)
+  eq('★ 加进去的是 trim 后的【原写法】（⛔ 不擅自改成小写）',
+    AS.addCustomTag([], '题材', '  COS妆  ').custom[0].items[0].name, 'COS妆')
+
+  // ── U2. 加 / 删 / 勾选 ─────────────────────────────────────────────
+  const add1 = AS.addCustomTag([], '浓度', '特效妆')
+  eq('★ 加进空列表 → ok', add1.ok, true)
+  eq('★ 落在点名的那一组里', add1.custom[0].group, '浓度')
+  eq('★ 新词默认【选中】（她刚打完，就是要用它）', add1.custom[0].items[0].on, true)
+  const add2 = AS.addCustomTag(add1.custom, '浓度', '舞台妆')
+  eq('★ 同一组连加两颗 → 一条组里两颗',
+    add2.custom.length + '/' + add2.custom[0].items.length, '1/2')
+  eq('★ 往另一组加 → 多一条组',
+    AS.addCustomTag(add2.custom, '题材', '古风定制').custom.length, 2)
+  eq('🔴 加的时候不 mutate 入参', add1.custom[0].items.length, 1)
+  eq('🔴★ 删掉某组最后一颗 → 那一组【整条去掉】（⛔ 不留空壳组）',
+    AS.removeCustomTag(add2.custom, '舞台妆').length, 1)
+  eq('★ 删掉唯一一颗 → 一条都不剩',
+    AS.removeCustomTag(add1.custom, '特效妆').length, 0)
+  eq('★ 删除也按大小写不敏感比（删得掉）',
+    AS.removeCustomTag(custom('COS妆', '题材'), 'cos妆').length, 0)
+  eq('🔴★ toggleCustomTag 不 mutate 入参',
+    (() => { const src = add1.custom; AS.toggleCustomTag(src, '特效妆'); return src[0].items[0].on })(),
+    true)
+  eq('★ toggleCustomTag 只翻那一颗（⛔ 不是删）',
+    AS.toggleCustomTag(add1.custom, '特效妆')[0].items[0].on, false)
+  eq('★ 再点一次翻回来',
+    AS.toggleCustomTag(AS.toggleCustomTag(add1.custom, '特效妆'), '特效妆')[0].items[0].on, true)
+  /* ⚠️ 六颗词要写成数组，⛔ 不是 custom('ABCDEF') —— 那个 helper 把字符串
+     当成【一颗】词（「ABCDEF」是一颗 6 字的词），满员测试会整个测空。 */
+  const SIX = ['甲妆', '乙妆', '丙妆', '丁妆', '戊妆', '己妆']
+  const full6 = custom(SIX, '浓度')
+  eq('★ 六颗词铺好了', AS.customWords(full6).length, 6)
+  eq('🔴★ A6 第 7 个 → 拦住', AS.addCustomTag(full6, '浓度', '庚妆').ok, false)
+  eq('★ A6 的话术', AS.addCustomTag(full6, '浓度', '庚妆').error,
+    '自填词最多 6 个，先删一个再加')
+  eq('🔴 名额把「没选中的」也算进去（删一个才能加，跟她选没选无关）',
+    AS.addCustomTag(custom(SIX, '浓度', false), '浓度', '庚妆').ok, false)
+  eq('★ 但 5 颗时还能加（第 6 颗放行）',
+    AS.addCustomTag(custom(SIX.slice(0, 5), '浓度'), '浓度', '庚妆').ok, true)
+
+  // ── U3. 并集 / 消毒 / 视图 ─────────────────────────────────────────
+  eq('★ 并集 = 预设（按词表序）++ 自填（按组序）',
+    AS.allStyleWords(['浓系', '自然感'], add2.custom).join(','),
+    '自然感,浓系,特效妆,舞台妆')
+  /* 🔴 顺序必须是【数据的函数】，⛔ 不是添加历史的函数：
+     同一批词，先加 A 后加 B 和先加 B 后加 A，必须得到同一句 style_text
+     —— 否则同一组标签换个点选次序，分享页上的字就变了，而她什么都没改。 */
+  const o1 = AS.addCustomTag(AS.addCustomTag([], '浓度', '甲妆').custom, '题材', '乙妆').custom
+  const o2 = AS.addCustomTag(AS.addCustomTag([], '题材', '乙妆').custom, '浓度', '甲妆').custom
+  eq('🔴★ 两种添加顺序 → 同一句 style_text（文字只由数据决定）',
+    AS.buildStyleText(AS.allStyleWords([], o1)) === AS.buildStyleText(AS.allStyleWords([], o2)),
+    true)
+  eq('★ 没选中的自填词【不进】并集（⛔ 没选用的词不上一页公开的分享页）',
+    AS.allStyleWords([], custom('甲妆', '浓度', false)).length, 0)
+  eq('★ normalize：trim 掉首尾空白',
+    AS.normalizeCustom([{ group: '浓度', items: [{ name: '  甲妆 ', on: true }] }])[0].items[0].name,
+    '甲妆')
+  eq('★ normalize：纯空白的词丢掉（画出来会是一个空 chip）',
+    AS.normalizeCustom([{ group: '浓度', items: [{ name: '   ', on: true }] }]).length, 0)
+  eq('🔴★ normalize：认不出的组名归兜底组'
+    + '（⛔ 不静默丢 —— 丢了她再也删不掉它，而它还在分享页上、还占着名额）',
+    AS.normalizeCustom([{ group: '早就没有的组', items: [{ name: '甲妆', on: true }] }])[0].group,
+    AS.GROUP_FALLBACK)
+  eq('★ normalize：同一个词只留第一颗（按小写比）',
+    AS.normalizeCustom([{ group: '浓度', items: [{ name: 'A妆', on: true }, { name: 'a妆', on: false }] }])[0].items.length,
+    1)
+  eq('★ normalize：同名的两组并成一条',
+    AS.normalizeCustom([{ group: '浓度', items: [{ name: '甲', on: true }] },
+                        { group: '浓度', items: [{ name: '乙', on: true }] }]).length, 1)
+  /* ⚠️ 这里跟方案书写的不同：方案说「截到上限」，实现改成【不截断】。
+     理由：截断是【静默丢数据】—— 手改过的 storage 里真有第 7 颗的话，
+     截掉它 = 她再也删不掉它，而它还挂在分享页上。surfacing 出来更好：
+     她看得见、删得掉，保存时由 validateStyles 拦并告诉她删一个。 */
+  eq('🔴★ normalize 【不】按上限截断（第 7 颗要让她看得见、删得掉）',
+    AS.normalizeCustom(custom(SIX.concat(['庚妆']), '浓度'))[0].items.length, 7)
+  eq('★ 视图：自填词挂在对的那一组',
+    AS.toStyleView(['展妆'], add2.custom).groups.filter((g) => g.custom.length).map((g) => g.group).join(','),
+    '浓度')
+  eq('🔴 视图：认不出组名的自填词也归兜底组（界面上看得见）',
+    AS.toStyleView([], [{ group: '没了', items: [{ name: '甲妆', on: true }] }])
+      .groups.filter((g) => g.custom.length)[0].group, AS.GROUP_FALLBACK)
+
+  // ── U4. validateStyles：两个通道一起判 ─────────────────────────────
+  eq('★ 预设空 + 自填空 → STYLE_NONE（原样那句话）',
+    AS.validateStyles([], []).error, '至少选一个接妆风格，客人靠它知道你能接什么妆')
+  /* 🔴🔴 这一条是本次设计的核心回归：老设计里「至少一个」只看 style_tags，
+     于是「她撤掉所有预设词、只留自填词」会被误报成"一个都没选"——
+     她屏幕上那颗词明明亮着。判据必须是【并集】。 */
+  eq('🔴★ 预设空但有一颗【选中的】自填词 → 必须放行（⛔ 判据是并集不是 style_tags）',
+    AS.validateStyles([], custom('特效妆', '浓度')).ok, true)
+  eq('★ 只有一颗【没选中的】自填词 → 还是拦住（并集是空的）',
+    AS.validateStyles([], custom('特效妆', '浓度', false)).ok, false)
+  eq('🔴★ 第 7 颗自填词 → 拦住（写入点也拦，⛔ 不是只在"添加"时拦）',
+    AS.validateStyles(['展妆'], custom(SIX.concat(['庚妆']), '浓度')).ok, false)
+  eq('★ 正好 6 颗 → 放行', AS.validateStyles(['展妆'], custom(SIX, '浓度')).ok, true)
+  eq('★ 而且正好 6 颗时【不会自己撞自己】'
+    + '（上限判在"添加"和"写入"两处，⛔ 不是塞进单颗词的闸里 ——'
+    + '塞进去的话，校验第 6 颗时它会跟已满的名单撞上）',
+    AS.validateStyles([], custom(SIX, '浓度')).ok, true)
+  eq('🔴 手改过的数据里混进一颗含「/」的 → 写入点也拦',
+    AS.validateStyles(['展妆'], custom('a/b', '浓度')).ok, false)
+  eq('★ 校验通过时返回的是【消毒后】的两份',
+    AS.validateStyles(['展妆'], custom(' 甲妆 ', '没了')).custom[0].group + '/'
+      + AS.validateStyles(['展妆'], custom(' 甲妆 ', '没了')).custom[0].items[0].name,
+    AS.GROUP_FALLBACK + '/甲妆')
+
+  // ── V. saveArtist：两个风格通道一起写、别的字段不许碰它们 ───────────
+  seed6()
+  const sv1 = AS.saveArtist({ style_custom: custom('特效妆', '题材') })
+  eq('★ 只写自填通道：预设一个没少',
+    sv1.artist.style_text, '建模感 / 展妆 / 浓系 / 特效妆')
+  eq('🔴★ 含自填词时 style_text === buildStyleText(style_tags)（规矩 16）',
+    sv1.artist.style_text, AS.buildStyleText(sv1.artist.style_tags))
+  eq('★ style_custom 真的落库了',
+    JSON.parse(store10['zhuangli_artist']).style_custom[0].items[0].name, '特效妆')
+  eq('★ 派生字段仍然不落库（style_text 不在 storage 里）',
+    'style_text' in JSON.parse(store10['zhuangli_artist']), false)
+  /* 🔴🔴 本轮最危险的一格：next 是【逐字段重建】的，漏接一个新字段就是
+     「改一次昵称＝她的自填词全没了」，而屏幕上弹的是「已保存」。 */
+  const customBefore = JSON.stringify(JSON.parse(store10['zhuangli_artist']).style_custom)
+  AS.saveArtist({ nickname: '阿黎' })
+  eq('🔴★ 改昵称之后自填词一个字没变（⛔ 不是「改一次昵称＝自填词全没」）',
+    JSON.stringify(JSON.parse(store10['zhuangli_artist']).style_custom), customBefore)
+  eq('★ 而且它还挂在分享页上', AS.getArtist().style_text.indexOf('特效妆') >= 0, true)
+  AS.saveArtist({ city: '北京' })
+  eq('★ 改城市也一样（自填词一个字没变）',
+    JSON.stringify(JSON.parse(store10['zhuangli_artist']).style_custom), customBefore)
+  AS.saveArtist({ intro: '写点东西' })
+  eq('★ 改简介也一样', AS.getArtist().style_text, '建模感 / 展妆 / 浓系 / 特效妆')
+  /* 🔴🔴 老设计的静默 bug 就栽在这一步：兜底判据原来是「style_tags 是空的」
+     而不是「形状不对」，于是这里会去读一个从不落库的 r.style_text（永远 undefined）
+     → 返回空 → 她的自填词从分享页上消失。 */
+  const sv2 = AS.saveArtist({ style_tags: [] })
+  eq('🔴★ 撤掉所有预设词、只留自填词 → 放行（并集不是空的）', sv2.ok, true)
+  eq('🔴★ 而且那颗自填词【还在】分享页上（这就是那个静默 bug 的回归断言）',
+    sv2.artist.style_text, '特效妆')
+  /* ⚠️ 判据要读【storage】，⛔ 不是读 sv2.artist.style_tags —— 后者是
+     getArtist() 的展示读模型，那里的 style_tags 是【并集】（= 那颗自填词），
+     读它会得出"通道没闭合"的假结论。 */
+  eq('🔴 预设通道是【闭合】的：清空之后落库的 style_tags 就是空的，⛔ 不装自填词',
+    JSON.parse(store10['zhuangli_artist']).style_tags.length, 0)
+  eq('🔴 再把自填也清空 → 拦住（并集空了）',
+    AS.saveArtist({ style_custom: [] }).ok, false)
+  eq('🔴 拦住时一次都没写（那颗词还在）', AS.getArtist().style_text, '特效妆')
+  eq('★ patch 里夹带了垃圾组名 → 归兜底组落库，⛔ 不丢',
+    AS.saveArtist({ style_custom: [{ group: '没了', items: [{ name: '甲妆', on: true }] }] })
+      .artist.style_text.indexOf('甲妆') >= 0, true)
+
+  // ── V2. getStyleState：编辑页的读模型 ──────────────────────────────
+  seed6()
+  eq('★ getStyleState：预设就是那三个', AS.getStyleState().presets.join(','), '建模感,浓系,展妆')
+  eq('★ getStyleState：自填是空的', AS.getStyleState().custom.length, 0)
+  store10['zhuangli_artist'] = JSON.stringify({
+    artist_id: 'demo', nickname: '示例', city: '上海',
+    style_tags: ['展妆', '自创老词'],
+    style_custom: [{ group: '没了', items: [{ name: ' 甲妆 ', on: true }] }],
+    intro: ''
+  })
+  eq('🔴 getStyleState：预设通道的词表外词继续滤掉（⛔ 不搬进自填通道）',
+    AS.getStyleState().presets.join(','), '展妆')
+  eq('🔴★ getStyleState：认不出的组名归兜底组（她看得见、删得掉）',
+    AS.getStyleState().custom[0].group, AS.GROUP_FALLBACK)
+  eq('★ getStyleState：自填词的首尾空白 trim 掉了',
+    AS.getStyleState().custom[0].items[0].name, '甲妆')
+  eq('🔴★ getArtist() 里【没有】style_custom 这个键'
+    + '（展示读模型 / 编辑读模型不许混，规矩 16 钉着 7 个键）',
+    'style_custom' in AS.getArtist(), false)
+  eq('★ 手写的 seed 里 style_custom 是空数组（demo 不自填，提审截图别多出东西）',
+    Array.isArray(ARTIST_PUBLIC.style_custom) && ARTIST_PUBLIC.style_custom.length, 0)
+
+  // ── W. 🔴 style-edit 页面级（这一页原先一条页面级测试都没有）────────
+  const toasts10 = []
+  const back10 = { n: 0 }
+  global.wx.showToast = (o) => toasts10.push(o.title)
+  global.wx.navigateBack = () => { back10.n++ }
+  const loadPage10 = (p) => {
+    let cfg = null
+    global.Page = (c) => { cfg = c }
+    delete require.cache[require.resolve(R('妆历小程序/' + p))]
+    require(R('妆历小程序/' + p))
+    const pg = {}
+    for (const k in cfg) pg[k] = cfg[k]
+    pg.data = JSON.parse(JSON.stringify(cfg.data))
+    pg.setData = function (patch) { for (const k in patch) this.data[k] = patch[k] }
+    return pg
+  }
+  const ev10 = (ds) => ({ currentTarget: { dataset: ds } })
+
+  seed6()
+  const sp = loadPage10('pages/style-edit/style-edit.js')
+  sp.onLoad()
+  eq('★ 进来就是 5 组', sp.data.groups.length, 5)
+  eq('★ 勾选态跟 storage 一致（并集，按词表序）', sp.data.picked.join(','), '建模感,展妆,浓系')
+  eq('★ 一开始没有输入框开着', sp.data.openGroup, '')
+
+  sp.openAdd(ev10({ group: '题材' }))
+  eq('★ 点「＋ 自定义」→ 那一组的输入框开了', sp.data.openGroup, '题材')
+  sp.onDraft({ detail: { value: '特效妆' } })
+  eq('★ 打字只更草稿', sp.data.draft, '特效妆')
+  toasts10.length = 0
+  sp.onAdd()
+  eq('🔴★ 添加成功 → 落进那一组',
+    sp.data.groups.filter((g) => g.custom.length).map((g) => g.group).join(','), '题材')
+  eq('★ 添加成功 → 它是选中的', sp.data.picked.join(','), '建模感,展妆,浓系,特效妆')
+  eq('🔴★ 添加成功 → 清空草稿 + 收起输入框（键盘跟着落下，底部那颗「保存」才点得到）',
+    sp.data.draft + '/' + sp.data.openGroup, '/')
+  eq('★ 添加成功不出声（结果就在屏幕上，多一句 toast 反而吵）', toasts10.length, 0)
+
+  /* 点自填词的本体＝勾选，⛔ 不是删（用户当天改过一次的口径）。 */
+  sp.onToggleCustom(ev10({ name: '特效妆' }))
+  eq('🔴★ 点自填词本体 → 只是取消勾选，⛔ 词还在',
+    sp.data.groups.filter((g) => g.custom.length).length + '/' + sp.data.picked.length, '1/3')
+  eq('★ 而它也不在并集里了（没选用的词不上分享页）',
+    sp.data.picked.indexOf('特效妆'), -1)
+  sp.onToggleCustom(ev10({ name: '特效妆' }))
+  eq('★ 再点一次 → 又选中了', sp.data.picked.indexOf('特效妆') >= 0, true)
+
+  /* 点 ✕＝删。 */
+  sp.onDelCustom(ev10({ name: '特效妆' }))
+  eq('🔴★ 点 ✕ → 词没了', sp.data.picked.indexOf('特效妆'), -1)
+  eq('★ 那一组空了就整条不出现（⛔ 不留一个空的分组标题）',
+    sp.data.groups.filter((g) => g.custom.length).length, 0)
+  eq('★ 删完不出声（她按的就是写着 ✕ 的键，意图没有歧义）', toasts10.length, 0)
+
+  /* 🔴 两条草稿护栏：保存 / 换组。共用同一句话。 */
+  sp.openAdd(ev10({ group: '浓度' }))
+  sp.onDraft({ detail: { value: '没加完的词' } })
+  toasts10.length = 0
+  back10.n = 0
+  const storeBefore10 = store10['zhuangli_artist']
+  sp.onSave()
+  eq('🔴★ 有草稿时点保存 → 拦住出声', toasts10.length, 1)
+  eq('★ 那句话点是哪一组的框', toasts10[0], '「浓度」那个框里还有没加进来的词，先点「添加」或「丢掉」')
+  eq('🔴★ 而且【一次 storage 都没写】（⛔ 不许先存了再说）',
+    store10['zhuangli_artist'], storeBefore10)
+  eq('🔴★ 也不退出这一页（那等于把框里的字一起丢了）', back10.n, 0)
+  toasts10.length = 0
+  sp.openAdd(ev10({ group: '题材' }))
+  eq('🔴★ 有草稿时换组 → 同样拦住出声（和上面【同一句话】）',
+    toasts10.length + '/' + sp.data.openGroup, '1/浓度')
+  eq('★ 点「丢掉」→ 干净收起（静默：键名就是意图）',
+    (() => { toasts10.length = 0; sp.dropDraft(); return sp.data.draft + '/' + sp.data.openGroup + '/' + toasts10.length })(),
+    '//0')
+
+  /* 空草稿点「添加」→ 出声（⛔ 不是静默什么都不做，那是"点了没反应"的变体）。
+     ⚠️ 上面那颗「丢掉」真把词丢了、也把框收掉了，所以先重开这一组 ——
+        空着框点「添加」正是要测的那条路。 */
+  sp.openAdd(ev10({ group: '浓度' }))
+  toasts10.length = 0
+  sp.onAdd()
+  eq('★ 空草稿点「添加」→ 出声，⛔ 不是静默', toasts10.join(','), '先打个词再加进来')
+  eq('★ 而且它也不把输入框收起来（她还得接着打）', sp.data.openGroup, '浓度')
+
+  /* 正常保存：落库 + 出声 + 退回资料页。
+     ⚠️ ⛔ 这里【不许】再调一次 openAdd —— 框此刻正开着（上一句刚开），
+        再点一下是【收起】（openAdd 是开关），草稿会落到兜底组里去。 */
+  sp.onDraft({ detail: { value: '没加完的词' } })
+  sp.onAdd()
+  eq('★ 加完这一颗，输入框又收起来了', sp.data.openGroup, '')
+  toasts10.length = 0
+  sp.onSave()
+  eq('🔴★ 保存成功 → 退回资料页（那一页的 onShow 会重读 storage）', back10.n, 1)
+  eq('★ 落库的是并集', AS.getArtist().style_text, '建模感 / 展妆 / 浓系 / 没加完的词')
+  eq('★ getStyleState 读回来的自填词挂在刚才那一组',
+    AS.getStyleState().custom[0].group, '浓度')
+
+  // ── W2. style-edit 的源码级硬约束 ──────────────────────────────────
+  eq('🔴★ ✕ 挂的是 catchtap，⛔ 不是 bindtap（父节点也在监听，bindtap 会冒泡成"又勾选又删"）',
+    /class="cx"[\s\S]{0,80}catchtap="onDelCustom"/.test(styleWxml), true)
+  eq('🔴★ 预设词那一支里【没有】✕ 节点（系统设定的词不能删）',
+    /wx:for="\{\{g\.items\}\}"[\s\S]*?wx:for="\{\{g\.custom\}\}"/.test(styleWxml) &&
+    !/cx/.test(styleWxml.slice(styleWxml.indexOf('g.items'), styleWxml.indexOf('g.custom'))), true)
+  eq('🔴★ 输入框【不带】maxlength（这一页没有计数器，加了就是静默截断）',
+    /<input[^>]*addip[^>]*\/>/.test(styleWxml) &&
+    !/<input[^>]*maxlength/.test(styleWxml), true)
+  eq('★ 键盘上的「完成」＝添加（⛔ 不许让它什么都不做）',
+    /bindconfirm="onAdd"/.test(styleWxml), true)
+  eq('🔴★ 这一页的 setData 只有一处（paint）—— 没有哪条分支能把视图留在旧值上',
+    (styleJs.match(/setData\(/g) || []).length, 1)
+  eq('🔴★ 而 toStyleView 也只被调一次（就在 paint 里）',
+    (styleJs.match(/toStyleView\(/g) || []).length, 1)
+  eq('🔴★ onSave 里的草稿检查【排在 saveArtist 之前】',
+    styleJs.indexOf('draftBlocked') < styleJs.indexOf('saveArtist('), true)
+  eq('🔴 每个 bindtap / catchtap 都有同名处理函数'
+    + '（拼错一个就是"点了没反应"，这个项目被坑过四轮）',
+    (styleWxml.match(/(?:bind|catch)tap="([^"]+)"/g) || [])
+      .map((s) => s.replace(/(?:bind|catch)tap="([^"]+)"/, '$1'))
+      .filter((n) => !new RegExp('\\b' + n + '\\b\\s*:').test(styleJs)), [])
+  eq('★ 页面里不出现字面量的「其他」（兜底组名住在 store 里）',
+    styleJs.indexOf('其他') >= 0 || styleWxml.indexOf('其他') >= 0, false)
+  /* 🔴 Request O 第二轮把 hover-stop-propagation 从全项目删掉了
+     （「换来的只是观感」），这一轮新加的键也不许把它带回来。 */
+  eq('🔴★ 全项目不再出现 hover-stop-propagation',
+    ['pages/style-edit/style-edit.wxml', 'pages/mine/mine.wxml']
+      .filter((p) => /hover-stop-propagation/.test(
+        fs.readFileSync(R('妆历小程序/' + p), 'utf8'))), [])
+  /* 🔴 顾客端【不加】按风格搜索/筛选 —— 用户明确说了「顾客搜不着就搜不着吧」。
+     这一条钉的是"别去补上"：landing（C1）的源码里不许出现风格词表的用法。 */
+  eq('🔴★ 顾客端 C1 仍然不许按风格词筛人（用户明确不要，⛔ 不是漏了）',
+    /STYLE_GROUPS|style_tags/.test(
+      stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))), false)
+  /* 规矩 27：同一份来源喂两个端 —— booking-form 也在用 STYLE_GROUPS，
+     但那是【顾客端的目标妆感】，⛔ 不含妆娘的自填词。这里有断言钉死它
+     仍然只 require 预设词表、不去读妆娘的 storage。 */
+  eq('🔴★ booking-form（顾客端妆感 chips）不读妆娘资料（那些自填词不上顾客那一屏）',
+    /artistStore|getStyleState|style_custom/.test(
+      stripJs(fs.readFileSync(R('妆历小程序/pages/booking-form/booking-form.js'), 'utf8'))), false)
 }
 
 restoreBookings()

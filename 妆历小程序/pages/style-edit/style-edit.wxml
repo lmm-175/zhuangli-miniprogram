@@ -1,10 +1,15 @@
-<!-- 接妆风格（妆师端 · 整页多选）
+<!-- 接妆风格（妆师端 · 整页多选 + 每一组可自填）
      落点：我的资料 →「接妆风格」行。
      ⚠️ 界面稿 §9.4 的 14 个可点元素里没有这一屏 —— 第十七处新增。见 README §4。
 
-     📌 16 个词分 5 组铺开，长相直接吃 app.wxss 已有的 `.chips` / `.chip` /
-        `.grp-sec` / `.grp-tag`（最后两条是这一轮从 booking-form.wxss 上提的）。
-     🔴 词表【不在这里】—— `groups` 由 artistStore.toStyleOptions() 从
+     📌 2026-09-30（第十八处）：用户把「只用固定词表」推翻了，
+        每一组都能自己加词（见 .js 头部那段）。这一屏因此比界面稿多出：
+        每组的「＋ 自定义」、输入框、自填词上的 ✕。差异记在 README §3。
+
+     📌 长相直接吃 app.wxss 已有的 `.chips` / `.chip` / `.grp-sec` / `.grp-tag`，
+        这一轮只加了 `.style-chips`（本页专用：把 chip 的点击区撑到 88rpx）、
+        `.chip.mine` / `.cx` / `.cb` / `.addrow` / `.addip` 五条。
+     🔴 词表【不在这里】—— `groups` 由 artistStore.toStyleView() 从
         mock/data.js 的 STYLE_GROUPS 算出来。⛔ 这一页一个字面量的词都不许有，
         否则就是第二份真相，改了 mock 这里不跟着变、而且是静默不变。
      ⚠️ 这一页没有空态分支：16 个词是常量，`groups` 永远是 5 组。 -->
@@ -13,16 +18,49 @@
 
   <view class="body tight">
     <view class="note">
-      这 16 个词就是客人在你的分享页上看到的接妆风格。至少选一个。
+      上面这一排是平台给的常用词，点一下就是选中。每一组最右边都能加你自己的词 ——
+      自己加的词只有你的分享页上有，客人看得到、搜不到。
     </view>
 
     <view wx:for="{{groups}}" wx:key="group" wx:for-item="g" class="grp-sec">
       <view class="grp-tag">{{g.group}}</view>
-      <view class="chips" style="padding:2rpx 4rpx">
+      <view class="chips style-chips" style="padding:2rpx 4rpx">
+        <!-- 预设词：整颗可点＝勾选。⛔ 没有 ✕ —— 系统设定的词不能删。 -->
         <view wx:for="{{g.items}}" wx:key="name" wx:for-item="it"
               class="chip {{it.on ? 'on' : ''}}"
               data-name="{{it.name}}" bindtap="onTag"
               hover-class="btn-hover" hover-stay-time="80">{{it.name}}</view>
+
+        <!-- 她自己加的词：本体＝勾选；右边那颗 ✕＝删。
+             🔴 ✕ 挂的是 catchtap，⛔ 不是 bindtap —— 父节点是
+                bindtap="onToggleCustom"，用 bindtap 会冒泡成「又勾选又删除」。
+                本项目为同一个形状栽过一次（README 第 21 条）。 -->
+        <view wx:for="{{g.custom}}" wx:key="name" wx:for-item="ct"
+              class="chip mine {{ct.on ? 'on' : ''}}"
+              data-name="{{ct.name}}" bindtap="onToggleCustom"
+              hover-class="btn-hover" hover-stay-time="80"
+        ><text>{{ct.name}}</text><view class="cx" data-name="{{ct.name}}"
+              catchtap="onDelCustom">✕</view></view>
+
+        <!-- 关闭态的入口。开着的时候它换成下面的输入行。 -->
+        <view wx:if="{{openGroup !== g.group}}"
+              class="chip cb" data-group="{{g.group}}" bindtap="openAdd"
+              hover-class="btn-hover" hover-stay-time="80">＋ 自定义</view>
+      </view>
+
+      <!-- 打开态：打一个词 →「添加」；反悔就点「丢掉」。
+           ⚠️ 同一时刻只允许开一组（换组会被拦住），所以 data.draft 可以只是一个
+              字符串、⛔ 不必按组存。哪天允许同时开两组，它必须改成按组存。
+           ⚠️ 输入框⛔【故意不加 maxlength】：这一页没有计数器，加了就是
+              静默截断（她打第 11 个字时屏幕上什么都没发生），而 store 里那句
+              「一个风格词最多 10 个字」会变成永远触发不了的一句死话。
+           ⚠️ bindconfirm＝键盘上的「完成」＝添加。⛔ 不许让它什么都不做。 -->
+      <view wx:if="{{openGroup === g.group}}" class="addrow">
+        <input class="addip" value="{{draft}}" bindinput="onDraft" bindconfirm="onAdd"
+               confirm-type="done" placeholder="打一个你自己的风格词…"
+               placeholder-class="ta-ph" cursor-spacing="24" />
+        <view class="btn sm pri" bindtap="onAdd" hover-class="btn-hover" hover-stay-time="80">添加</view>
+        <view class="btn sm out" bindtap="dropDraft" hover-class="btn-hover" hover-stay-time="80">丢掉</view>
       </view>
     </view>
   </view>
