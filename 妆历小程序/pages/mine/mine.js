@@ -1,17 +1,18 @@
 const { ARTIST_PUBLIC } = require('../../mock/data')
-const { TOAST } = require('../../utils/toast')
 
 Page({
   data: {
     artist: ARTIST_PUBLIC
   },
 
+  // 「我的资料」只读页。⛔ 别在这里又改成弹 toast —— 那正是这次要修的病。
   goProfile() {
-    wx.showToast({ title: '昵称：' + this.data.artist.nickname, icon: 'none', duration: 1500 })
+    wx.navigateTo({ url: '/pages/my-profile/my-profile' })
   },
 
+  // 「我的作品」空态页（M0 一页空态，没有上传入口）
   goWorks() {
-    wx.showToast({ title: TOAST.NO_WORK, icon: 'none', duration: 1500 })
+    wx.navigateTo({ url: '/pages/my-works/my-works' })
   },
 
   // §9.4 #6 的落点页 → 壳 4

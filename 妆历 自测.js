@@ -2600,6 +2600,133 @@ console.log('\n════ ⑧ 取消场次（入口在档期列表卡片上）
     /wx\.hideKeyboard\(\)/.test(detJs), true)
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   ⑨ 「我的资料 / 我的作品」点不跳页 + 设置页删掉重复的那一行「我的资料」
+   ══════════════════════════════════════════════════════════════════════ */
+/* ⚠️ 这一次**不是 bug，是缺功能** —— 用户报的是「点了没反应」，追问之后
+   他自己描述清楚了：「有提示，但不跳页面」。所以这两行原先是**有响应**的
+   （各弹一句 toast），只是没有落点页。⛔ 别照着「点了没反应」去查事件绑定、
+      查 catchtap、查 hideKeyboard —— 那三轮的坑不在这一处。
+   📌 教训：听到「点了没反应」**先追问「别的键也点得动吗 / 结果变成了什么」**，
+      问清楚能省掉一整轮瞎猜（README 第 26 条）。 */
+console.log('\n════ ⑨ 我的资料 / 我的作品两页 + 设置页去重 ════')
+{
+  const fs = require('fs')
+  const stripHtml = (t) => t.replace(/<!--[\s\S]*?-->/g, '')
+  const stripJs = (t) => t
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
+
+  const navs = []
+  let toastsN = 0
+  global.wx = {
+    navigateTo: (o) => navs.push(o.url),
+    navigateBack: () => {},
+    switchTab: () => {},
+    showToast: () => { toastsN++ },
+    showModal: () => {}
+  }
+
+  const loadPage = (p) => {
+    let cfg = null
+    global.Page = (c) => { cfg = c }
+    delete require.cache[require.resolve(R('妆历小程序/' + p))]
+    require(R('妆历小程序/' + p))
+    const pg = {}
+    for (const k in cfg) pg[k] = cfg[k]
+    pg.data = JSON.parse(JSON.stringify(cfg.data))
+    pg.setData = function (patch) {
+      for (const k in patch) {
+        const parts = k.split('.')
+        let o = this.data
+        for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]]
+        o[parts[parts.length - 1]] = patch[k]
+      }
+    }
+    return pg
+  }
+
+  // ── A. 「我的」页那两行，现在跳得动了 ──
+  const mine = loadPage('pages/mine/mine.js')
+  const tBefore = toastsN
+  mine.goProfile()
+  eq('★「我的资料」跳页了（落点是 /pages/my-profile/my-profile）',
+    navs[navs.length - 1], '/pages/my-profile/my-profile')
+  eq('★ 而且【不再】弹 toast 顶替（这是本次修的病本身）', toastsN, tBefore)
+  mine.goWorks()
+  eq('★「我的作品」也跳页了', navs[navs.length - 1], '/pages/my-works/my-works')
+  eq('★ 同样没有再拿 toast 顶替', toastsN, tBefore)
+  eq('★ 两行给的路径不一样（⛔ 不是复制粘贴忘了改）', navs[0] === navs[1], false)
+
+  // ── B. 两个新页都在 app.json 里注册过（没注册 = 跳过去白屏）──
+  const appJson = JSON.parse(fs.readFileSync(R('妆历小程序/app.json'), 'utf8'))
+  eq('★ my-profile 已注册',
+    appJson.pages.indexOf('pages/my-profile/my-profile') >= 0, true)
+  eq('★ my-works 已注册',
+    appJson.pages.indexOf('pages/my-works/my-works') >= 0, true)
+  eq('★ tabBar 还是 3 项（没被顺手改成 4 项）', appJson.tabBar.list.length, 3)
+  eq('★ 两行跳的路径确实都在 pages 里（拼错了就是白屏）',
+    navs.every((u) => appJson.pages.indexOf(u.slice(1)) >= 0), true)
+
+  // ── C. 两个新页能加载、且都带「‹ 返回」（不然进去出不来）──
+  const prof = loadPage('pages/my-profile/my-profile.js')
+  const works = loadPage('pages/my-works/my-works.js')
+  const profWxml = stripHtml(fs.readFileSync(R('妆历小程序/pages/my-profile/my-profile.wxml'), 'utf8'))
+  const worksWxml = stripHtml(fs.readFileSync(R('妆历小程序/pages/my-works/my-works.wxml'), 'utf8'))
+  eq('★ 资料页标题是「我的资料」且带返回',
+    /<nav-bar title="我的资料" back="\{\{true\}\}"/.test(profWxml), true)
+  eq('★ 作品页标题是「我的作品」且带返回',
+    /<nav-bar title="我的作品" back="\{\{true\}\}"/.test(worksWxml), true)
+  eq('★ 两个新页都有各自的 .js/.wxml（不是只有空目录）',
+    [prof, works].every((p) => p && typeof p === 'object'), true)
+
+  // ── D. 🔴 资料页绝不能带出微信号 ──
+  /* 这一页展示的就是「客人能看到的信息」，最容易顺手把微信号也列进去。
+     判据放在**源码**上：它连 ARTIST_CONTACT 都不许 require。
+     ⚠️ 查之前必须摘注释 —— 那个文件的注释里就写着 ARTIST_CONTACT 和 wechat_id
+        （正是为了警告后来者别加），不摘注释等于对着自己的警告下结论，永远红。 */
+  const profJs = stripJs(fs.readFileSync(R('妆历小程序/pages/my-profile/my-profile.js'), 'utf8'))
+  eq('🔴★ 资料页源码里没有 ARTIST_CONTACT', /ARTIST_CONTACT/.test(profJs), false)
+  eq('🔴★ 也没有 wechat_id / contact.js',
+    /wechat_id|contact\.js/.test(profJs), false)
+  eq('🔴★ 数据对象里没有 wechat_id 这个键', 'wechat_id' in prof.data.artist, false)
+  eq('★ 只读的就是公开那三项（昵称 / 城市 / 风格）',
+    Object.keys(prof.data.artist).sort().join(','),
+    'artist_id,city,nickname,style_text')
+  eq('★ 头像位取昵称首字', prof.data.initial, '示')
+
+  // ── E. 两页都是「进得去、有事说、退得出来」，没有一个按不动的键 ──
+  eq('⛔ 资料页整页没有任何 bindtap（只读，不存在「点了没反应」的可能）',
+    /bindtap/.test(profWxml), false)
+  eq('⛔ 作品页也没有任何 bindtap（空态页没放「上传作品」按钮）',
+    /bindtap/.test(worksWxml), false)
+  eq('★ 作品页空态那句话是事实陈述', worksWxml.indexOf('还没有上传作品') > 0, true)
+  eq('★ 作品页用的是 .empty / .et（跟其他空态同一个样式）',
+    /class="empty"/.test(worksWxml) && /class="et"/.test(worksWxml), true)
+
+  const redline10 = /开发中|敬请期待|即将上线/
+  eq('⛔ 资料页没有「开发中」那类承诺（红线 10）', redline10.test(profWxml), false)
+  eq('⛔ 作品页也没有', redline10.test(worksWxml), false)
+
+  // ── F. 设置页那行重复的「我的资料」删干净了 ──
+  const setWxml = stripHtml(fs.readFileSync(R('妆历小程序/pages/settings/settings.wxml'), 'utf8'))
+  const setJs = stripJs(fs.readFileSync(R('妆历小程序/pages/settings/settings.js'), 'utf8'))
+  eq('★ 设置页里不再有「我的资料」四个字', setWxml.indexOf('我的资料'), -1)
+  eq('★ goProfile 处理函数也删了（⛔ 不留没用的死代码）', /\bgoProfile\b/.test(setJs), false)
+  eq('★ 设置页那两组里只剩 2 行', (setWxml.match(/class="cell"/g) || []).length, 2)
+  eq('★ 提审必需的「用户隐私保护指引」入口还在', setWxml.indexOf('openPrivacy') > 0, true)
+
+  // ── G. 「我的」页那一处是唯一入口 ──
+  const mineWxml = stripHtml(fs.readFileSync(R('妆历小程序/pages/mine/mine.wxml'), 'utf8'))
+  eq('★「我的资料」只留在「我的」页（用户原话：只在我的页面留）',
+    (mineWxml.match(/我的资料/g) || []).length, 1)
+
+  // ── H. toast.js 里那条 NO_WORK 成了死常量，已删 ──
+  const toastJs = stripJs(fs.readFileSync(R('妆历小程序/utils/toast.js'), 'utf8'))
+  eq('★ NO_WORK 这条已经没人用了，从 toast.js 删掉（话挪进作品页空态）',
+    /NO_WORK/.test(toastJs), false)
+}
+
 restoreBookings()
 
 console.log('\n' + (fail ? 'FAILED ' + fail + ' / ' : 'ALL PASS ') + (pass + fail) + ' assertions\n')

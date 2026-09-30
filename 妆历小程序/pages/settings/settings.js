@@ -12,10 +12,6 @@ Page({
     // M0 纯前端，只翻本地状态。
   },
 
-  goProfile() {
-    wx.showToast({ title: '昵称：示例', icon: 'none', duration: 1500 })
-  },
-
   /**
    * ⚠️ 提审必需项。
    * wx.openPrivacyContract 打开的是微信事后台配置并发布的《用户隐私保护指引》，

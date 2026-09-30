@@ -1,0 +1,17 @@
+<!-- 我的作品（妆师端 · 空态）
+     落点：「我的」Tab →「我的作品 0 张」行。
+     ⚠️ 同样不在界面稿 §9.4 的 14 个可点元素里，见 README §4。
+
+     📌 「0 张」和这一页的空态是同一个事实的两种说法，不会对不上。
+     ⛔ 不给上传入口：M0 没有上传能力，画个按钮出来就是假的。 -->
+<view class="app">
+  <nav-bar title="我的作品" back="{{true}}"></nav-bar>
+
+  <view class="body center" style="flex:1">
+    <view class="empty">
+      <text class="ic">🖼</text>
+      <view class="et">还没有上传作品</view>
+      <view style="font-size:26rpx">你分享出去的页面上<br />样片那块现在是占位图</view>
+    </view>
+  </view>
+</view>

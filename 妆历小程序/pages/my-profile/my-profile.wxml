@@ -1,0 +1,30 @@
+<!-- 我的资料（妆师端 · 只读）
+     落点：「我的」Tab →「我的资料」行。
+     ⚠️ 界面稿 §9.4 的 14 个可点元素里没有这一屏 —— 这一页是后补的，
+        因为「我的」页那一行原先只弹一句 toast、不跳页面。见 README §4。
+
+     📌 整页没有一个可点的键（除了导航栏的「‹ 返回」），所以不可能白屏、
+        也不可能「点了没反应」。
+     🔴 三个字段就是**客人在分享页上看到的那三个**（landing.wxml 同一个对象）；
+        别的字段一律不上这一页，尤其微信号。 -->
+<view class="app">
+  <nav-bar title="我的资料" back="{{true}}"></nav-bar>
+
+  <view class="body tight">
+    <view class="card tight row">
+      <view class="ava sm">{{initial}}</view>
+      <view style="flex:1;min-width:0">
+        <view style="font-size:31rpx;font-weight:700">{{artist.nickname}}</view>
+        <view class="meta">{{artist.city}} · {{artist.style_text}}</view>
+      </view>
+    </view>
+
+    <view class="grp">
+      <view class="cell"><text class="cl">昵称</text><text class="cr">{{artist.nickname}}</text></view>
+      <view class="cell"><text class="cl">常驻城市</text><text class="cr">{{artist.city}}</text></view>
+      <view class="cell"><text class="cl">接妆风格</text><text class="cr">{{artist.style_text}}</text></view>
+    </view>
+
+    <view class="hint">这三项就是客人在你的分享页上看到的信息。</view>
+  </view>
+</view>

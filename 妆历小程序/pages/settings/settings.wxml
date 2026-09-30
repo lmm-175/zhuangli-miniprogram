@@ -20,10 +20,9 @@
       <view class="sw {{showWechat ? 'on' : ''}}"></view>
     </view>
 
+    <!-- 🔴 这里原先有一行「我的资料」，跟「我的」Tab 那行完全重复，已删。
+         ⛔ 别加回来，也别改挂到别处 —— 入口只留「我的」页那一处。 -->
     <view class="grp">
-      <view class="cell" bindtap="goProfile" hover-class="btn-hover" hover-stay-time="80">
-        <text class="cl">我的资料</text><text class="cr">›</text>
-      </view>
       <view class="cell" bindtap="openPrivacy" hover-class="btn-hover" hover-stay-time="80">
         <text class="cl">用户隐私保护指引</text><text class="cr">›</text>
       </view>
