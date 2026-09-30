@@ -3,6 +3,7 @@
     "pages/role-select/role-select",
     "pages/guest-home/guest-home",
     "pages/guest-bookings/guest-bookings",
+    "pages/artist-list/artist-list",
     "pages/schedule/schedule",
     "pages/booking/booking",
     "pages/mine/mine",

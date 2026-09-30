@@ -1,0 +1,75 @@
+<!-- 我约过的妆娘（约妆端）。
+     落点：pages/guest-home 那张聚合卡（goArtistList）。
+     点一行 → pages/landing/（C1 分享落地页），⛔ 没有第二个妆娘主页。
+
+     🔴 这一页是【一份私人记录】，⛔ 不是「平台上有哪些妆娘」：
+        每一行都必须来自「我自己提交过的那张预约单」（utils/myArtists.js）。
+        在个人主体下这不是取舍，是唯一合规的形态 —— 一个能被一页页翻完的
+        公开妆娘列表就是红线 1（README §3.7）。
+        ⛔ 谁要把数据源改成「读妆娘目录」，先去看那一节。
+     ⚠️ 标题和两句空态文案都来自 utils/myArtists.js，⛔ 不许在这一页再写一遍：
+        它们和约妆首页那张卡上说的是同一句话（规矩 11 / 25）。 -->
+<view class="app">
+  <nav-bar title="{{title}}" back="{{true}}">
+    <!-- 「搜索」放右上角：导航栏整条已经让开了微信胶囊（.nv 上的 padding-right），
+         顾客端的 landing / guest-home 也都在这个位置放动作。
+         ⚠️ 文案要在两个状态之间说实话：开着的时候点它是【收起并清空】，
+            所以那一下它写「收起」，⛔ 不写「搜索」。 -->
+    <view slot="right" class="nv-act" bindtap="toggleSearch" hover-class="nv-hover" hover-stay-time="80">{{open ? '收起' : '搜索'}}</view>
+  </nav-bar>
+
+  <view class="body tight">
+    <!-- 搜索框：点「搜索」才出现。
+         ⚠️ 输入即筛（bindinput），⛔ 没有回车键、⛔ 没有放大镜、⛔ 没有搜索历史 ——
+            那三件是妆师端预约单页的（那边的条子还要管选场次），
+            这一页一共几行，打一个字筛一次就够。理由写在 artist-list.js 里。
+         ⚠️ 灰底圆角那套外壳复用的是 app.wxss 里 `.sb-ipw/.sb-ip/.sb-ph` ——
+            它就是「一个搜索框」在这个项目里的形状，⛔ 别另画一个。 -->
+    <view wx:if="{{open}}" class="al-search">
+      <view class="sb-ipw">
+        <input class="sb-ip" value="{{kw}}" placeholder="搜妆娘昵称 / 城市"
+               placeholder-class="sb-ph" confirm-type="search" bindinput="onKwInput" />
+      </view>
+    </view>
+
+    <block wx:if="{{rows.length}}">
+      <view class="grp">
+        <!-- ⚠️ `wx:for-item="artist"` 是为了让头像那行写成
+             `c-{{artist.avatar_color}}`，和 landing / mine / my-profile /
+             guest-home 那四处**逐字一样**（理由写在 utils/myArtists.js 的
+             rowOf 里：自测按这个写法认「有没有带颜色令牌」）。
+             ⛔ 别把它改回默认的 `item`。 -->
+        <view wx:for="{{rows}}" wx:for-item="artist" wx:key="id" class="al-row"
+              data-id="{{artist.id}}" bindtap="goArtist" hover-class="btn-hover" hover-stay-time="80">
+          <!-- 头像 = 人像剪影 + 妆娘自选底色（2026-09-30 第十九处）。
+               `c-{{…}}` 是颜色【令牌】不是色值，色值住在 app.wxss 的 `.c-*`。
+               ⚠️ 空标签是故意的：里面什么都不放（放首字会渲染成半个 emoji）。 -->
+          <view class="ava sm c-{{artist.avatar_color}}"></view>
+          <view style="flex:1;min-width:0">
+            <view class="al-nm">{{artist.nickname}}</view>
+            <view class="meta">{{artist.city}}</view>
+            <view class="al-last">最近约妆：{{artist.lastText}}</view>
+          </view>
+          <view class="rgo">›</view>
+        </view>
+      </view>
+      <view class="hint">这些都是你约过的妆娘，点一位看她的妆位。</view>
+    </block>
+
+    <!-- 空态分两支，⛔ 不许合成一句：
+         ① 搜了个词、一个都没对上 —— 这时候说「还没有约过妆娘」是【答非所问】，
+            她明明约过，只是这个词没对上，她会以为记录丢了；
+         ② 真的一位都没有。
+         两支的分界就是 `searching`（有没有提交过词），不是 rows 空不空。 -->
+    <view wx:elif="{{searching}}" class="empty">
+      <text class="ic">🔍</text>
+      <view class="et">没有昵称或城市含「{{kw}}」的妆娘</view>
+      <view style="font-size:26rpx">只按昵称和城市找，不按风格找<br />换个词，或点右上角「收起」</view>
+    </view>
+    <view wx:else class="empty">
+      <text class="ic">📋</text>
+      <view class="et">{{empty}}</view>
+      <view style="font-size:26rpx">{{emptySub}}</view>
+    </view>
+  </view>
+</view>

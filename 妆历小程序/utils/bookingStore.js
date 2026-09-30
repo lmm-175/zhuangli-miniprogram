@@ -63,6 +63,28 @@ function newId() {
    只有 rejected / cancelled 才真的**释放**妆位。 */
 const BOOKED_STATUS = { pending: true, confirmed: true, done: true, cancel_requested: true }
 
+/* ══ 一单属于哪位妆娘 ═════════════════════════════════════════════════
+   🔴 2026-09-30（第二十处）新增。原因：预约单里【第一次出现了不是 demo 的单】
+      —— 顾客端「我约过的妆娘」要求预置的 3 位每一位都有一条「我约过她」的记录
+      （少一条就会出现「列表里有她、我却从没约过」的行，那一眼就是人肉目录，
+      是红线 1）。于是 BOOKINGS 里有 artist_id: 'demo-mian' / 'demo-ali' 的单了。
+
+   ⚠️ 为什么妆娘端必须按这个滤：pages/booking/booking.js 的 buildList 选
+      「全部」场次时是 `!s || belongsToSchedule(...)` —— **不按场次滤**，
+      只按四个状态 Tab 滤。它以前不需要认人，因为以前只有一个妆娘。
+      ⇒ 少了这一层，demo 打开「已确认」会看见【青蓝漫展 · 别人的客人】。
+      自测里那几条固定单号的断言（'bk-4,bk-5,bk-7' 之类）就是它的看门人。
+
+   ⚠️ `b.artist_id || 'demo'` 的兜底【不要删】：
+      - buildBooking() 保证新单一定带 artist_id（默认就是 'demo'）；
+      - 但 mock 之前手写的、以及 M1 落库之前可能出现的老单没有这个字段，
+        直接比会让它们**从妆娘端凭空消失**（而不是报错）。
+      ⚠️ 这是「没有值时的诚实兜底」，⛔ 不是「按名字猜」——
+         猜的那一类已经在 belongsToSchedule 那边被明确否掉了。 */
+function bookingsOfArtist(artistId) {
+  return getBookings().filter((b) => (b.artist_id || 'demo') === artistId)
+}
+
 /* ══ 一单属于哪一场档期 ═══════════════════════════════════════════════
    ⚠️ 只看 schedule_id。⛔ 不要拿「漫展名 + 日期」认 —— 那是【认不出来】的：
       同一个漫展分两天、或者两场重名，都会撞在一起。2026-09-29 用户报的
@@ -281,6 +303,31 @@ function applyBatch(mode, ids) {
   return n
 }
 
+/* ══ 一单的状态，给顾客看的时候叫什么 ═════════════════════════════════
+   📌 2026-09-30（第二十处）：这一份原来写在 `pages/guest-bookings/guest-bookings.js`
+      里。这一轮顾客端多了一页要显示状态（`pages/artist-list/` 的「最近约妆」那一行），
+      ⇒ 上提到这里 —— 两页各写一份的下场是同一张单在「我的预约」里写「已确认」、
+      在「我约过的妆娘」里写「妆娘已接单」，顾客会以为自己约了两单（规矩 11）。
+   ⚠️ 它是**顾客侧**的说法，⛔ 和妆师端那四个 Tab（待处理/已确认/已完成/已取消）
+      不是一回事：那是【分组】，这是【一单的状态】。
+      ⚠️ 尤其 `cancel_requested` 这一条：写「申请取消中」⛔ 不写「已取消」——
+         她还没退成，妆位也还占着，说成已取消她就直接不去了。 */
+const STATUS_TEXT = {
+  pending: '待处理',
+  confirmed: '已确认',
+  done: '已完成',
+  cancel_requested: '申请取消中',
+  rejected: '已拒绝',
+  cancelled: '已取消'
+}
+
+/* 查不到的状态【原样吐回去】，⛔ 不吞成空串 ——
+   页面上显示成一个没见过的英文词，好过显示成一片空白：
+   空白会让人以为「这一单没有状态」，而原样吐出来至少说明「这是个我没见过的状态」。 */
+function statusText(s) {
+  return STATUS_TEXT[s] || s || ''
+}
+
 /* ══ 按关键词找单子 ═══════════════════════════════════════════════════
    妆娘找一张单只有两种找法，所以【只认这两个字段】：
      · 「那个叫千夏的」      → 顾客 CN
@@ -296,10 +343,10 @@ function matchesKeyword(b, kw) {
 }
 
 module.exports = {
-  BATCH, BATCH_ORDER, BOOKED_STATUS, OPEN_STATUS,
-  getBookings, getBooking, updateBooking,
+  BATCH, BATCH_ORDER, BOOKED_STATUS, OPEN_STATUS, STATUS_TEXT,
+  getBookings, getBooking, updateBooking, statusText,
   buildBooking, addBooking, newId, nowText,
-  belongsToSchedule, bookingsOfSchedule, bookedSeqsOfSchedule, blockingBookings,
+  belongsToSchedule, bookingsOfArtist, bookingsOfSchedule, bookedSeqsOfSchedule, blockingBookings,
   isScheduleSettled,
   batchButtonsOf, pickableIds, canPick, applyBatch, matchesKeyword
 }

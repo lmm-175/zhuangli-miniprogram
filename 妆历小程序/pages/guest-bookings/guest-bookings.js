@@ -8,18 +8,12 @@
       本来就不该出现在顾客的「我的预约」里。
    ⚠️ 这是本次改动**唯一**碰到用户端的一处（用户 2026-09-29 说过「我目前只查
       妆娘端的问题，等会查用户端的」—— 所以这里只改数据来源，不动任何行为）。 */
-const { getBookings } = require('../../utils/bookingStore')
+const { getBookings, statusText } = require('../../utils/bookingStore')
 
-const STATUS_TEXT = {
-  pending: '待处理',
-  confirmed: '已确认',
-  done: '已完成',
-  // 顾客自己申请了取消，等妆娘回话。⚠️ 写「中」不说「已取消」——
-  // 她还没退成，妆位也还占着，说成已取消她就直接不去了。
-  cancel_requested: '申请取消中',
-  rejected: '已拒绝',
-  cancelled: '已取消'
-}
+/* 📌 2026-09-30（第二十处）：这里原来自己写着一份 STATUS_TEXT。
+   顾客端多了一页也要显示状态（「我约过的妆娘」的「最近约妆」那一行），
+   ⇒ 那份表上提到 utils/bookingStore.js（statusText）。
+   ⛔ 别在这儿再抄回来：两页各写一份的下场是同一张单在两处叫两个名字。 */
 
 Page({
   data: {
@@ -36,7 +30,7 @@ Page({
         event: b.event + ' · ' + b.date,
         slot: '第 ' + b.seq + ' 位 · ' + b.slot_time,
         status: b.status,
-        statusText: STATUS_TEXT[b.status] || b.status
+        statusText: statusText(b.status)
       }))
     this.setData({ list })
   },

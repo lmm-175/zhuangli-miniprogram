@@ -1,7 +1,13 @@
-const { getBookings, batchButtonsOf, pickableIds, canPick, applyBatch, BATCH,
+const { bookingsOfArtist, batchButtonsOf, pickableIds, canPick, applyBatch, BATCH,
         belongsToSchedule, isScheduleSettled, matchesKeyword } =
   require('../../utils/bookingStore')
 const { getSchedules, getSchedule } = require('../../utils/scheduleStore')
+const { getArtist } = require('../../utils/artistStore')
+/* 📌 2026-09-30（第二十处）：`dayNum` / `todayNum` / `awayFromToday` 三个
+   原先就是这个文件的私有函数，现在【搬到 utils/schedule.js】了 ——
+   顾客端妆位页也要「只列今天及以后」+「按离今天多近排」，
+   同一件事必须在同一处算（规矩 11）。⛔ 别在这儿再写一份。 */
+const { awayFromToday } = require('../../utils/schedule')
 
 /* 妆娘端预约单列表：四个状态 Tab（方案草案 §4.1 · 预约单列表）。
    status → tab 的映射：
@@ -25,26 +31,6 @@ const ALL = 'all'
 const SCHED_KEY = 'zhuangli_bk_sched'   // 上次选的哪一场，下次进来还选它
 const HIST_KEY = 'zhuangli_bk_hist'     // 搜索历史（2026-09-30 用户要的）
 const HIST_MAX = 10                     // 用户原话：「最多容纳十条记录」
-
-/* 'YYYY-MM-DD' → 第几天（用于算「离今天多远」）。
-   ⚠️ 手算，不 new Date(str)：各平台对 '2026-05-02' 这种短横线格式的解析
-      并不一致，而这里只要一个能相减的数。 */
-function dayNum(s) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''))
-  if (!m) return null
-  return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86400000
-}
-
-function todayNum() {
-  const d = new Date()
-  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000
-}
-
-/* 这场的日期离今天有多远（绝对值）。没日期 / 日期写坏了 → 排到最后。 */
-function awayFromToday(date) {
-  const v = dayNum(date)
-  return v === null ? Number.MAX_SAFE_INTEGER : Math.abs(v - todayNum())
-}
 
 /* 场次下拉条上的几项。顺序是用户 2026-09-29 定的：
      ①「全部」永远第一颗
@@ -274,10 +260,20 @@ Page({
              清了就变成「一挑场次搜索就没了」，正是这一条要的用法反而做不到。
           ⛔ 这段原来写的是「搜索时跨全部场次，所以 kw 非空就不按场次滤」，
              那个做法已按用户要求反过来，连界面上的「搜索中：跨全部场次」一起删。 */
+    /* 🔴 2026-09-30（第二十处）：这一行原来是 getBookings()，现在按人滤。
+       原因：BOOKINGS 里第一次有了【不是 demo 的单】（顾客端「我约过的妆娘」
+       要求每位妆娘都有一条「我约过她」的记录）。
+       ⚠️ 上面那段「全部 = 这个 CN 在【这位妆娘】这儿的全部单」——「这位妆娘」
+          这一层以前是白写的（只有一位），现在它是真的了。
+       🔴 少了这一层什么都不会报错：demo 只是在自己的「已确认」里
+          多看见一张【青蓝漫展 · 别人的客人】。
+       ⚠️ getArtist() 必须在这里现读、⛔ 不缓存到 data 里 ——
+          页面模块只求值一次，妆娘改过昵称/号之后要跟着变（规矩：能变的都走 onShow）。 */
     const kw = this.data.kw
     const allScope = this.data.schedId !== ALL
     const s = allScope ? getSchedule(this.data.schedId) : null
-    this._groups = TABS.map((tab) => getBookings().filter((b) =>
+    const mine = bookingsOfArtist(getArtist().artist_id)
+    this._groups = TABS.map((tab) => mine.filter((b) =>
       inTab(b, tab.key) && (!s || belongsToSchedule(b, s)) && matchesKeyword(b, kw)))
     this.setData({ active: active })
     this.paint(active)

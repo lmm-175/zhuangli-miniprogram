@@ -327,8 +327,46 @@ function scheduleRange(slots) {
   return slots[0].start + ' – ' + slots[slots.length - 1].end
 }
 
+/* ══ 日期差（2026-09-30 第二十处：从 pages/booking/booking.js 抽到这儿）══
+   🔴 抽出来的理由：妆娘端要「按离今天多近排场次」，顾客端要「只列今天及以后」
+      —— 同一件事（这一天离今天多远）两个端各算一遍的话，
+      某天有人改了其中一处的「今天」怎么取，两边的排序就会悄悄分成两套，
+      而且**两个端各自看都挺合理**，没有一处会报错。
+
+   ⚠️ 手算，⛔ 不 new Date('2026-05-02')：各平台对短横线格式的解析并不一致
+      （有的按 UTC、有的按本地），而这里只要一个能相减的数。
+   ⚠️ 全部按【本地日】取整（setHours 那一步在 todayNum 里）。 */
+function dayNum(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''))
+  if (!m) return null
+  return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86400000
+}
+
+function todayNum() {
+  const d = new Date()
+  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000
+}
+
+/* 这场的日期离今天有多远（绝对值）。没日期 / 日期写坏了 → 排到最后。 */
+function awayFromToday(date) {
+  const v = dayNum(date)
+  return v === null ? Number.MAX_SAFE_INTEGER : Math.abs(v - todayNum())
+}
+
+/* 是不是「今天及以后」。
+   🔴 认不出日期时返回 **true**（留着），⛔ 不是 false ——
+      筛掉一个妆娘自己建的场次必须是「它确实过期了」，
+      不是「我读不懂它的日期」。后者悄悄藏起来的话，
+      她建了一场、顾客端一场都看不到，而且谁都不报错。 */
+function isTodayOrLater(date) {
+  const v = dayNum(date)
+  if (v === null) return true
+  return v >= todayNum()
+}
+
 module.exports = {
   toMin, toHHMM, generateSlots, buildSlotsView, buildRows, markBooked,
   shiftSlot, lunchMovable, adjustLunch, removeLunch, removeSlot, insertSlot,
-  scheduleRange
+  scheduleRange,
+  dayNum, todayNum, awayFromToday, isTodayOrLater
 }

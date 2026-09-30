@@ -73,8 +73,11 @@
 
     <!-- 场次下拉面板。⚠️ 绝对定位【浮】在列表上面，⛔ 不占流 ——
          占流的话展开/收起会把下面整块内容顶下去又拉回来，而用户正盯着它选。
-         和「未付定金」那行红字同一个道理（见 §3.5）。 -->
-    <view wx:if="{{schedOpen}}" class="sched-panel">
+         和「未付定金」那行红字同一个道理（见 §3.5）。
+         ⚠️ 2026-09-30（第二十处）：壳的 class 从 .sched-panel 改成 .drop-panel，
+            因为它和下面的搜索历史面板本来是【逐字相同的两份声明】，
+            现在在 app.wxss 合成了一条（顾客端那一条场次筛选也用同一个壳）。 -->
+    <view wx:if="{{schedOpen}}" class="drop-panel">
       <view class="sp-list">
         <view wx:for="{{schedChips}}" wx:key="id"
               class="sp-item {{schedId === item.id ? 'on' : ''}}"
@@ -95,7 +98,7 @@
          点一下即可清空搜索历史。」
          ⚠️ 只在【点过输入框】时弹出来，不是常驻 —— 平时这一格是空的，不占屏。
          ⚠️ 一条历史都没有时也⛔ 不弹：一个空的「搜索历史」框纯属噪声（见 onFocus）。 -->
-    <view wx:if="{{histOpen}}" class="hist-panel">
+    <view wx:if="{{histOpen}}" class="drop-panel">
       <view class="hp-head">
         <text class="hp-t">搜索历史</text>
         <!-- 垃圾桶【用画的】：提手 + 盖子横条 + 桶身 + 两道竖纹。⛔ 不用 emoji。

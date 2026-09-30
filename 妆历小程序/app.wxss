@@ -226,6 +226,31 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 .lbl{font-size:24rpx;color:var(--t3)}
 .wxid{font-size:30rpx;font-weight:600}
 
+/* ── 行尾那个「 › 」（2026-09-30 第二十处 · 上提到这儿）────────────────
+   📌 它原来在 pages/booking/booking.wxss 和 pages/schedule/schedule.wxss 里
+      **各写了一份逐字相同的声明**。这一轮顾客端又多了两个消费者
+      （「我约过的妆娘」列表页 + 约妆首页那张卡），四份就是四份真相 ⇒ 收成一条。
+   ⚠️ 它是「这一行点得进去」的通用记号，⛔ 不是某一页的装饰。 */
+
+.rgo{font-size:34rpx;color:var(--t3);flex:none}
+
+/* ── 我约过的妆娘（顾客端列表页）· 2026-09-30 第二十处 ──────────────────
+   ⚠️ 那一页只有 `.js` + `.wxml`，样式全在这儿（照 pages/settings/ 的先例）。
+   🔴 这一页装的是【一份私人记录】，⛔ 不是妆娘目录 —— 理由写在
+      utils/myArtists.js 开头和 README §3.7。改这一页之前先看那两处。 */
+
+/* 搜索框那一行。点右上角「搜索」才出现，所以⛔ 不常驻 ——
+   一共两三位妆娘的时候，一个空搜索框纯属占地方。 */
+.al-search{padding:16rpx 26rpx 0}
+.al-row{display:flex;align-items:center;gap:20rpx;padding:24rpx 26rpx;background:#fff}
+.al-row + .al-row{border-top:1px solid var(--line2)}
+.al-nm{font-size:31rpx;font-weight:700}
+/* 「最近约妆：…」自己一行，⛔ 不跟城市挤 ——
+   漫展名是自由文本（红线 3），没人拦着顾客写多长；两个由用户决定长度的字符串
+   挤在同一行，没法决定该省谁的。所以各占一行，各自末尾省略号。 */
+.al-last{font-size:24rpx;color:var(--t3);margin-top:6rpx;
+         overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* ── 妆感 chip ───────────────────────────────────────── */
 .chips{display:flex;flex-wrap:wrap;gap:15rpx}
 .chip{display:inline-block;padding:13rpx 29rpx;border-radius:33rpx;border:1px solid var(--line);
@@ -269,6 +294,95 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
       所以整块上提到这里。⛔ 别在任何页面里再抄一份。 */
 .grp-sec{margin-top:14rpx}
 .grp-tag{font-size:24rpx;color:var(--t3);margin:9rpx 4rpx 4rpx}
+
+/* ── 场次下拉条 + 下拉面板（2026-09-30 第二十处上提）──────────────────
+   ⚠️ 这一套原先只长在 pages/booking/booking.wxss 里。顾客端 C1（妆位页）要
+      加一条场次筛选（用户原话：「可选妆位添加漫展场次筛选，点击妆娘已创建的
+      漫展场次即可显示可选妆位」），于是整块搬上来。
+      两份实现就是两份真相 —— 谁先改谁先烂，而且烂得静默（看着只是
+      「这两个页面有点不一样」）。⛔ 别在任何页面里再抄一份。
+
+   ⚠️ 留在 pages/booking/booking.wxss 的，只有【妆师端专有】的那几件：
+      框里那颗 ✕（.sb-clr）、放大镜（.sb-find）、搜索历史面板里的行（.hp-* / .hd-*）。
+      顾客端那两页 ⛔ 没有搜索历史、妆位页连搜索框都没有（搜人是妆娘端的事）。
+
+   📌 2026-09-30：`.sb-ipw / .sb-ip / .sb-ph`（「一个搜索框」的外壳）这一轮也
+      **搬上来了**。原先它留在这儿是当作「妆师端专有」的，可顾客端新加的
+      「我约过的妆娘」列表页也要一个搜索框 —— 它的复用方式就是挂这三个类
+      （那一页没有 .wxss，样式全在 app.wxss）。⛔ 别在页面里另画一个：
+      两份输入框差 2rpx 的圆角，没人会报。
+
+   ⚠️ 前缀 `sb-` 是「sched bar」的历史遗留名（它曾经只有场次那一块），
+      ⛔ 别按前缀猜归属，以这一段的注释为准。 */
+
+/* ⚠️ 这层是【定位上下文】，不是排版用的。面板绝对定位挂在这上面，
+   它决定面板从哪儿展开。z-index 是给「盖住 Tab / 列表 / 底栏」用的。 */
+.sched-wrap{position:relative;flex:none;z-index:30}
+/* ⚠️ position+z-index 是为了压在 .pn-mask（z-index:19）上面 ——
+   面板开着的时候那一层铺满全屏，条子要是被它盖住，条子上可点的东西
+   （妆师端是输入框、顾客端是场次那一块）就点不着了。
+   （面板挂在这条下面、跟它不重叠，所以压过 20 也不会挡到面板本身。） */
+.sched-bar{display:flex;align-items:center;gap:12rpx;
+           background:#fff;border-bottom:1px solid var(--line);
+           padding:16rpx 22rpx;position:relative;z-index:21}
+/* ⚠️ 场次名那块【不参与伸缩】（flex:none + 上限 300rpx）——
+   妆师端那条上它右边还有输入框，让它 flex:1 会把输入框挤到没宽度，
+   而「正在打字」的那一格才是那一行里最需要宽度的地方。
+   名字长了末尾省略号，下面面板里看得全。 */
+.sb-pick{display:flex;align-items:center;flex:none;max-width:300rpx;
+         padding:10rpx 20rpx;border-radius:14rpx;background:var(--line2)}
+.sb-lb{font-size:27rpx;color:var(--t1);font-weight:600;
+       overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 下拉箭头【用两条边画的】，⛔ 不用文字「▾」/「∨」——
+   字形和基线各平台不一，同一个道理见圆钮那两根小条。 */
+/* ⚠️ 箭头本身只有 14rpx，直接挂 bindtap 命中区太小（描不准就是没反应）。
+   所以外面这层 56rpx 的方块才是点击区，箭头只是它的内容。 */
+.sb-arw{width:56rpx;height:64rpx;flex:none;
+        display:flex;align-items:center;justify-content:center}
+.sb-ar{width:14rpx;height:14rpx;flex:none;
+       border-right:3rpx solid var(--t3);border-bottom:3rpx solid var(--t3);
+       transform:rotate(45deg) translate(-3rpx,-3rpx)}
+.sb-ar.up{transform:rotate(-135deg) translate(-3rpx,-3rpx)}
+
+/* 输入框的外壳。⚠️ 背景和圆角画在【壳】上，输入框自己透明 ——
+   输入框自带白底，画在它身上的话会把壳里那颗 ✕ 盖住（妆师端条子上那颗）。
+   ⚠️ 顾客端列表页把它当【独立的一行】用（外面是 .al-search，一个块级容器）：
+      那时 `flex:1` 不生效，`display:flex` 让它自己撑满整行 —— 这是对的，
+      不是漏了什么。 */
+.sb-ipw{flex:1;min-width:0;display:flex;align-items:center;
+        border-radius:14rpx;background:var(--line2)}
+.sb-ip{flex:1;min-width:0;height:68rpx;font-size:27rpx;color:var(--t1);
+       padding:0 20rpx;background:transparent}
+.sb-ph{color:var(--t4)}
+
+/* 点面板以外的地方收起它。⚠️ 铺满整屏的透明层，z-index 要比面板低一档。
+   ⚠️ 两个面板（场次 / 搜索历史）共用这一层，它们不同时开。 */
+.pn-mask{position:fixed;left:0;right:0;top:0;bottom:0;z-index:19}
+
+/* 下拉面板（场次清单 / 搜索历史 / 顾客端的场次清单 都是它）。
+   ⚠️ 绝对定位浮在 Tab 和列表上面，⛔ 不占流 ——
+      占流的话展开/收起会把下面整块内容顶下去又拉回来，而用户正盯着它选。
+   ⚠️ top:100% = .sched-wrap 的下沿（就是条子本身）。
+      它挂在 .sched-wrap 上（上面那条 position:relative）。
+   📌 2026-09-30：这个壳原先在 booking.wxss 里写了两份（.sched-panel /
+      .hist-panel 逐字相同），搬上来的时候合成了一条 —— 两个面板本来就
+      是同一个位置的两个替身，⛔ 不该各写一份。 */
+.drop-panel{position:absolute;left:0;right:0;top:100%;z-index:20;
+            background:#fff;border-bottom:1px solid var(--line);
+            box-shadow:0 12rpx 28rpx rgba(0,0,0,.10);
+            max-height:640rpx;overflow:hidden;display:flex;flex-direction:column}
+/* 面板里没有搜索框（妆师端的那个长在条子上），所以上沿自己留一点空。
+   ⚠️ 2026-09-30 方案 B 之后面板就是【纯场次清单】了：不再被关键词筛，
+      所以也不会再出现「一项都没剩下」的样子，「没有叫这个名字的展子 / CN」
+      那行（原 .sp-none）连同样式一起删了。 */
+.sp-list{overflow-y:auto;padding:12rpx 0}
+.sp-item{display:flex;align-items:center;justify-content:space-between;gap:16rpx;
+         padding:24rpx 26rpx;font-size:28rpx;color:var(--t1)}
+.sp-item + .sp-item{border-top:1px solid var(--line2)}
+.sp-item.on{color:var(--brand);font-weight:700;background:var(--brand-l)}
+.sp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-sub{flex:none;font-size:22rpx;color:var(--t4);font-weight:400}
+.sp-item.on .sp-sub{color:var(--brand-d)}
 
 /* ── 底部固定栏 ──────────────────────────────────────── */
 .footbar{padding:22rpx;background:#fff;border-top:1px solid var(--line);display:flex;gap:20rpx;flex:none}

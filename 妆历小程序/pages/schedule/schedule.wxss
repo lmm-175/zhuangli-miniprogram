@@ -34,4 +34,3 @@
 .s-meta{font-size:25rpx;color:var(--t3);margin-top:6rpx}
 /* 「N 人已预约」—— 蓝色，跟「已预订」那类蓝色信息同族（--info） */
 .s-bk{color:var(--info)}
-.rgo{font-size:34rpx;color:var(--t3)}

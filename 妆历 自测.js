@@ -1281,8 +1281,16 @@ function restoreBookings() {
 }
 function st(id) { return BS.getBooking(id).status }
 function dep(id) { return BS.getBooking(id).deposit_paid }
+/* 🔴 2026-09-30（第二十处）：这里【必须】按人滤，跟页面同一个口径。
+   BOOKINGS 里现在有另外两位妆娘的单（顾客端「我约过的妆娘」要求每位都有一条
+   「我约过她」的记录），而页面走的是 bookingsOfArtist(getArtist().artist_id)。
+   桩要是不跟着滤，这几条断言就会因为「别的妆娘的单混进来了」而红 ——
+   那种红是假警报，但它掩盖的正是真问题：**妆娘端只该看见自己的单**。
+   ⚠️ 妆娘端那一位是谁，从 ARTIST_PUBLIC.artist_id 取，⛔ 不写字面量 'demo' ——
+      写了就没人知道这两处是一回事了。 */
+const MY_ARTIST_ID = require(R('妆历小程序/mock/data.js')).ARTIST_PUBLIC.artist_id
 function byTab(key) {
-  return BS.getBookings().filter((b) => {
+  return BS.bookingsOfArtist(MY_ARTIST_ID).filter((b) => {
     if (key === 'closed') return b.status === 'rejected' || b.status === 'cancelled'
     return b.status === key
   })
@@ -1302,6 +1310,24 @@ function byTab(key) {
   eq('每个入口都声明了自己属于哪个 Tab',
     ['pending', 'confirm', 'deposit'].map((m) => m + '=' + BATCH[m].tab).join(' '),
     'pending=pending confirm=confirmed deposit=confirmed')
+
+  /* 🔴🔴 2026-09-30（第二十处）新增 —— 妆娘端的射程。
+     BOOKINGS 里现在有另外两位妆娘的单（顾客端要的）。妆娘端选「全部」场次时
+     【不按场次滤】，所以少了 bookingsOfArtist() 这一层，demo 会安静地在
+     自己的列表里多看见几张别人的单 —— 不报错、不崩，只是错。
+     ⚠️ 第二条是【防上面的空集自证】：要是哪天 BOOKINGS 里一张别人的单都没有了，
+        上面那条会靠空数组白拿一个绿，而它保的性质当天就没了。 */
+  const mineAll = [].concat(byTab('pending'), byTab('confirmed'), byTab('done'), byTab('closed'))
+  eq('🔴★ 妆娘端能看见的每一张单都是她自己的（⛔ 一张别人的都没有）',
+    mineAll.filter((b) => b.artist_id !== MY_ARTIST_ID).length, 0)
+  eq('★ 而且库里确实存在【不是她的】单（不然上一条是空集自证，白绿）',
+    BS.getBookings().filter((b) => b.artist_id !== MY_ARTIST_ID).length > 0, true)
+  /* ⚠️ 这一条【按人直接数】，⛔ 不能用上面 mineAll 那几个 Tab 相加 ——
+     「顾客申请取消」（cancel_requested）那一张【不属于四个 Tab 里的任何一个】
+     （它留在「已确认」里等妆娘回话），加起来恒少一张。
+     这不是四舍五入的小事：用 Tab 求和当总数，会让这条断言从第一天起就差 1。 */
+  eq('★ 她那 7 张一张不少（按人滤没有把她自己的单也滤掉）',
+    BS.bookingsOfArtist(MY_ARTIST_ID).length, 7)
 }
 
 // ── B. 勾得上 / 勾不上 ──
@@ -1565,8 +1591,44 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
     eq('🔴★ 「搜索中：跨全部场次」那句话在 wxml 里已经删干净',
       /搜索中：跨全部场次/.test(bw), false)
     eq('⛔ 它的样式（.sb-tip*）也跟着删了，不留死代码', /\.sb-tip/.test(bwss), false)
-    eq('★ 蒙层改名成两个面板共用的 .pn-mask', /\.pn-mask\s*\{/.test(bwss), true)
-    eq('⛔ 老名字 .sp-mask 一个都不剩', /\.sp-mask/.test(bwss), false)
+    /* 📌 2026-09-30（第二十处）：这一套下拉【搬到 app.wxss】了 ——
+       顾客端 C1 的妆位页要一条一模一样的场次筛选，两份实现就是两份真相。
+       ⚠️ 这条断言的【性质一个字没变】（那个蒙层叫 .pn-mask、是两个面板
+          共用的），只是它现在住 app.wxss。⛔ 不是删掉重写一条。
+       🔴 后半条是这次新加的：「搬」和「抄」的区别就在这儿 ——
+          搬完本页不许还留着一份，否则下一个人改哪一份都只改到一半。 */
+    const awss = require('fs')
+      .readFileSync(R('妆历小程序/app.wxss'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+    eq('★ 蒙层改名成两个面板共用的 .pn-mask（已上提到 app.wxss）',
+      /\.pn-mask\s*\{/.test(awss), true)
+    eq('🔴★ 而且 booking.wxss 里【没有】第二份（搬是搬，⛔ 不是抄）',
+      /\.pn-mask\s*\{/.test(bwss), false)
+    eq('⛔ 老名字 .sp-mask 一个都不剩',
+      /\.sp-mask/.test(bwss) || /\.sp-mask/.test(awss), false)
+    /* 🔴 面板壳：原先 .sched-panel / .hist-panel 各写了一份逐字相同的声明，
+       现在合成 app.wxss 的一条 .drop-panel。⛔ 两个老名字都不许再出现
+       （留着的话，谁改了那份"看起来还在用"的声明都会以为生效了）。 */
+    eq('🔴★ 两个面板的壳合成一条 .drop-panel（app.wxss）', /\.drop-panel\s*\{/.test(awss), true)
+    eq('🔴★ 两个老名字（.sched-panel / .hist-panel）都不剩',
+      /\.sched-panel\s*\{/.test(bwss) || /\.hist-panel\s*\{/.test(bwss) ||
+      /\.sched-panel\s*\{/.test(awss) || /\.hist-panel\s*\{/.test(awss), false)
+    /* 🔴 妆师端专有的那几件【必须还在】—— 搬家搬过头把它们也搬走的话，
+       妆师端的输入框会当场裸奔（一个没高度的裸 input = 「点了没反应」的长相）。
+       📌 2026-09-30：`.sb-ipw / .sb-ip / .sb-ph`（搜索框那套壳）这一轮也上提了
+          —— 顾客端「我约过的妆娘」列表页要一个同款搜索框，而那一页没有 .wxss。
+          所以它从这一条挪到下面「在 app.wxss 里」那一半。
+          ⚠️ **判据一个字没变**：那套壳有且只有一份、且必须存在（规矩 31 ——
+             性质没变，换的是实现它的机制）。
+       ⚠️ 仍然留在本页的是 ✕ / 放大镜 / 历史行：
+          顾客端那两页⛔ 没有搜索历史，妆位页连搜索框都没有。 */
+    eq('★ ✕ + 放大镜 + 历史行都还在 booking.wxss 里',
+      ['\\.sb-clr\\s*\\{', '\\.sb-find\\s*\\{', '\\.hp-item\\s*\\{']
+        .filter((re) => !new RegExp(re).test(bwss)).length, 0)
+    eq('★ 搜索框的壳也在（搬到了 app.wxss，列表页和妆师端共用一份）',
+      /\.sb-ipw\s*\{/.test(awss), true)
+    eq('🔴★ 而且 booking.wxss 里【没有】第二份（搬是搬，⛔ 不是抄）',
+      /\.sb-ipw\s*\{/.test(bwss), false)
     eq('★ 输入框里的 ✕ 只有框里有字才出现',
       /wx:if="\{\{kwInput\}\}"[\s\S]{0,120}?class="sb-clr"/.test(bw), true)
     eq('★ 点输入框弹历史走的是 bindfocus', /bindfocus="onFocus"/.test(bw), true)
@@ -2288,11 +2350,26 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
      ⚠️ 旧版的 ⑤ 只有三行：填完 cn/role/wechat 直接 onSubmit 就期望退回。
         现在**选不出妆位就提交不了** —— 那正是这次要验的事，所以整块重写。
      ⚠️ 用一场**自己新建的**档期来跑通的路径：mock 里那两场示例档期
-        （sched-demo-0502 / 0503）的妆位**已经全被 7 张示例单占满了**，
-        拿它们跑不出「有妆位可选」那条路（顺带：这正好拿来验 C3 空态）。
+        （sched-demo-0502 / 0503）的妆位基本都被示例单占着，拿它们跑不出
+        「有妆位可选」那条路（顺带：这正好拿来验 C3 空态）。
+        📌 2026-09-30（第二十处）更正：这句话原先写的是「**已经全被** 7 张
+           示例单占满了」—— 只有 0503 是。0502 这一轮加到 5 个妆位
+           （顾客端 C1 的默认场次，不能一个空位都没有）。
      ══════════════════════════════════════════════════════════════════ */
   const SS = require(R('妆历小程序/utils/scheduleStore.js'))
   const genSlots = S.generateSlots
+
+  /* 🔴🔴 2026-09-30（第二十处）新增 —— 进 ⑤ 之前先把预约单还原。
+     上面几段（顾客取消 / 妆娘同意 / 批量处理）会**就地改** BOOKINGS 的状态，
+     而且不是每一段都收干净了：跑完 ⑤-B 时 bk-1 已经是 confirmed、
+     bk-4 是 done、bk-7 是 cancelled。
+     ⚠️ 这不是「为了绿而还原」—— ⑤ 下面的前提就是「示例档期的妆位是满的」，
+        不还原的话那个前提是假的，而断言只会以「某一场的下拉里多了一项」
+        这种看不出所以然的方式变红。⛔ 别删这一行，也别改成换一场档期。
+     ⚠️ 用 ⑥ 段那个 restoreBookings()：它是**就地改**数组（`list.length = 0`
+        再 push），⛔ 不是换一个引用 —— 换引用的话 bookingStore 里那个闭包
+        还握着老的，后面每段都歪（⑥ 段那段注释原话）。 */
+  restoreBookings()
 
   // ⑤-A 代填不预选任何妆位
   reopen({ mode: 'artist' })
@@ -2319,10 +2396,25 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
     BS.getBookings().length, nBefore5)
   eq('★ 也没往外跳', outN(), outBefore5)
 
-  // ⑤-C 选一场【妆位全被占满】的档期 → C3 空态必须说清是「满了」
+  /* ⑤-C 选一场【妆位全被占满】的档期 → C3 空态必须说清是「满了」
+     🔴 2026-09-30（第二十处）：这一条从 sched-demo-0502 改用 sched-demo-0503。
+        原因：0502 被加到了 5 个妆位（它同时是【顾客端 C1 的默认场次】，
+        3 个位全占满的话提审截图 ② 上一个妆位都点不到）。
+        ⇒ 用 0503（4 个位被 bk-4/5/6/7 占满）之后**判据一个字没改**，
+          emptyReasonOf 一样落到「这一场的妆位都约满了」。
+        ⚠️ 别把这条删了 —— 它保的是「约满」这个状态**真的还会有**，
+           不是「0502 永远满着」。
+
+     🔴🔴 而且它逼出了一个**真问题**：这一条第一次改完是红的，因为跑到这里时
+        bk-7 已经被上面「同意取消」那段改成了 cancelled ⇒ 0503 的第 4 位也空着。
+        「示例数据是排满的」这件事**从来就不成立** —— 它只是碰巧在旧断言下
+        看不出来（旧断言用的是 0502，而 bk-1/2/3 那三张的 status 恰好没被动过）。
+        ⇒ 修法是先把预约单**还原成初始快照**再验（见 ⑤-A 上面那行
+          restoreBookings()），⛔ 不是换一场「碰巧还是满的」的档期。
+          靠别段残留状态凑出来的前提，迟早会静默失效。 */
   const idxOf = (id) => pg.data.schedOptions.findIndex((x) => x.value === id)
-  pg.pickSched({ detail: { value: idxOf('sched-demo-0502') } })
-  eq('★ 这一场 3 个妆位全被示例单占着 → 下拉里一个都没有',
+  pg.pickSched({ detail: { value: idxOf('sched-demo-0503') } })
+  eq('★ 这一场 4 个妆位全被示例单占着 → 下拉里一个都没有',
     pg.data.slotOptions.length, 0)
   eq('🔴★ 空态说的是「这一场的妆位都约满了」，⛔ 不是笼统的「没有可选的妆位」',
     pg.data.slotEmptyText, '这一场的妆位都约满了')
@@ -2910,9 +3002,13 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
   eq('🔴 my-works 已从 app.json 注销（第十五处：整块删掉）',
     appJson.pages.indexOf('pages/my-works/my-works'), -1)
   /* ⚠️ 这一条是**页数账本**，每次加页都要跟着改：15 → 14（第十五处删了作品页）
-     → **16**（第十七处加了 style-edit / intro-edit）→ **17**（第十九处加了 feedback）。
-     ⛔ 不是「改到能过就行」—— 它存在的意义是「有人顺手加了一页却没想清楚」时当场红。 */
-  eq('🔴 app.json 的 pages 是 17 项（加回风格页 + 简介页 + 反馈页）', appJson.pages.length, 17)
+     → **16**（第十七处加了 style-edit / intro-edit）→ **17**（第十九处加了 feedback）
+     → **18**（第二十处加了 artist-list）。
+     ⛔ 不是「改到能过就行」—— 它存在的意义是「有人顺手加了一页却没想清楚」时当场红。
+     📌 第二十处只加了**一页**（artist-list）⇒ 17 + 1 = 18。
+        方案里当时写的是「17 → 19」，那是算错了：这一轮没有第二个新页
+        （妆位页是改造 pages/landing/，⛔ 不是新建）。 */
+  eq('🔴 app.json 的 pages 是 18 项（加回风格页 + 简介页 + 反馈页 + 我约过的妆娘）', appJson.pages.length, 18)
   eq('★ tabBar 还是 3 项（没被顺手改成 4 项）', appJson.tabBar.list.length, 3)
   eq('★ 跳的路径确实都在 pages 里（拼错了就是白屏）',
     navs.every((u) => appJson.pages.indexOf(u.slice(1)) >= 0), true)
@@ -3194,6 +3290,83 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('🔴★ getArtist() 输出里也搜不到',
     JSON.stringify(AS.getArtist()).indexOf('demo_makeup'), -1)
 
+  /* ── D2. getArtistById —— 顾客端按 id 取人（2026-09-30 第二十处新增）─────
+     🔴 这一段保的是【顾客端唯一该走的取资料入口】。它坏掉不会报错：
+        列表里那一行只会显示成一个空白人（没名字、没颜色），
+        而那种空白在真机上跟「这个人没填资料」长得一模一样。
+     ⚠️ 它和上面 D 段是同一条白名单性质的两个入口（规矩 11）——
+        新入口要是漏了 getArtist() 那套消毒，这里必须红。 */
+  const { ARTIST_DIRECTORY, ARTIST_CONTACT } = require(R('妆历小程序/mock/data.js'))
+  const ARTIST_CONTACT_IDS = ARTIST_CONTACT.map((c) => c.artist_id)
+  const CT = require(R('妆历小程序/utils/contact.js'))
+  const DIR_KEY = 'artist_id,avatar_color,city,intro,nickname,style_tags,style_text'
+
+  eq('★ 不传 id → 就是当前这位（页面少传参数时不该崩）',
+    JSON.stringify(AS.getArtistById()), JSON.stringify(AS.getArtist()))
+  eq('★ 传 null / 空串也一样',
+    JSON.stringify(AS.getArtistById(null)) + JSON.stringify(AS.getArtistById('')),
+    JSON.stringify(AS.getArtist()) + JSON.stringify(AS.getArtist()))
+  /* 🔴 这一条是整个函数的重点：demo 是【妆娘端那一位】，她的资料会被改。
+     走目录里那份快照的话，妆娘改完昵称，顾客端纹丝不动 —— 不报错。 */
+  AS.saveArtist({ city: '测试城' })
+  eq('★ 妆娘改过城市之后，getArtist() 里是新的', AS.getArtist().city, '测试城')
+  eq('🔴★ getArtistById(\'demo\') 跟着 storage 走（⛔ 不是目录里那份快照）',
+    AS.getArtistById('demo').city, '测试城')
+  eq('★ 而目录里 demo 那一条仍然是「上海」（证明上一条真的在比两样东西，⛔ 不是自证）',
+    ARTIST_DIRECTORY.filter((e) => e.artist_id === 'demo')[0].city, '上海')
+
+  /* 🔴 目录里每一位都要解析得出来，而且长得是那 7 个键。
+     用循环而不是一条条写死：以后加第 4 位妆娘，这一段自动覆盖。 */
+  eq('★ 目录里恰好 3 位（预置的就是 3 位）', ARTIST_DIRECTORY.length, 3)
+  ARTIST_DIRECTORY.forEach((e) => {
+    const a = AS.getArtistById(e.artist_id)
+    eq('★ ' + e.artist_id + ' 解析出来的键恰好是那 7 个',
+      Object.keys(a).sort().join(','), DIR_KEY)
+    eq('🔴★ ' + e.artist_id + ' 的输出里没有 wechat_id',
+      'wechat_id' in a || JSON.stringify(a).indexOf('_makeup') >= 0, false)
+    eq('★ ' + e.artist_id + ' 的名字取到了（⛔ 不是回落成空白人）',
+      a.nickname.length > 0, true)
+    eq('★ ' + e.artist_id + ' 的头像色是闭集里的令牌（⛔ 不是 undefined）',
+      AS.AVATAR_COLORS.indexOf(a.avatar_color) >= 0, true)
+  })
+  /* 🔴 规矩 16 扩到目录：手写在那 3 条里的 style_text，
+     必须等于 buildStyleText(自己的 style_tags)。改了排序规则或手改了文案，当场红。 */
+  eq('🔴★ 规矩 16：目录里每一条的 style_text === buildStyleText(style_tags)',
+    ARTIST_DIRECTORY.filter((e) => AS.buildStyleText(e.style_tags) !== e.style_text)
+      .map((e) => e.artist_id), [])
+  /* 🔴 另外两位的风格词【必须各有各的】：三条一模一样的话，
+     「换一位妆娘进去，风格跟着换」这件事在界面上根本看不出来，
+     而那正是「妆位页跟着认人」要证明的东西。 */
+  eq('★ 3 位的接妆风格各不相同（不然「认人」在界面上看不出来）',
+    ARTIST_DIRECTORY.map((e) => e.style_text).filter((x, i, arr) => arr.indexOf(x) === i).length, 3)
+  /* 查不到 → 落到 demo。⛔ 不是 null、不是半个对象 —— 页面拿到 null
+     会渲染出一张空白人卡，那种空白跟「她没填资料」长得一模一样。 */
+  eq('🔴★ 传一个不存在的 id → 回落到 demo（⛔ 不是 null、不是空白人）',
+    AS.getArtistById('demo-查无此人').nickname, AS.getArtist().nickname)
+  eq('🔴★ 回落出来的仍然是一个【完整的】7 键对象',
+    Object.keys(AS.getArtistById('demo-查无此人')).sort().join(','), DIR_KEY)
+
+  /* ── D3. contact：3 位各一条，仍然只有这一个出口 ─────────────────────
+     ⚠️ 原先这里一条断言都没有（只有一条「资料页不许 require contact.js」）。
+        妆娘变成 3 位之后，少一条记录的后果是「在阿黎的页面上找不到联系方式」，
+        而界面上只是那一行不出现 —— 不报错。 */
+  eq('★ 3 位妆娘各有一条联系方式', ARTIST_CONTACT_IDS.length, 3)
+  eq('★ 名单和目录对得上（⛔ 一个都不能少）',
+    ARTIST_CONTACT_IDS.slice().sort().join(','),
+    ARTIST_DIRECTORY.map((e) => e.artist_id).sort().join(','))
+  eq('★ demo 的微信号取得到', CT.getContact('demo').wechat_id, 'demo_makeup')
+  eq('★ 小满的也取得到（⛔ 不是只认第一位）',
+    CT.getContact('demo-mian').wechat_id, 'demo_mian_makeup')
+  eq('★ 阿黎的也取得到', CT.getContact('demo-ali').wechat_id, 'demo_ali_makeup')
+  eq('🔴★ 不传 / 传查不到的 → 空对象（C1 上整行不渲染）',
+    JSON.stringify(CT.getContact()) + JSON.stringify(CT.getContact('demo-不存在')),
+    '{}{}')
+  /* 🔴 任何一位的资料里都不许有她的微信号 —— 三位都查一遍，
+     ⛔ 不是只查 demo 那一位就完事。 */
+  eq('🔴★ 整个目录序列化之后搜不到任何一个微信号',
+    ['demo_makeup', 'demo_mian_makeup', 'demo_ali_makeup']
+      .filter((w) => JSON.stringify(ARTIST_DIRECTORY).indexOf(w) >= 0), [])
+
   // ── E. 派生字段：style_text 只算不存；avatar_color 是【存了但不派生】 ──
   const saved2 = AS.saveArtist({ style_tags: ['展妆', '古风妆'] })
   eq('★ 改了 style_tags，style_text 当场跟着变',
@@ -3317,15 +3490,27 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   /* 这次把 4 个消费者从 ARTIST_PUBLIC 换成了 artistStore.getArtist()，
      迁移时真正踩到的坑是 pages/guest-bookings 自己 require 了 BOOKINGS
      （绕开了 bookingStore 那一整层）。所以这两条要钉在**文件级**上。 */
+  /* 📌 2026-09-30（第二十处）：第 5 个消费者是「我约过的妆娘」列表页 ——
+     它显示的正是妆娘的昵称 / 城市 / 头像令牌，所以它同样必须经过 artistStore。
+     ⚠️ 少写它一条的代价：「妆娘改了资料、顾客端这一页不变」那个 bug 从这一页
+        回来，而且同样不报错（这一页是顾客**每次进来都会看**的一页）。 */
   const consumers10 = ['pages/landing/landing.js', 'pages/guest-home/guest-home.js',
-                       'pages/mine/mine.js', 'pages/my-profile/my-profile.js']
-  eq('🔴★ 4 个消费者都不再直接 require ARTIST_PUBLIC',
+                       'pages/mine/mine.js', 'pages/my-profile/my-profile.js',
+                       'pages/artist-list/artist-list.js']
+  eq('🔴★ 5 个消费者都不再直接 require ARTIST_PUBLIC',
     consumers10.filter((p) =>
       /require\([^)]*mock\/data[^)]*\)[\s\S]{0,80}ARTIST_PUBLIC/.test(
         fs.readFileSync(R('妆历小程序/' + p), 'utf8'))), [])
-  eq('★ 而且都改成走 artistStore 了',
-    consumers10.filter((p) =>
-      !/getArtist/.test(fs.readFileSync(R('妆历小程序/' + p), 'utf8'))), [])
+  /* 🔴 正向：它必须【经过】artistStore —— 自己 getArtist()，
+     或者经过 utils/myArtists.js（那一层自己走 getArtistById）。
+     ⚠️ 这里认两种走法，⛔ 不是把判据放宽了：list 页要的是**一份聚合成多行的记录**，
+        资料本身它一行都不该自己去取 —— 它经过的那一层同样住在 utils/ 里，
+        同样只有一份（规矩 11）。⛔ 别把 artist-list 从这条里踢出去。 */
+  eq('★ 而且都改成走 artistStore 了（自己 getArtist，或经 myArtists 那一层）',
+    consumers10.filter((p) => {
+      const s = fs.readFileSync(R('妆历小程序/' + p), 'utf8')
+      return !/getArtist/.test(s) && !/require\([^)]*myArtists[^)]*\)/.test(s)
+    }), [])
   /* ⚠️ 必须【摘掉注释再查】—— guest-bookings.js 的注释里原样引着那句
      `require('../../mock/data').BOOKINGS` 用来讲这次为什么改（第五处栽在
      同类陷阱上：README 第 21 条那条「查前先摘注释」）。 */
@@ -3494,8 +3679,14 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
         ⚠️ 这一段的另一个价值：它是**全项目扫一遍**的，将来谁在新页面里加一个
           `<view class="ava">`（漏了令牌 = 兜底色能画出来，但换色换不到它），
           这条会红。 */
-  const avaOwners = ['pages/landing/landing.wxml', 'pages/guest-home/guest-home.wxml',
-    'pages/mine/mine.wxml', 'pages/my-profile/my-profile.wxml']
+  /* 📌 2026-09-30（第二十处）：名单里进了「我约过的妆娘」列表页、
+     **移出了约妆首页** —— 走的是同一个人的同一份数据，一个进一个出。
+     ⚠️ 它那一行用的是 `wx:for-item="artist"`，就是为了让头像那行写成
+        `c-{{artist.avatar_color}}` —— 和别处**逐字一样**，
+        于是下面三条断言一条都不用放宽（判据没变，也没漏掉新那一页）。 */
+  const avaOwners = ['pages/landing/landing.wxml',
+    'pages/mine/mine.wxml', 'pages/my-profile/my-profile.wxml',
+    'pages/artist-list/artist-list.wxml']
   const avaTags = avaOwners.reduce((acc, p) => {
     /* ⚠️ 正则末尾那个 `(\s*</view>)?` 是可选的【闭合标签】——
        标签里**有内容**时它匹配不上，于是捕获到的那一段就不以 `</view>` 结尾。
@@ -3505,7 +3696,17 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
       .match(/<view class="[^"]*\bava\b[^"]*"[^>]*>(\s*<\/view>)?/g) || []
     return acc.concat(hits.map((h) => p + ' → ' + h))
   }, [])
-  eq('★ 全项目恰好 4 处头像（4 个消费者，⛔ 没有第 5 处）', avaTags.length, 4)
+  eq('★ 4 个消费者里恰好 4 处头像（每页一处，⛔ 没有多于一处）', avaTags.length, 4)
+  /* 🔴 约妆首页【一处头像都没有】，这一条钉着它 ——
+     那张卡原来展示的是**某一位**妆娘（她的头像 / 昵称 / 风格 / 档期 / 简介），
+     第二十处按用户定的口径（首页不再单独展示某一位）换成了**聚合**：
+     「共约过几位 + 最近约的是谁」。聚合口径里没有「某一位」，自然没有她的头像。
+     ⚠️ 所以它是从上面那份名单里【移出去】的，⛔ 不是漏写了 ——
+        将来首页要是又想放一位的头像，这一条会红；那时候要问的问题是
+        「首页是不是又在替顾客挑人了」，⛔ 不是把名单加回来。 */
+  eq('🔴★ 约妆首页一处头像都没有（首页不代表任何一位妆娘）',
+    /<view class="[^"]*\bava\b/.test(
+      stripHtml(fs.readFileSync(R('妆历小程序/pages/guest-home/guest-home.wxml'), 'utf8'))), false)
   eq('🔴★ 每一处头像都带颜色令牌（漏了 = 换色换不到它）',
     avaTags.filter((h) => !/c-\{\{artist\.avatar_color\}\}/.test(h)), [])
   eq('🔴★ 每一处头像内都是空的（人像是 ::before/::after 画的，⛔ 不许再放字）',
@@ -3530,8 +3731,8 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     /getSchedules\(\)[^\n]{0,40}\n[^\n]{0,40}setStorageSync/.test(ssStore10), false)
 
   // ── R. app.json 的页数账本 ─────────────────────────────────────────
-  eq('🔴 页数是 17（= 14 + 风格页 + 简介页 + 反馈页），加页要主动改这一条',
-    appJson10.pages.length, 17)
+  eq('🔴 页数是 18（= 14 + 风格页 + 简介页 + 反馈页 + 我约过的妆娘），加页要主动改这一条',
+    appJson10.pages.length, 18)
   eq('★ 而且没有重复注册',
     appJson10.pages.length, new Set(appJson10.pages).size)
 
@@ -4246,9 +4447,15 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     /env:\s*'/.test(stripJs(fs.readFileSync(R('妆历小程序/app.js'), 'utf8'))), false)
 
   const appJson19 = JSON.parse(fs.readFileSync(R('妆历小程序/app.json'), 'utf8'))
-  eq('🔴 app.json 的 pages 是 17 项（第十九处加了 feedback 页）', appJson19.pages.length, 17)
+  eq('🔴 app.json 的 pages 是 18 项（第二十处加了 artist-list 页）', appJson19.pages.length, 18)
   eq('★ feedback 页已注册（没注册 = 跳过去白屏）',
     appJson19.pages.indexOf('pages/feedback/feedback') >= 0, true)
+  eq('★ 我约过的妆娘页已注册（没注册 = 从首页点过去白屏）',
+    appJson19.pages.indexOf('pages/artist-list/artist-list') >= 0, true)
+  /* ⚠️ 新页只有 .js + .wxml —— 样式全在 app.wxss（照 settings / feedback 的先例）。 */
+  eq('🔴★ artist-list 页只有 .js + .wxml（样式全在 app.wxss）',
+    fs.readdirSync(R('妆历小程序/pages/artist-list')).sort().join(','),
+    'artist-list.js,artist-list.wxml')
 }
 
 restoreBookings()

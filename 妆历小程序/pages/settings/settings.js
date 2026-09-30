@@ -1,9 +1,19 @@
-const { ARTIST_CONTACT } = require('../../mock/data')
+/* 🔴 2026-09-30（第二十处）：这里原来是
+   `const { ARTIST_CONTACT } = require('../../mock/data')` + `ARTIST_CONTACT.show_wechat`。
+   两件事都不对：
+     ① 【违规】页面直接 require ARTIST_CONTACT —— 那个数组的唯一合法消费者是
+        utils/contact.js（这一页只要一个布尔，根本不该碰那个数组）；
+     ② 【真 bug】同一天 ARTIST_CONTACT 从单对象改成了数组，那一行读到的就成了
+        `undefined` ⇒ 开关**恒渲染成「关」**，且不报错、不崩、屏幕上没有一句话
+        （自测当时没覆盖到这一页，所以它活到了第二轮）。
+   ⇒ 改走 utils/contact.js 的 myShowWechat()：它按 artist_id 查、只回一个布尔。
+   ⚠️ 别改回直接读 mock —— 那既违规，又会随数据形状静默失效一次。 */
+const { myShowWechat } = require('../../utils/contact')
 
 Page({
   data: {
     // 初值跟假数据里的 show_wechat 对齐，切换是这个页面唯一的真功能
-    showWechat: ARTIST_CONTACT.show_wechat
+    showWechat: myShowWechat()
   },
 
   toggleWechat() {

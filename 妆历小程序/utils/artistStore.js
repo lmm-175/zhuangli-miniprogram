@@ -29,7 +29,7 @@
  * ══════════════════════════════════════════════════════════════════════
  */
 const KEY = 'zhuangli_artist'
-const { ARTIST_PUBLIC, STYLE_GROUPS } = require('../mock/data')
+const { ARTIST_PUBLIC, ARTIST_DIRECTORY, STYLE_GROUPS } = require('../mock/data')
 const { TOAST } = require('./toast')
 
 const NICKNAME_MAX = 12
@@ -534,8 +534,13 @@ function raw() {
          而 `s.slice(0,1)` 会把 emoji（代理对）劈成半个字符，屏幕上出现
          「一个菱形里面一个问号」（用户真机上拍的）。现在头像位画的是一张
          【和昵称无关的人像】，这类输入问题从根上没有了。 */
-function getArtist() {
-  const r = raw()
+/* ══ 读模型投影 —— getArtist() 与 getArtistById() 共用这一处 ═══════════
+   入参是【storage 形状的记录】，出参是那 7 个键。
+   🔴 抽出来的理由（规矩 11）：第二十处之后有两条路要产出同一个形状 ——
+      「当前这位妆娘」（走 storage）和「目录里那几位」（走 ARTIST_DIRECTORY）。
+      各写一份的那天，其中一份就会少一个键或忘了过 avatarColorOf，
+      而症状是「某一页的头像没颜色」这种不报错的空白。 */
+function project(r) {
   const words = allStyleWords(readPresets(r), normalizeCustom(r.style_custom))
   return {
     artist_id: r.artist_id || 'demo',
@@ -545,6 +550,57 @@ function getArtist() {
     style_text: buildStyleText(words),
     intro: typeof r.intro === 'string' ? r.intro : '',
     avatar_color: avatarColorOf(r.avatar_color)
+  }
+}
+
+function getArtist() {
+  return project(raw())
+}
+
+/* ══ 按 id 取一位妆娘（2026-09-30 第二十处新增）════════════════════════
+   ⛔ 这是【顾客端】唯一该用的取资料入口 —— 不许在页面里 require
+      ARTIST_PUBLIC / ARTIST_DIRECTORY 直接读。
+
+   · 空值 / 'demo' / 就是当前这位 → 走 getArtist()（读 storage）
+     🔴 理由：demo 是【妆娘端那一位】，她改过昵称/城市/简介/颜色之后，
+        顾客端看到的必须是改过的。目录里那一份只是【播种时的快照】。
+        ⛔ 别图省事把 demo 也走目录 —— 那会让妆娘改了资料、顾客端纹丝不动。
+   · 其余 → 在 ARTIST_DIRECTORY 里查，过同一套 project()。
+   · **查不到 → 落到 demo**（⛔ 不返回 null、不返回半个对象）：
+        调用方拿到 null 会渲染出一张空白人卡（没名字、没头像颜色、没简介），
+        而那种空白在真机上跟「这个人没填资料」长得一模一样。
+        回落成一个具体的人是错的，但那是**看得见**的错（名字不对），
+        比一片空白强 —— 而且页面会照常显示妆位，顾客的路不会断。
+        ⚠️ M1 接云开发之后这一支要改成「查不到就报错/回落地页」，
+           那时才有办法区分「网络失败」和「这个人不存在」。 */
+function getArtistById(id) {
+  const want = String(id == null ? '' : id).trim()
+  const selfId = String((ARTIST_PUBLIC && ARTIST_PUBLIC.artist_id) || 'demo')
+  if (!want || want === selfId) return getArtist()
+  const hit = (ARTIST_DIRECTORY || []).filter((e) => e && e.artist_id === want)[0]
+  if (!hit) return getArtist()
+  return project(directoryRecord(hit))
+}
+
+/* 目录里那一条 → storage 形状的记录。
+   ⚠️ 目录写的是【那 7 个展示键】（含 style_text），没有 style_custom ——
+      它是「顾客看得到的资料」，不是「她编辑页的状态」。
+      补齐 style_custom: [] 是**有意的**：目录里那几位这一轮不支持自填词。
+   ⚠️ style_tags 缺失时拿 style_text 反推，跟 seedRecord() 同一个兜底 ——
+      ⛔ 别在那边有、这边没有（同一份数据，两种解析结果）。 */
+function directoryRecord(e) {
+  const p = e || {}
+  const tags = Array.isArray(p.style_tags) && p.style_tags.length
+    ? p.style_tags.slice()
+    : splitStyleText(p.style_text)
+  return {
+    artist_id: p.artist_id || '',
+    nickname: p.nickname || '',
+    city: p.city || '',
+    style_tags: tags,
+    style_custom: [],
+    intro: typeof p.intro === 'string' ? p.intro : '',
+    avatar_color: p.avatar_color
   }
 }
 
@@ -640,5 +696,5 @@ module.exports = {
   eachCustom, isValidGroup, normalizeCustom, customWords,
   toggleCustomTag, validateCustomWord, validateCustomTag, addCustomTag, removeCustomTag,
   validateNickname, validateCity, validateIntro, validateStyles,
-  getArtist, getStyleState, saveArtist, raw
+  getArtist, getArtistById, getStyleState, saveArtist, raw
 }
