@@ -92,6 +92,12 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 .empty .et{font-size:34rpx;font-weight:700;color:var(--t1);margin-bottom:9rpx}
 .hint{text-align:center;font-size:24rpx;color:var(--t3);padding:0 53rpx;line-height:1.7;margin-top:26rpx}
 
+/* ── 一屏说明文案（左对齐；跟上面那条居中的 .hint 分开）──────────
+   ⚠️ 2026-09-30（第十七处）新增，style-edit / intro-edit 顶部各一条。
+      内容是**事实陈述**（「这 16 个词就是客人会看到的」），
+      ⛔ 不是「敬请期待」那类承诺 —— 红线 10。 */
+.note{font-size:24rpx;color:var(--t3);line-height:1.7;padding:0 4rpx}
+
 /* ── 提示条 ──────────────────────────────────────────── */
 .noti{display:flex;gap:18rpx;padding:22rpx 26rpx;border-radius:var(--r);font-size:28rpx;line-height:1.7}
 .noti.info{background:var(--info-l);color:#2B4E96}
@@ -106,6 +112,20 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 .fld .vl.ph{color:var(--t4)}
 .ip{height:66rpx;line-height:66rpx}
 .ph{color:var(--t4)}
+
+/* ── 多行输入（全项目第一处 textarea · 2026-09-30 第十七处）────────
+   🔴 textarea 是小程序的【原生组件】，规则跟 input 不一样，别照 .fld 那套抄：
+      ① 它**层级高于普通 view**，盖不住也压不过，所以这里给它自己一块白底，
+         ⛔ 不塞进 `.grp > .fld`（那是「一行 label + 一行 input」的长相，装不下多行）。
+      ② 它**必须有显式高度**，不给就塌成一条线。给死高度后超出部分自己内部滚动。
+      ③ ⛔ **别把它放进 `<scroll-view>`**：原生组件在滚动容器里会出现
+         「字滚了、底没动」的错位；全项目没有别处可抄先例，就按最朴素的方式摆。
+   ⚠️ `height` 是内容区高度，写 520rpx ≈ 8 行，足够看完 200 字的大半。 */
+.ta{width:100%;box-sizing:border-box;background:#fff;border-radius:var(--r);
+    padding:24rpx 26rpx;font-size:29rpx;line-height:1.7;color:var(--t1);height:520rpx}
+.ta-ph{color:var(--t4)}
+/* 右下角那行「N/200」实时计数 */
+.cnt{text-align:right;font-size:24rpx;color:var(--t3);padding:10rpx 6rpx 0}
 
 /* ── 开关（照设计稿自绘；原生 <switch> 样式对不上令牌） ──── */
 .sw-row{display:flex;align-items:center;justify-content:space-between;gap:26rpx;
@@ -144,6 +164,12 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
      flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:29rpx;font-weight:700}
 .ava.sm{width:88rpx;height:88rpx;font-size:26rpx}
 .meta{font-size:25rpx;color:var(--t3);margin-top:4rpx}
+/* 妆娘自己写的简介（分享页 landing ⑤ 段）· 2026-09-30 第十七处新增。
+   🔴 `white-space:pre-wrap` 不能省：artistStore 的 validateIntro 只 trim
+      **首尾**空白，中间的换行原样留着 —— 不写这条，她分好的段落在页面上
+      会挤成一坨。⛔ 也别改成 `pre`（那样连自动换行都没了，长句子会溢出）。
+   ⚠️ 这里【不做】行数截断，理由写在 landing.wxml 那段注释里。 */
+.intro{font-size:28rpx;color:var(--t2);line-height:1.85;white-space:pre-wrap}
 .card-div{margin-top:22rpx;padding-top:22rpx;border-top:1px solid var(--line2);
           display:flex;align-items:center;justify-content:space-between;gap:18rpx}
 .lbl{font-size:24rpx;color:var(--t3)}
@@ -154,6 +180,14 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 .chip{display:inline-block;padding:13rpx 29rpx;border-radius:33rpx;border:1px solid var(--line);
       background:#fff;font-size:28rpx;color:var(--t2)}
 .chip.on{border-color:var(--brand);background:var(--brand-l);color:var(--brand-d);font-weight:600}
+
+/* ── chip 组的分组小标题（「妆感」那 5 组、「接妆风格」那 5 组）────────
+   ⚠️ 2026-09-30（第十七处）：这两条原先只长在
+      pages/booking-form/booking-form.wxss 里。style-edit 页要用**同一套长相**，
+      而两份实现就是两份真相 —— 谁先改谁先烂、而且烂得静默（看着只是「有点不一样」）。
+      所以整块上提到这里。⛔ 别在任何页面里再抄一份。 */
+.grp-sec{margin-top:14rpx}
+.grp-tag{font-size:24rpx;color:var(--t3);margin:9rpx 4rpx 4rpx}
 
 /* ── 底部固定栏 ──────────────────────────────────────── */
 .footbar{padding:22rpx;background:#fff;border-top:1px solid var(--line);display:flex;gap:20rpx;flex:none}

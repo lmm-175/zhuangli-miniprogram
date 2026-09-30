@@ -10,12 +10,32 @@
       里面永远、永远不能有 wechat_id。
       微信号的唯一出口是 utils/contact.js（对应云函数 showContact）。
       这是全项目最容易写错、也最致命的一处 —— 见 README「微信号」一节。
+
+   ⚠️ 2026-09-30（第十七处）起，它同时是 utils/artistStore.js 的【seed】——
+      首次进入时由 seed() 深拷贝进 storage（key = zhuangli_artist），
+      之后妆娘改的是 storage 里那份，这个常量不再变（同 SCHEDULES / TEMPLATES 的地位）。
+      ⇒ ⛔ 页面里不许再 require 这个对象当数据源，一律走 artistStore.getArtist()。
+
+   ⚠️ `style_text` 从此是【派生字段】：真相源是 style_tags，
+      artistStore.buildStyleText() 生成它。这里手写的那一份必须跟它一致
+      （自测里有一条 `buildStyleText(ARTIST_PUBLIC.style_tags) === ARTIST_PUBLIC.style_text`
+      专门钉这件事，也叫「手写数据的形状必须等于产生它的纯函数的产物」）。
+      artistStore 只在【播种那一次】读它 —— 老 storage 里没有 style_tags 时才拿它反推。
+
+   🔴 这一行**已经被上面那条断言抓过一次**：原先手写的是「建模感 / 浓系 / 展妆」，
+      那是**点选顺序**（bk-1 的妆感再加个展妆）。而 buildStyleText 按 STYLE_GROUPS
+      的词表顺序排 ⇒ 妆感质感(建模感) → 场合(展妆) → 浓度(浓系)。
+      ⛔ 别照着手感改回来：同一组标签换个点选次序就换一段文案的话，
+         她在分享页上会看到自己什么都没改、字却变了。
    ════════════════════════════════════════════════════════════════════ */
 const ARTIST_PUBLIC = {
   artist_id: 'demo',
   nickname: '示例',
   city: '上海',
-  style_text: '建模感 / 浓系 / 展妆'
+  style_tags: ['建模感', '浓系', '展妆'],
+  style_text: '建模感 / 展妆 / 浓系',
+  // 选填，≤200 字，顾客在分享页上能看到（2026-09-30 用户要的那一行）
+  intro: ''
 }
 
 /* 🔒 只给 utils/contact.js 用。
@@ -80,8 +100,22 @@ const SCHEDULES = [
   }
 ]
 
-/* busy 的判定 = 该妆位存在一条 status ∈ {pending, confirmed} 的预约单。
-   第 1 位已约，所以 C1 上它是灰色的「已约」，不可点。 */
+/* ════════════════════════════════════════════════════════════════════
+   🔴🔴 `busy` 是【写死的演示夹具】，⛔ 不是从 BOOKINGS 推出来的。
+
+   2026-09-30（第十七处）把这句话纠正过来了 —— 原先这里写着「busy 的判定 =
+   该妆位存在一条 status ∈ {pending, confirmed} 的预约单」，**那句话是假的**，
+   而且是个陷阱：真按 bookedSeqsOfSchedule() 去推，`sched-demo-0502` 的
+   第 1/2/3 位会被 bk-2(confirmed) / bk-1(pending) / bk-3(done) **全部占掉**，
+   C1 上三个妆位一起变成灰色的「已约」，「选这个妆位」一个都点不到 ——
+   **提审截图 ② 的顾客路径当场断掉**。
+
+   ⇒ 这两套世界是【故意解耦】的：
+        · `SLOTS[].busy`            = 冻结的演示夹具（C1 落地页，提审用）
+        · `mock/data.js 的 BOOKINGS` = 妆娘端真实的预约单库（会被改、会新增）
+      代填建的单只占【妆娘端】的妆位，**不会也不该**反映到 C1 上。
+   ⇒ 自测里有一条断言专门钉死「pages/landing 不许 require bookingStore」，
+      ⛔ 别去「顺手修一致」，那会把提审路径修没。 */
 const SLOTS = [
   { slot_id: 'demo-s1', seq: 1, time: '09:00 – 10:20', busy: true  },
   { slot_id: 'demo-s2', seq: 2, time: '10:30 – 11:50', busy: false },
@@ -162,6 +196,14 @@ const TEMPLATES = [
          / cancel_requested(顾客申请取消，等妆娘点头) / rejected / cancelled
    ⚠️ cancel_requested 是【两步】里的第一步：顾客点了申请，妆娘还没表态 ——
       所以妆位【仍然被占着】，要等妆娘同意才释放（见 bookingStore 的 BOOKED_STATUS）。
+   ⚠️ 2026-09-30（第十七处）：这一份【仍然】是内存里那一份直接被子改的
+      （bookingStore 故意不落 storage，理由见那个文件开头）。妆娘端「代填」
+      新建的单也是 push 进这个数组 —— 于是它当场就被 bookedSeqsOfSchedule()
+      算成「已占」，档期卡片上的「N 人已预约」也跟着 +1，三处读的是同一个数组。
+      ⚠️ 代价：预约单的所有改动都是【会话级】的，重启小程序就回到这个初始状态 ——
+         这是 M0 一贯的行为（标记已确认、批量处理、代填都一样），
+         ⛔ 不要只让「新增」持久化 —— 那会造出一条新的不对称
+         （我改的状态会丢、我新建的单不会丢），比现状更难解释。M1 一起迁云开发。
    ════════════════════════════════════════════════════════════════════ */
 const BOOKINGS = [
   {

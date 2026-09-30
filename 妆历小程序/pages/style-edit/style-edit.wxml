@@ -1,0 +1,33 @@
+<!-- 接妆风格（妆师端 · 整页多选）
+     落点：我的资料 →「接妆风格」行。
+     ⚠️ 界面稿 §9.4 的 14 个可点元素里没有这一屏 —— 第十七处新增。见 README §4。
+
+     📌 16 个词分 5 组铺开，长相直接吃 app.wxss 已有的 `.chips` / `.chip` /
+        `.grp-sec` / `.grp-tag`（最后两条是这一轮从 booking-form.wxss 上提的）。
+     🔴 词表【不在这里】—— `groups` 由 artistStore.toStyleOptions() 从
+        mock/data.js 的 STYLE_GROUPS 算出来。⛔ 这一页一个字面量的词都不许有，
+        否则就是第二份真相，改了 mock 这里不跟着变、而且是静默不变。
+     ⚠️ 这一页没有空态分支：16 个词是常量，`groups` 永远是 5 组。 -->
+<view class="app">
+  <nav-bar title="接妆风格" back="{{true}}"></nav-bar>
+
+  <view class="body tight">
+    <view class="note">
+      这 16 个词就是客人在你的分享页上看到的接妆风格。至少选一个。
+    </view>
+
+    <view wx:for="{{groups}}" wx:key="group" wx:for-item="g" class="grp-sec">
+      <view class="grp-tag">{{g.group}}</view>
+      <view class="chips" style="padding:2rpx 4rpx">
+        <view wx:for="{{g.items}}" wx:key="name" wx:for-item="it"
+              class="chip {{it.on ? 'on' : ''}}"
+              data-name="{{it.name}}" bindtap="onTag"
+              hover-class="btn-hover" hover-stay-time="80">{{it.name}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="footbar">
+    <view class="btn pri" style="flex:1" bindtap="onSave" hover-class="btn-hover" hover-stay-time="80">保存</view>
+  </view>
+</view>

@@ -2148,7 +2148,15 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
   const backs = 0
   const toasts = []
   let backsN = 0
+  /* ⚠️ 2026-09-30（第十七处）：桩里**必须**有 storage。
+     妆师端「代填」现在要读档期（scheduleStore 走 storage）才能列出场次下拉，
+     没有 storage 就在 onLoad 里直接抛 TypeError，整段红在一个跟被测逻辑无关的地方。
+     ⚠️ setStorageSync 走 JSON 往返（跟真机一致）：这样「存进去一个 mock 常量
+        的引用」这类会被跨段污染的实现，在这里当场现形。 */
+  const store7 = {}
   global.wx = {
+    getStorageSync: (k) => (k in store7 ? JSON.parse(store7[k]) : ''),
+    setStorageSync: (k, v) => { store7[k] = JSON.stringify(v) },
     showToast: (o) => toasts.push(o.title),
     navigateTo: (o) => navs.push(o.url),
     redirectTo: (o) => redirs.push(o.url),
@@ -2179,23 +2187,57 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
     pg.data = JSON.parse(JSON.stringify(cfg.data))
     pg.onLoad(opt || {})
   }
+  /* 「一共往外跳了几次」—— ④ 之前那几条断言写的是 `navs.length + redirs.length`，
+     它们在 ④ 之前跑所以恰好是 0。⑤ 起要对比「这次有没有多跳」，所以抽出来用差值。 */
+  const outN = () => navs.length + redirs.length + backsN
+  /* ⚠️ ⑦ 这一段的代填会**真的往 BOOKINGS 里 push 单子**（那是这次要验的行为本身）。
+     但它跑在 ⑧⑨⑩ 前面 —— 不还原的话，后面几段读到的单子数就跟我动笔时不一样了。
+     照 ⑥ 段 restoreBookings() 的做法：就地改那个数组，⛔ 不是换一个引用
+     （换成新数组的话，bookingStore 里那个闭包还握着老的，后面每段都歪）。 */
+  const snap7 = JSON.parse(JSON.stringify(BS.getBookings()))
+  const restore7 = () => {
+    const list = BS.getBookings()
+    list.length = 0
+    snap7.forEach((b) => list.push(JSON.parse(JSON.stringify(b))))
+  }
   // 表单字段走的是同一个 onInput（data-k 决定写哪个字段）
   const type = (k, v) => pg.onInput({ currentTarget: { dataset: { k } }, detail: { value: v } })
+  /* 🔴 顾客自填必须**带一个真 slot_id** 打开 —— 这几行原先写的是 `reopen({})`，
+     靠的正是那个「找不到就静默回落到 SLOTS[1]」的实现。那个回落这一轮被删掉了
+     （它是妆师端代填挂错漫展的成因），于是这几条当场变红。
+     ⚠️ 这恰好说明「旧版这几条断言在验什么」：它们在验一个**不存在的路径** ——
+        真实入口 pages/landing/landing.js 的 pickSlot 永远会带 slot_id 过来。
+        改成带 slot_id 之后，测的才是顾客真走的那条路。
+     ⚠️ 用 demo-s2：它就是老回落 `SLOTS[1]` 挑中的那一个，换上去行为不变。 */
+  const USER_OPEN = { slot_id: 'demo-s2' }
 
-  reopen({})
+  reopen(USER_OPEN)
   eq('★ 顾客自填：CN 预填好（审核员一键可提交）', pg.data.form.cn, '千夏')
   eq('form 里有 cn 这个字段（不是靠 undefined 混过去）', 'cn' in pg.data.form, true)
   eq('cn 排在 form 的第一个 key（填写顺序就是先 CN）',
     Object.keys(pg.data.form)[0], 'cn')
   type('cn', '洛霞')
   eq('输入框写的是同一个字段', pg.data.form.cn, '洛霞')
+  eq('★ 顾客自填：妆位是 C1 上定好的那一个，卡片上直接写出来',
+    pg.data.slotText, '示例漫展 · 第 2 位 · 10:30 – 11:50')
+  eq('★ 而且没有「妆位没找到」这个标记', pg.data.slotMissing, false)
+
+  // 顾客自填：?slot_id= 传了个不存在的妆位 → 拦住，⛔ 不是随便挑一个顶上
+  reopen({ slot_id: 'demo-不存在' })
+  eq('🔴★ 妆位找不到 → 标记出来', pg.data.slotMissing, true)
+  eq('🔴 卡片上明说「这个妆位已经不在了」', pg.data.slotText, '这个妆位已经不在了')
+  toasts.length = 0
+  pg.onSubmit()
+  eq('🔴★ 提交也被拦住（⛔ 不落到任何一个妆位上）',
+    /已经不在了/.test(toasts[0]), true)
+  eq('🔴★ 而且【一张单都没生成】', BS.getBookings().length, snap7.length)
 
   reopen({ mode: 'artist' })
   eq('★ 妆师代填：CN 不预填（线下口头约的，得她自己问清圈名）', pg.data.form.cn, '')
   eq('代填时标题也跟着换', pg.data.title, '新建预约单（代填）')
 
   // ① CN 空着 → 单独一句提示，别的什么都不动
-  reopen({})
+  reopen(USER_OPEN)
   type('cn', '')
   toasts.length = 0
   pg.onSubmit()
@@ -2233,16 +2275,202 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
   flush()
   eq('★ 顾客填完进「我的预约」', redirs[0], '/pages/guest-bookings/guest-bookings')
 
-  // ⑤ 代填走另一条出口
+  /* ══════════════════════════════════════════════════════════════════
+     ⑤ 妆师端「代填」（2026-09-30 第十七处大改）
+
+     🔴 这一整块修的是一个**真 bug**：原先 onLoad 里是
+          `SLOTS.filter(...)[0] || SLOTS[1]`
+        妆师端进来**不带 slot_id**（booking.js 的 goNewArtistForm 只传
+        `?mode=artist`）→ 静默回落到 `SLOTS[1]`，那是**顾客端 C1 落地页的
+        示例妆位**（漫展名写死「示例漫展」）。结果：妆娘线下谈好一单，
+        代填出来的单挂在一场她根本不存在的漫展上，而且一点提示都没有。
+
+     ⚠️ 旧版的 ⑤ 只有三行：填完 cn/role/wechat 直接 onSubmit 就期望退回。
+        现在**选不出妆位就提交不了** —— 那正是这次要验的事，所以整块重写。
+     ⚠️ 用一场**自己新建的**档期来跑通的路径：mock 里那两场示例档期
+        （sched-demo-0502 / 0503）的妆位**已经全被 7 张示例单占满了**，
+        拿它们跑不出「有妆位可选」那条路（顺带：这正好拿来验 C3 空态）。
+     ══════════════════════════════════════════════════════════════════ */
+  const SS = require(R('妆历小程序/utils/scheduleStore.js'))
+  const genSlots = S.generateSlots
+
+  // ⑤-A 代填不预选任何妆位
+  reopen({ mode: 'artist' })
+  eq('★ 代填：CN 不预填（线下口头约的，得她自己问清圈名）', pg.data.form.cn, '')
+  eq('★ 代填时标题也跟着换', pg.data.title, '新建预约单（代填）')
+  eq('🔴 代填【不预选任何妆位】—— 哪一场只有她知道，替她选就是又一次替她做决定',
+    pg.data.pickedSched, '')
+  eq('★ 卡片上先写「请选择场次」', pg.data.pickedSched ? 'x' : '请先选场次', '请先选场次')
+  eq('★ 场次下拉里没有「全部」这一项（预约单必须落在具体一场上）',
+    pg.data.schedOptions.filter((o) => o.value === 'all').length, 0)
+  eq('★ 下拉里的场次名带日期（同一个漫展分两天，光看名字分不出来）',
+    /· \d\d-\d\d$/.test(pg.data.schedOptions[0].label), true)
+
+  // ⑤-B 没选妆位就提交 → 三道闸逐个出声，且一张单都不生成
+  type('cn', '洛霞')
+  type('role', '花火')
+  type('wechat', 'wxid_luoxia')
+  const nBefore5 = BS.getBookings().length
+  const outBefore5 = outN()
+  toasts.length = 0
+  pg.onSubmit()
+  eq('🔴 没选场次就提交 → 拦住', toasts[0], '先选一场档期')
+  eq('🔴★ 而且【一张单都没生成】（不是「先提交了再提示」）',
+    BS.getBookings().length, nBefore5)
+  eq('★ 也没往外跳', outN(), outBefore5)
+
+  // ⑤-C 选一场【妆位全被占满】的档期 → C3 空态必须说清是「满了」
+  const idxOf = (id) => pg.data.schedOptions.findIndex((x) => x.value === id)
+  pg.pickSched({ detail: { value: idxOf('sched-demo-0502') } })
+  eq('★ 这一场 3 个妆位全被示例单占着 → 下拉里一个都没有',
+    pg.data.slotOptions.length, 0)
+  eq('🔴★ 空态说的是「这一场的妆位都约满了」，⛔ 不是笼统的「没有可选的妆位」',
+    pg.data.slotEmptyText, '这一场的妆位都约满了')
+  toasts.length = 0
+  pg.onSubmit()
+  eq('★ 这时候提交 → 报的是「再选一个妆位」', toasts[0], '再选一个妆位')
+
+  // ⑤-D 新建一场空档期 → 妆位出现在下拉里，文案跟 mock 逐字一致
+  const g7 = genSlots({ startTime: '09:00', slotMin: 80, gapMin: 10, count: 2,
+                        lunch: { enabled: false } })
+  SS.addSchedule({
+    schedule_id: 'sched-t7', name: '测试漫展', date: '2026-06-01',
+    startTime: '09:00', slotMin: 80, gapMin: 10, count: 2,
+    lunch: g7.lunch, slots: g7.slots
+  })
   reopen({ mode: 'artist' })
   type('cn', '洛霞')
   type('role', '花火')
   type('wechat', 'wxid_luoxia')
+  pg.pickSched({ detail: { value: idxOf('sched-t7') } })
+  eq('★ 新档期两个妆位都空着 → 都出现在下拉里', pg.data.slotOptions.length, 2)
+  eq('★ 下拉里那行文案 = 「第 N 位 · 时段」',
+    pg.data.slotOptions[0].label, '第 1 位 · 09:00 – 10:20')
+  /* 🔴 分隔符必须跟 mock 里那 7 张单【逐字一致】。booking-detail 是把这个
+     字符串直接印出来的，两边用不同的字符就会在同一屏上出现两种写法，
+     而那种差异没人会当成 bug 报上来。 */
+  eq('🔴★ 妆位时段的分隔符跟 mock 里那 7 张单逐字一致（都是 U+2013）',
+    pg.data.slotOptions[1].label.indexOf(BS.getBooking('bk-1').slot_time) > 0, true)
+
+  // ⑤-E 选齐 → 真生成一张单、真占上这个妆位
+  pg.pickSlot({ detail: { value: 0 } })
+  eq('★ 选了第 1 位', pg.data.pickedSeq, 1)
+  toasts.length = 0
+  const outBefore5e = outN()
+  pg.onSubmit()
+  eq('🔴★ 反馈不是「化妆师会联系你」那句 —— 代填时她自己就是化妆师',
+    toasts[0], '代填的预约单已生成，妆位已占上')
+  flush()
+  eq('★ 代填完退回妆师端', backsN, outBefore5e - navs.length - redirs.length + 1)
+
+  const made = BS.getBookings().filter((b) => b.schedule_id === 'sched-t7')[0]
+  eq('🔴★ 单真生成了（不是只弹个 toast）', !!made, true)
+  eq('🔴 状态直接是【已确认】（线下谈好的，不是待处理）', made.status, 'confirmed')
+  eq('🔴 created_by 是 artist —— ⛔ 不会跑到顾客的「我的预约」里',
+    made.created_by, 'artist')
+  eq('🔴 妆位身份 = (schedule_id, seq)，slot_id 留空串',
+    made.schedule_id + '/' + made.seq + '/' + made.slot_id, 'sched-t7/1/')
+  eq('★ 落的是这一场的名字和日期', made.event + ' ' + made.date, '测试漫展 2026-06-01')
+  eq('★ slot_time 就是这一格的时段', made.slot_time, '09:00 – 10:20')
+  eq('★ CN / 角色名 / 微信号 都带过来了',
+    made.cn + '/' + made.role + '/' + made.wechat, '洛霞/花火/wxid_luoxia')
+  /* 🔴 钉的是**当前真实取值**，不是「应该是什么」。
+     代码里那句注释一度写着「预选（建模感 / 浓系）」，而 `items[0]` 实际取到的是
+     **自然感 / 淡系** —— 那句话是错的，已改正。⛔ 别把这里的期望改回
+     「建模感 浓系」去迁就那句注释；真要改预选值，先改代码再改这里。
+     ⚠️ 这一条同时证明了「勾选态 → 落库字段」这条链路真的通了。 */
+  eq('★ 妆感多选也带过来了（预选那两项 —— 自然感 / 淡系）',
+    made.styles.join(' '), '自然感 淡系')
+  eq('★ 眼型 / 肤质也带过来了', made.eye.join(' ') + '|' + made.skin.join(' '),
+    '双眼皮 肿眼泡|油皮 敏感肌')
+  eq('★ 性别取的是勾上的那个', made.gender, '女')
+  eq('🔴 定金默认 0 / 未付 —— ¥0 是「没谈定金」的诚实表示，⛔ 不许瞎填一个 50',
+    made.deposit_amount + '/' + made.deposit_paid, '0/false')
+  /* 🔴 键的形状必须跟 mock 里那 7 张单【逐字一致】：详情页会读
+     extra / note / phone / styles，缺了就是 undefined 渲染成空白，
+     而那种空白在真机上跟「她没填」长得一模一样。 */
+  eq('🔴★ 新建单的键跟 mock 里那 7 张单【逐字一致】（缺一个就是 undefined）',
+    Object.keys(made).sort().join(','),
+    Object.keys(BS.getBooking('bk-1')).sort().join(','))
+  eq('🔴★ 而且 created_at 是「2026-05-01 20:14」那种写法，⛔ 不是 ISO 串',
+    /^\d{4}-\d\d-\d\d \d\d:\d\d$/.test(made.created_at), true)
+
+  // ⑤-F 建完单，妆位当场就被算作「被占」
+  const t7 = SS.getSchedule('sched-t7')
+  eq('🔴★ 这个妆位立刻算「被占」—— 不会出现「建了单、妆位却还显示空闲」',
+    BS.bookedSeqsOfSchedule(t7).indexOf(1) >= 0, true)
+  eq('🔴 档期卡片上「N 人已预约」也跟着变 1（走的是同一个 blockingBookings）',
+    BS.blockingBookings(t7).length, 1)
+
+  // ⑤-G 提交那一刻妆位刚被约走（并发重查 → 拦住 + 就地重算下拉）
+  reopen({ mode: 'artist' })
+  type('cn', '洛霞')
+  type('role', '花火')
+  type('wechat', 'wxid_luoxia')
+  pg.pickSched({ detail: { value: idxOf('sched-t7') } })
+  eq('★ 刚才占掉的第 1 位已经从下拉里消失了', pg.data.slotOptions.length, 1)
+  eq('★ 只剩第 2 位', pg.data.slotOptions[0].value, 2)
+  pg.pickSlot({ detail: { value: 0 } })
+  // 模拟并发：她还在填表，这个妆位被别处的一张单占走了
+  BS.addBooking(BS.buildBooking({
+    schedule_id: 'sched-t7', seq: 2, event: '测试漫展', date: '2026-06-01',
+    slot_time: '10:30 – 11:50', created_by: 'user', status: 'pending'
+  }))
+  const nBefore5g = BS.getBookings().length
   toasts.length = 0
   pg.onSubmit()
-  flush()
-  eq('★ 妆师代填完退回妆师端', backsN, 1)
-  eq('没往顾客端跑', redirs.length, 1)
+  eq('🔴★ 提交时【重查一遍】→ 拦住', toasts[0], '这个妆位刚被约走了，换一个')
+  eq('🔴 而且要【就地重算下拉】—— 不然她再点一次还是同一句话，看着像按钮坏了',
+    pg.data.slotOptions.length, 0)
+  eq('★ 说的还是「都约满了」这一种空', pg.data.slotEmptyText, '这一场的妆位都约满了')
+  eq('★ 上一格的选择被清掉', pg.data.pickedSeq, 0)
+  eq('★ 而且【没有多生成单】', BS.getBookings().length, nBefore5g)
+
+  /* ⑤-H 这一场在别处被取消（软删除）→ 拦住 + 清空场次选择
+     ⚠️ 必须用**另一场新档期**（sched-t8）：sched-t7 到这一步两个妆位
+        已经被 ⑤-E 和 ⑤-G 占满了，`pickSlot` 选不出东西，
+        `pickedSeq` 会是 0 → 会被「再选一个妆位」那道闸先拦住，
+        根本走不到「这一场已经不在了」这一支（那是**测试自己的坑**，
+        不是代码的问题 —— 但它会让人误以为 D2 没实现）。 */
+  const g8 = genSlots({ startTime: '09:00', slotMin: 80, gapMin: 10, count: 2,
+                        lunch: { enabled: false } })
+  SS.addSchedule({
+    schedule_id: 'sched-t8', name: '测试漫展二', date: '2026-06-02',
+    startTime: '09:00', slotMin: 80, gapMin: 10, count: 2,
+    lunch: g8.lunch, slots: g8.slots
+  })
+  reopen({ mode: 'artist' })
+  type('cn', '洛霞')
+  type('role', '花火')
+  type('wechat', 'wxid_luoxia')
+  pg.pickSched({ detail: { value: idxOf('sched-t8') } })
+  pg.pickSlot({ detail: { value: 0 } })
+  eq('（前置）sched-t8 的妆位选上了', pg.data.pickedSeq, 1)
+  SS.cancelSchedule('sched-t8')
+  toasts.length = 0
+  pg.onSubmit()
+  eq('🔴★ 提交时这一场已经被取消了 → 拦住', toasts[0], '这一场已经不在了，换一场')
+  eq('★ 场次选择被清空（⛔ 不留一个指向已取消档期的残留选择）',
+    pg.data.pickedSched, '')
+  eq('★ 妆位选择也清空', pg.data.pickedSeq, 0)
+  eq('★ 下拉也清空（⛔ 不留一个指向已取消档期的妆位列表）',
+    pg.data.slotOptions.length, 0)
+
+  // ⑤-I 一场档期都没有 → 引导卡 + 真落点
+  reopen({ mode: 'artist' })
+  store7['zhuangli_schedules'] = JSON.stringify([])
+  SS.rawList()                       // 让 seed 判据看到 key 已存在（空数组也要保留）
+  reopen({ mode: 'artist' })
+  eq('🔴 一场档期都没建过 → 走引导卡', pg.data.noSchedule, true)
+  eq('★ 这时候提交 → 出声，⛔ 不是静默什么都不发生',
+    (toasts.length = 0, pg.onSubmit(), toasts[0]), '你还没有建过档期，先去「档期」建一场')
+  toasts.length = 0
+  navs.length = 0
+  pg.goSchedule()
+  eq('🔴★ 引导卡上那个键是【真落点】（switchTab 到档期页），⛔ 不是弹个 toast 了事',
+    navs[0], '/pages/schedule/schedule')
+
+  restore7()
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -2624,7 +2852,15 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
 
   const navs = []
   let toastsN = 0
+  /* ⚠️ 2026-09-30（第十七处）：资料页从只读改成可编辑之后，这一页要经
+     artistStore 读/写 storage —— 桩里**必须**有 storage，否则 onShow 一调
+     就抛异常，整段红在一个跟被测逻辑无关的地方。
+     ⚠️ setStorageSync 走 JSON 往返（跟真机一致）：这样「存进去一个
+        mock/data.js 的常量引用」这种会被跨段污染的实现，在这里当场现形。 */
+  const store9 = {}
   global.wx = {
+    getStorageSync: (k) => (k in store9 ? JSON.parse(store9[k]) : ''),
+    setStorageSync: (k, v) => { store9[k] = JSON.stringify(v) },
     navigateTo: (o) => navs.push(o.url),
     navigateBack: () => {},
     switchTab: () => {},
@@ -2668,13 +2904,20 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
     appJson.pages.indexOf('pages/my-profile/my-profile') >= 0, true)
   eq('🔴 my-works 已从 app.json 注销（第十五处：整块删掉）',
     appJson.pages.indexOf('pages/my-works/my-works'), -1)
-  eq('🔴 app.json 的 pages 从 15 项变成 14 项', appJson.pages.length, 14)
+  /* ⚠️ 这一条是**页数账本**，每次加页都要跟着改：15 → 14（第十五处删了作品页）
+     → **16**（第十七处加了 style-edit / intro-edit）。⛔ 不是「改到能过就行」——
+     它存在的意义是「有人顺手加了一页却没想清楚」时当场红。 */
+  eq('🔴 app.json 的 pages 是 16 项（加回风格页 + 简介页）', appJson.pages.length, 16)
   eq('★ tabBar 还是 3 项（没被顺手改成 4 项）', appJson.tabBar.list.length, 3)
   eq('★ 跳的路径确实都在 pages 里（拼错了就是白屏）',
     navs.every((u) => appJson.pages.indexOf(u.slice(1)) >= 0), true)
 
   // ── C. 资料页能加载且带「‹ 返回」（不然进去出不来）；作品页文件已不存在 ──
   const prof = loadPage('pages/my-profile/my-profile.js')
+  /* ⚠️ 必须真的走一遍 onShow 再断言：这一页的 data.artist 初值是个
+     「能渲染的空壳」（真数据在 onShow 里从 storage 灌）。不调 onShow 就断言，
+     等于对着一个手写字面量下结论 —— 那种断言永远绿，也永远没用。 */
+  prof.onShow()
   const profWxml = stripHtml(fs.readFileSync(R('妆历小程序/pages/my-profile/my-profile.wxml'), 'utf8'))
   eq('★ 资料页标题是「我的资料」且带返回',
     /<nav-bar title="我的资料" back="\{\{true\}\}"/.test(profWxml), true)
@@ -2692,14 +2935,34 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
   eq('🔴★ 也没有 wechat_id / contact.js',
     /wechat_id|contact\.js/.test(profJs), false)
   eq('🔴★ 数据对象里没有 wechat_id 这个键', 'wechat_id' in prof.data.artist, false)
-  eq('★ 只读的就是公开那三项（昵称 / 城市 / 风格）',
+  eq('★ 上这一页的就是公开那几项（昵称 / 城市 / 风格 / 简介）—— 多了就是漏了别的字段',
     Object.keys(prof.data.artist).sort().join(','),
-    'artist_id,city,nickname,style_text')
-  eq('★ 头像位取昵称首字', prof.data.initial, '示')
+    'artist_id,city,initial,intro,nickname,style_tags,style_text')
+  eq('★ 头像位取昵称首字', prof.data.artist.initial, '示')
+  /* ⚠️ 两处冗余也不能漂：wxml 里写的是 {{artist.initial}}，
+     而 introLen 是「简介那一行只报字数」的数据源。
+     两者都必须跟 store 里那份对得上（一处算、一处用，⛔ 不是各算一遍）。 */
+  eq('★ 简介字数跟正文对得上（这一行只报字数，⛔ 不渲染正文）',
+    prof.data.introLen, prof.data.artist.intro.length)
 
-  // ── E. 资料页「进得去、有事说、退得出来」，没有一个按不动的键 ──
-  eq('⛔ 资料页整页没有任何 bindtap（只读，不存在「点了没反应」的可能）',
-    /bindtap/.test(profWxml), false)
+  // ── E. 资料页从【只读】改成【可编辑】之后：键要真的按得动 ──
+  /* 🔴 上一版这里是反向断言「整页没有任何 bindtap」，理由是只读页不可能
+     「点了没反应」。现在整段反过来了 —— 但**精神没变**：
+     不能只是「有 bindtap」，必须**每个 bindtap 都有同名处理函数**。
+     只断言个数的话，一个 bindtap="goIntroo" 的拼写错误照样绿，而真机点下去
+     什么都不发生 —— 正是这个项目被坑过四轮的那句话。 */
+  const taps9 = (profWxml.match(/bindtap="([^"]+)"/g) || [])
+    .map((s) => s.replace(/bindtap="([^"]+)"/, '$1'))
+  eq('🔴 资料页【恰好 4 个可点的键】（昵称 / 常住城市 / 接妆风格 / 简介）',
+    taps9.length, 4)
+  eq('🔴 四个 bindtap 全是不同的处理函数（⛔ 没有两份指向同一个）',
+    taps9.slice().sort().join(','), 'editCity,editNickname,goIntro,goStyle')
+  eq('🔴★ 每一个 bindtap 在 .js 里都有同名函数（拼错了就是「点了没反应」）',
+    taps9.filter((n) => typeof prof[n] !== 'function'), [])
+  /* ⛔ 头那张卡片不许有手势：头像是整块冻结的（等 M0 过审），
+     给它 bindtap 就是假承诺 —— 点下去只能弹一句「还没做」。 */
+  eq('⛔ 头像卡片没有 bindtap（头像是冻结的，不许给假承诺）',
+    /class="card tight row"[^>]*bindtap/.test(profWxml), false)
 
   const redline10 = /开发中|敬请期待|即将上线/
   eq('⛔ 资料页没有「开发中」那类承诺（红线 10）', redline10.test(profWxml), false)
@@ -2734,6 +2997,429 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
     .map((p) => stripHtml(fs.readFileSync(R(p), 'utf8'))).join('\n')
   eq('🔴 全项目没有任何落点还指向 pages/my-works（页面 + 入口都已删）',
     /pages\/my-works/.test(goto2), false)
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ⑩ 我的资料可编辑 + 接妆风格 + 简介 + 代填（2026-09-30 第十七处）
+
+   用户原话：
+     「我的资料里面接妆风格改成可选择的，现在这版选不了 常驻城市可以打字输入。
+       昵称可以打字输入。再加一行简介，点击可以输入200字以内内容，
+       预约界面的代填，代填的妆位可以选择已建好的漫展」
+
+   这一段的重点是【纯函数】和【源码级】两条线 ——
+   因为 utils/artistStore.js 的设计就是把「校验 / 派生」全挪进纯函数里，
+   页面只负责调它 + 播报结果。纯函数能直接喂，不用打桩 wx；
+   而页面行为那部分（弹框、跳页）靠**源码级断言**钉结构，比打桩更抗漂。
+   ══════════════════════════════════════════════════════════════════════ */
+console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 ════')
+{
+  const fs = require('fs')
+  const stripHtml = (t) => t.replace(/<!--[\s\S]*?-->/g, '')
+  const stripJs = (t) => t
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
+
+  // artistStore 要 wx（读 storage），先给个内存桩再 require
+  const store10 = {}
+  global.wx = {
+    getStorageSync: (k) => (k in store10 ? JSON.parse(store10[k]) : ''),
+    setStorageSync: (k, v) => { store10[k] = JSON.stringify(v) },
+    showToast: () => {},
+    showModal: () => {}
+  }
+  delete require.cache[require.resolve(R('妆历小程序/utils/artistStore.js'))]
+  const AS = require(R('妆历小程序/utils/artistStore.js'))
+  const { ARTIST_PUBLIC, STYLE_GROUPS } = require(R('妆历小程序/mock/data.js'))
+
+  // ── A. 纯函数：风格标签 ──────────────────────────────────────────────
+  eq('🔴 总词表就是 STYLE_GROUPS 摊平（16 个，⛔ 不另抄一份）',
+    AS.ALL_TAGS.length, 16)
+  eq('★ 词表内容和 STYLE_GROUPS 完全一致',
+    AS.ALL_TAGS.join('|'),
+    STYLE_GROUPS.reduce((a, g) => a.concat(g.items), []).join('|'))
+  /* 🔴 规矩 16：手写的那份 seed 必须等于纯函数的产物。
+     一旦有人改了 buildStyleText 的排序规则、或者手改了 ARTIST_PUBLIC.style_text，
+     这条当场红 —— 否则那个不一致只会在真机上表现为「接妆风格那格字变了」，
+     而且没人会意识到那是 bug。
+     ⚠️ 这条**真的响过一次**：seed 原先手写的是「建模感 / 浓系 / 展妆」（点选顺序），
+        而词表顺序是 妆感质感(建模感) → 场合(展妆) → 浓度(浓系)。修的是 seed。 */
+  eq('🔴★ 规矩 16：手写 seed 的 style_text === buildStyleText(style_tags)',
+    AS.buildStyleText(ARTIST_PUBLIC.style_tags), ARTIST_PUBLIC.style_text)
+  eq('★ 分隔符就是「空格 斜杠 空格」', AS.STYLE_SEP, ' / ')
+  /* 🔴 按【词表顺序】排，⛔ 不是点击顺序 —— 同一组标签换个点击次序就换一段文案的话，
+     分享页上的字会莫名其妙地变，而她什么都没改。
+     ⚠️ 故意把入参写成「倒着的」：浓系(第10) 自然感(第1) 展妆(第7)。 */
+  eq('🔴★ 按词表顺序排，⛔ 不是点击顺序（入参顺序完全打乱）',
+    AS.buildStyleText(['浓系', '自然感', '展妆']), '自然感 / 展妆 / 浓系')
+  eq('★ 去重', AS.buildStyleText(['展妆', '展妆', '自然感']), '自然感 / 展妆')
+  eq('★ 空数组不炸、返回空串', AS.buildStyleText([]), '')
+  eq('★ 喂 undefined 也不炸', AS.buildStyleText(undefined), '')
+  eq('★ 词表外的词沉到最后（不该有，但不能崩）',
+    AS.buildStyleText(['没这个词', '展妆']), '展妆 / 没这个词')
+
+  // 反推（只用来兜底不完整的旧数据）
+  eq('★ 反推：一句话拆回标签',
+    AS.splitStyleText('建模感 / 浓系 / 展妆').join('|'), '建模感|浓系|展妆')
+  /* 🔴 往返是【对规整后的顺序】成立的，⛔ 不是对入参顺序 ——
+     入参顺序本来就该被丢掉（那正是上面那条断言在保的东西）。
+     写反了的话这两条会互相打架，而看不出谁对。 */
+  eq('🔴★ split(build(tags)) 回来的是【规整后】的顺序（入参是反的）',
+    AS.splitStyleText(AS.buildStyleText(['展妆', '自然感'])).join('|'), '自然感|展妆')
+  eq('★ build 对任意字符串幂等（⛔ 它和 split 不是严格互逆，只钉这一条）',
+    AS.buildStyleText(AS.splitStyleText('浓系  /  展妆')),
+    AS.buildStyleText(AS.splitStyleText(AS.buildStyleText(AS.splitStyleText('浓系  /  展妆')))))
+
+  // ── B. 纯函数：头像首字 / 勾选态 / 点选 ─────────────────────────────
+  eq('★ 头像首字 = 昵称第一个字', AS.initialOf('阿黎'), '阿')
+  eq('★ 空昵称兜底成「妆」（⛔ 不留空 —— 空头像位看着像页面坏了）',
+    AS.initialOf(''), '妆')
+  eq('★ 全是空格也兜底', AS.initialOf('   '), '妆')
+  eq('★ 喂 undefined 也兜底', AS.initialOf(undefined), '妆')
+
+  const opts = AS.toStyleOptions(['展妆'])
+  eq('★ 勾选态：5 组', opts.length, 5)
+  eq('★ 只有已存的那个词是勾上的',
+    opts.reduce((a, g) => a + g.items.filter((i) => i.on).length, 0), 1)
+  eq('★ 勾上的是展妆',
+    opts.reduce((a, g) => a.concat(g.items.filter((i) => i.on).map((i) => i.name)), []).join(','),
+    '展妆')
+  /* ⛔ 唯一一处「已存标签 → 勾选态」的映射。页面再自己 map 一遍的话，
+     两次实现迟早有一次先烂掉，而且是静默烂。 */
+  eq('🔴★ toggleTag 不改入参（纯函数，返回新数组）',
+    (() => { const a = ['展妆']; AS.toggleTag(a, '浓系'); return a.join(',') })(), '展妆')
+  eq('★ 点没勾上的 → 加上', AS.toggleTag(['展妆'], '浓系').join(','), '展妆,浓系')
+  eq('★ 点已勾上的 → 去掉', AS.toggleTag(['展妆', '浓系'], '展妆').join(','), '浓系')
+
+  // ── C. 校验：一处实现，各自一句 ─────────────────────────────────────
+  eq('★ 昵称空 → 拦住', AS.validateNickname('  ').ok, false)
+  eq('★ 昵称空的话术', AS.validateNickname('').error, '昵称不能空着')
+  eq('★ 昵称 13 个字 → 拦住', AS.validateNickname('一'.repeat(13)).ok, false)
+  eq('★ 昵称 12 个字 → 放行', AS.validateNickname('一'.repeat(12)).ok, true)
+  eq('★ 昵称前后空格会被 trim 掉', AS.validateNickname('  阿黎  ').value, '阿黎')
+  eq('★ 城市空 → 拦住', AS.validateCity('').error, '常驻城市不能空着')
+  eq('★ 城市 13 个字 → 拦住', AS.validateCity('一'.repeat(13)).ok, false)
+  /* 简介【允许空】—— 它就是选填的。上面昵称/城市都拦空，这里不拦，
+     这个差别是【故意】的，所以要有断言把它钉住，免得后来者「统一」掉。 */
+  eq('🔴 简介允许空（它是选填的，⛔ 不要跟昵称/城市一起拦）',
+    AS.validateIntro('').ok, true)
+  eq('★ 简介 200 字 → 放行', AS.validateIntro('一'.repeat(200)).ok, true)
+  eq('🔴 简介 201 字 → 拦住', AS.validateIntro('一'.repeat(201)).ok, false)
+  eq('🔴★ 超长的话术带【实际字数】（不然她不知道要删多少）',
+    AS.validateIntro('一'.repeat(201)).error, '简介最多 200 字，现在 201 字')
+  eq('★ 简介中间的回车保留（她分的段不能被吃掉）',
+    AS.validateIntro('第一段\n\n第二段').value, '第一段\n\n第二段')
+  eq('★ 简介首尾的空白 trim 掉（留着会让 landing 的 wx:if 对纯空白成立）',
+    AS.validateIntro('\n  正文  \n').value, '正文')
+  eq('★ 风格一个没选 → 拦住', AS.validateStyleTags([]).ok, false)
+  eq('★ 风格一个没选的话术', AS.validateStyleTags([]).error,
+    '至少选一个接妆风格，客人靠它知道你能接什么妆')
+  eq('🔴 词表外的词 → 拦住（⛔ 不放进 storage）',
+    AS.validateStyleTags(['展妆', '自创词']).ok, false)
+  eq('★ 拦住的话术里点名是哪个词',
+    AS.validateStyleTags(['展妆', '自创词']).error, '「自创词」不在可选风格里，请从上面选')
+
+  // ── D. 🔴 白名单：这一层永远没有 wechat_id ──────────────────────────
+  eq('★ getArtist() 的键就是那 7 个', Object.keys(AS.getArtist()).sort().join(','),
+    'artist_id,city,initial,intro,nickname,style_tags,style_text')
+  eq('🔴★ 输出里没有 wechat_id 这个键', 'wechat_id' in AS.getArtist(), false)
+  /* 播种之后，任何 patch 里带进来的 wechat_id 都必须被【静默丢掉】
+     （不是报错，是不落库）—— 这是「资料页不许夹带微信号」在代码层的落点。 */
+  const saved1 = AS.saveArtist({ nickname: '阿黎', wechat_id: 'demo_makeup' })
+  eq('★ 改名成功', saved1.ok, true)
+  eq('🔴★ patch 里夹带的 wechat_id 被丢掉了', 'wechat_id' in saved1.artist, false)
+  eq('🔴★ storage 里也搜不到那个值',
+    JSON.stringify(store10['zhuangli_artist']).indexOf('demo_makeup'), -1)
+  eq('🔴★ getArtist() 输出里也搜不到',
+    JSON.stringify(AS.getArtist()).indexOf('demo_makeup'), -1)
+
+  // ── E. 派生字段：style_text / initial 只算不存 ──────────────────────
+  const saved2 = AS.saveArtist({ style_tags: ['展妆', '古风妆'] })
+  eq('★ 改了 style_tags，style_text 当场跟着变',
+    saved2.artist.style_text, '展妆 / 古风妆')
+  eq('🔴★ style_text 【没有】落进 storage（派生字段落库就是第二份真相）',
+    'style_text' in JSON.parse(store10['zhuangli_artist']), false)
+  eq('🔴★ initial 也没有落进 storage',
+    'initial' in JSON.parse(store10['zhuangli_artist']), false)
+  eq('★ 存的就那 5 个键',
+    Object.keys(JSON.parse(store10['zhuangli_artist'])).sort().join(','),
+    'artist_id,city,intro,nickname,style_tags')
+  eq('★ 改了昵称，头像首字当场跟着变',
+    AS.saveArtist({ nickname: '洛霞' }).artist.initial, '洛')
+  eq('★ 四个键都能各自保存', AS.saveArtist({ city: '北京' }).artist.city, '北京')
+
+  // ── F. 校验不过时【一次都不写】 ─────────────────────────────────────
+  const before10 = store10['zhuangli_artist']
+  const badSave = AS.saveArtist({ nickname: '   ' })
+  eq('🔴★ 昵称空 → 返回失败', badSave.ok, false)
+  eq('🔴★ 而且【一个字都没写进 storage】（不是「先存了再回滚」）',
+    store10['zhuangli_artist'], before10)
+  eq('🔴 简介超长也不写', AS.saveArtist({ intro: '一'.repeat(201) }).ok, false)
+  eq('🔴 风格空也不写', AS.saveArtist({ style_tags: [] }).ok, false)
+  eq('★ 一次都没写成功，storage 还是上一版',
+    store10['zhuangli_artist'], before10)
+
+  // ── G. 规矩 9：老 storage 只有 style_text、没有 style_tags 时的兜底 ─
+  store10['zhuangli_artist'] = JSON.stringify({
+    artist_id: 'demo', nickname: '旧数据', city: '上海',
+    style_text: '建模感 / 浓系 / 展妆', intro: ''
+  })
+  eq('🔴★ 老数据缺 style_tags → 从 style_text 反推回来（⛔ 不显示成空的）',
+    AS.getArtist().style_tags.join(','), '建模感,浓系,展妆')
+  /* ⚠️ 反推回来之后**再过一遍派生**，所以展示顺序会被规整成词表顺序。
+     这不是 bug —— 三个词一个没少，只是排序统一了。 */
+  eq('🔴★ 反推之后展示顺序被规整成词表顺序（三个词一个没少）',
+    AS.getArtist().style_text, '建模感 / 展妆 / 浓系')
+  store10['zhuangli_artist'] = JSON.stringify({
+    artist_id: 'demo', nickname: '旧数据', city: '上海',
+    style_text: '建模感 / 自创老词 / 展妆', intro: ''
+  })
+  eq('🔴★ 老数据里有词表外的词 → 滤掉（⛔ 不让它上分享页）',
+    AS.getArtist().style_tags.join(','), '建模感,展妆')
+
+  // ── H. 播种判据是「storage 里没有这个 key」──────────────────────────
+  delete store10['zhuangli_artist']
+  const seeded = AS.getArtist()
+  eq('★ 从没存过 → 种下 mock 那份',
+    seeded.nickname + '/' + seeded.city, '示例/上海')
+  eq('★ 种下的 style_text 就是 mock 里那句', seeded.style_text, ARTIST_PUBLIC.style_text)
+  eq('★ 播种后 storage 里有这个 key 了', 'zhuangli_artist' in store10, true)
+  /* ⚠️ 判据必须是「key 不存在」而不是「值看起来是空的」——
+     下面这步把她改成一个**内容不同**的记录再读，不能被重新播种盖掉。 */
+  AS.saveArtist({ nickname: '改过' })
+  eq('🔴★ 已经存过就不重播（改了昵称不会被 mock 盖回去）',
+    AS.getArtist().nickname, '改过')
+  store10['zhuangli_artist'] = JSON.stringify({
+    artist_id: 'demo', nickname: '', city: '', style_tags: [], intro: ''
+  })
+  eq('🔴★ 也不靠「值看着空」判 —— 空记录也照样读出来、不重播',
+    AS.getArtist().nickname, '')
+
+  // ── I. 🔴 源码级：那个静默回落 `SLOTS[1]` 必须真的没了 ──────────────
+  const bfJs = stripJs(fs.readFileSync(R('妆历小程序/pages/booking-form/booking-form.js'), 'utf8'))
+  /* 🔴 这一条就是本次修的那个真 bug 的**墓碑**：
+     原先 `SLOTS.filter(...)[0] || SLOTS[1]` 让妆师端代填静默落到
+     顾客端 C1 的示例妆位上（漫展名写死「示例漫展」），一声不吭。
+     改回去 = 这个 bug 原样复活，所以这里钉死。 */
+  eq('🔴★ booking-form.js 里不再有 `|| SLOTS[1]` 那个静默回落',
+    /\|\|\s*SLOTS\[1\]/.test(bfJs), false)
+  /* 规矩 14：判定「这个妆位还能不能选」和「提交时放不放行」必须问同一个函数。 */
+  eq('🔴★ 妆位能不能选 → 走 bookingStore 的 bookedSeqsOfSchedule',
+    /bookedSeqsOfSchedule/.test(bfJs), true)
+  eq('🔴★ 这一页里没有手写的状态枚举（那些散在页面里就迟早对不上）',
+    /status\s*===\s*'(pending|confirmed|done|cancel_requested)'/.test(bfJs), false)
+  eq('🔴 而且是【从 bookingStore require 进来的】，⛔ 不是本地自己算一份',
+    /bookedSeqsOfSchedule[\s\S]{0,200}require\(.\.\.\/\.\.\/utils\/bookingStore.\)/.test(bfJs) ||
+    /require\(.\.\.\/\.\.\/utils\/bookingStore.\)[\s\S]{0,300}bookedSeqsOfSchedule/.test(bfJs),
+    true)
+  eq('★ 代填真的会建单（调 addBooking）', /addBooking\(/.test(bfJs), true)
+  eq('🔴★ 用的是 buildBooking（键的形状在 store 里统一，⛔ 不在页面里手拼一个对象）',
+    /buildBooking\(/.test(bfJs), true)
+  eq('★ 顾客自填那一条出口一个字没动（还是 redirectTo 到我的预约）',
+    /guest-bookings\/guest-bookings/.test(bfJs), true)
+
+  // ── J. 🔴 规矩 27：同一份来源喂两个端 —— 不许再有第二处直接 require ──
+  /* 这次把 4 个消费者从 ARTIST_PUBLIC 换成了 artistStore.getArtist()，
+     迁移时真正踩到的坑是 pages/guest-bookings 自己 require 了 BOOKINGS
+     （绕开了 bookingStore 那一整层）。所以这两条要钉在**文件级**上。 */
+  const consumers10 = ['pages/landing/landing.js', 'pages/guest-home/guest-home.js',
+                       'pages/mine/mine.js', 'pages/my-profile/my-profile.js']
+  eq('🔴★ 4 个消费者都不再直接 require ARTIST_PUBLIC',
+    consumers10.filter((p) =>
+      /require\([^)]*mock\/data[^)]*\)[\s\S]{0,80}ARTIST_PUBLIC/.test(
+        fs.readFileSync(R('妆历小程序/' + p), 'utf8'))), [])
+  eq('★ 而且都改成走 artistStore 了',
+    consumers10.filter((p) =>
+      !/getArtist/.test(fs.readFileSync(R('妆历小程序/' + p), 'utf8'))), [])
+  /* ⚠️ 必须【摘掉注释再查】—— guest-bookings.js 的注释里原样引着那句
+     `require('../../mock/data').BOOKINGS` 用来讲这次为什么改（第五处栽在
+     同类陷阱上：README 第 21 条那条「查前先摘注释」）。 */
+  const gbPlain10 = stripJs(fs.readFileSync(R('妆历小程序/pages/guest-bookings/guest-bookings.js'), 'utf8'))
+  eq('🔴★ 顾客端「我的预约」也不再直接 require BOOKINGS（规矩 11 的那处真违规）',
+    /require\([^)]*mock\/data[^)]*\)/.test(gbPlain10), false)
+  eq('★ 它现在是走 getBookings() 的', /getBookings\(\)/.test(gbPlain10), true)
+  /* 🔴 bookingStore 里【只允许 load() 碰 import 进来那份 BOOKINGS】。
+     别的函数再直读一次，就是「妆师端和顾客端读两份不同的单」那类静默不一致的入口。 */
+  const bsPlain10 = stripJs(fs.readFileSync(R('妆历小程序/utils/bookingStore.js'), 'utf8'))
+  eq('🔴★ bookingStore 里一共只提 BOOKINGS 两次：import 那一行 + load() 里那一行',
+    (bsPlain10.match(/\bBOOKINGS\b/g) || []).length, 2)
+  /* ⛔ 真正要防的是「把它当值用」（BOOKINGS.filter / BOOKINGS[0] / BOOKINGS.push…）——
+     只要没人这么写，读入口就唯一。 */
+  eq('🔴★ 而且没有一处把它当值直接用（⛔ 不许 BOOKINGS.filter / BOOKINGS[0]）',
+    /BOOKINGS\s*[.\[]/.test(bsPlain10), false)
+  /* 🔴 这一轮【故意没做 storage 化】（文件头写着两条理由：只持久化新增的单
+     会造成「重启后新的还在、原来的改动全没了」这种更难解释的不对称；
+     自测 ⑥ 的 restoreBookings() 会变成静默失效的兜底）。
+     所以这里钉的是「要么全持久化、要么全内存」—— ⛔ 不许做一半。 */
+  eq('🔴★ bookingStore 完全不碰 storage（本轮有意为之，⛔ 别当漏了去补一半）',
+    /setStorageSync|getStorageSync/.test(bsPlain10), false)
+  /* ⚠️ 返回的是**数组本身**不是副本 —— updateBooking / addBooking 都是原地改，
+     复制一份出去的话「代填建了单、妆位却还显示空闲」当场复活。 */
+  eq('🔴★ getBookings() 直接返回那一份（⛔ 不复制 —— 原地改才传得出去）',
+    /function getBookings\(\) \{\s*return BOOKINGS\s*\}/.test(bsPlain10), true)
+  eq('★ addBooking 走 getBookings()（⛔ 不直接用 BOOKINGS.push）',
+    /getBookings\(\)\.push\(rec\)/.test(bsPlain10), true)
+  /* 🔴 决定 2：给顾客看的那一页不许读预约单。C1 的可约标记在 M0 是写死的夹具
+     （mock/data.js 的 SLOTS.busy），不是从 BOOKINGS 推的 —— 真要推的话
+     seq 1/2/3 会全变「已约」，提审那条路当场废掉。 */
+  eq('🔴★ pages/landing 不许 require bookingStore（两个世界故意解耦）',
+    /bookingStore/.test(stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))),
+    false)
+
+  // ── K. 🔴 新加的两个页面：注册 + 落点 + 形状 ─────────────────────────
+  const appJson10 = JSON.parse(fs.readFileSync(R('妆历小程序/app.json'), 'utf8'))
+  eq('★ style-edit 注册了', appJson10.pages.indexOf('pages/style-edit/style-edit') >= 0, true)
+  eq('★ intro-edit 注册了', appJson10.pages.indexOf('pages/intro-edit/intro-edit') >= 0, true)
+  eq('★ 两个新页都只有 .js/.wxml（样式进 app.wxss，照 settings 的形状）',
+    ['style-edit', 'intro-edit'].filter((p) =>
+      !fs.existsSync(R('妆历小程序/pages/' + p + '/' + p + '.js')) ||
+      !fs.existsSync(R('妆历小程序/pages/' + p + '/' + p + '.wxml'))), [])
+  eq('★ 两个新页都没有自己的 .wxss',
+    ['style-edit', 'intro-edit'].filter((p) =>
+      fs.existsSync(R('妆历小程序/pages/' + p + '/' + p + '.wxss'))), [])
+
+  /* 🔴 落点必须真的在 app.json 里 —— 拼错了在真机上就是白屏，
+     而自测不打桩是发现不了的。这里扫全项目所有 navigateTo 的字面量。 */
+  const allJs10 = ['pages/my-profile/my-profile.js', 'pages/style-edit/style-edit.js',
+                   'pages/intro-edit/intro-edit.js', 'pages/booking-form/booking-form.js']
+    .map((p) => fs.readFileSync(R('妆历小程序/' + p), 'utf8')).join('\n')
+  const urls10 = (allJs10.match(/url:\s*'(\/pages\/[^'?]+)/g) || [])
+    .map((s) => s.replace(/url:\s*'\/?/, ''))
+  eq('🔴★ 这些页面里每一个跳转落点都在 app.json 的 pages 里（拼错了就是白屏）',
+    urls10.filter((u) => appJson10.pages.indexOf(u) < 0), [])
+  eq('★ 而且落点确实含新加那两页（不是空跑）',
+    ['pages/style-edit/style-edit', 'pages/intro-edit/intro-edit']
+      .filter((u) => urls10.indexOf(u) < 0), [])
+
+  // ── L. 🔴 规矩 20：这两个新页都不许调 hideKeyboard ──────────────────
+  const hip10 = ['pages/my-profile/my-profile.js', 'pages/style-edit/style-edit.js',
+                 'pages/intro-edit/intro-edit.js']
+  eq('🔴★ 资料页 / 风格页 / 简介页：hideKeyboard 一次都没调（README 第 20 条）',
+    hip10.filter((p) => /hideKeyboard/.test(
+      stripJs(fs.readFileSync(R('妆历小程序/' + p), 'utf8')))), [])
+
+  // ── M. 简介页：textarea 的硬约束 ────────────────────────────────────
+  const introWxml = stripHtml(fs.readFileSync(R('妆历小程序/pages/intro-edit/intro-edit.wxml'), 'utf8'))
+  const introJs = stripJs(fs.readFileSync(R('妆历小程序/pages/intro-edit/intro-edit.js'), 'utf8'))
+  /* ⚠️ textarea 的 `maxlength` 默认是 **140**，⛔ 不是 200 —— 不显式写就
+     静默卡在 140 字，而计数器还写着 /200，看着像计数器坏了。 */
+  eq('🔴★ <textarea> 显式带了 maxlength（默认只有 140，不写就静默卡住）',
+    /<textarea[\s\S]*?maxlength="\{\{max\}\}"/.test(introWxml), true)
+  eq('★ 而且 maxlength 绑的就是 INTRO_MAX 那个常量',
+    /INTRO_MAX/.test(introJs) && /max:\s*INTRO_MAX/.test(introJs), true)
+  eq('★ 计数器用的是 .length（跟 validateIntro 同一个单位，⛔ 不换成码点数）',
+    /len:\s*v\.length/.test(introJs), true)
+  eq('🔴★ 「保存」放【导航栏右侧】，⛔ 不放底部 —— 键盘从底部升起会盖住 footbar',
+    /slot="right"[\s\S]{0,120}onSave/.test(introWxml), true)
+  eq('🔴★ 这一页【没有】底部 fixed 操作栏', /footbar/.test(introWxml), false)
+  eq('★ 保存失败时不退出（退出等于把刚写的 200 字一起丢掉）',
+    /if\s*\(!r\.ok\)[\s\S]{0,160}return/.test(introJs), true)
+  eq('🔴 保存成功后【立刻】navigateBack，⛔ 不套 setTimeout',
+    /setTimeout/.test(introJs), false)
+  eq('★ 这一页也是「零 bindtap 拼错」的安全形状：两个键都有同名函数',
+    (introWxml.match(/bindtap="([^"]+)"/g) || [])
+      .map((s) => s.replace(/bindtap="([^"]+)"/, '$1'))
+      .filter((n) => !new RegExp('\\b' + n + '\\b\\s*[:(]').test(introJs)), [])
+
+  // ── N. 风格页：词表只有一处来源 ─────────────────────────────────────
+  const styleJs = stripJs(fs.readFileSync(R('妆历小程序/pages/style-edit/style-edit.js'), 'utf8'))
+  const styleWxml = stripHtml(fs.readFileSync(R('妆历小程序/pages/style-edit/style-edit.wxml'), 'utf8'))
+  /* ⛔ 页面里不许出现第二个 16 项词表：mock 改了这里不跟着变，而且是**静默**不变。 */
+  eq('🔴★ 风格页里没有第二个词表（一个字面量的词都不许有）',
+    ['自然感', '建模感', '古早感', '混血感', '超精妆', '蕾系', '成男妆', '古风妆', '韩妆']
+      .filter((w) => styleJs.indexOf(w) >= 0 || styleWxml.indexOf(w) >= 0), [])
+  eq('★ 它从 artistStore 拿勾选态和点选',
+    /toStyleOptions/.test(styleJs) && /toggleTag/.test(styleJs), true)
+  eq('🔴★ 校验不预判、不自己拼话术（规矩 11：一处实现）',
+    /saveArtist\(\{[\s\S]{0,40}style_tags[\s\S]{0,60}\}/.test(styleJs) &&
+    /r\.error/.test(styleJs), true)
+  eq('★ 一个词都没选 → 不保存、不退出（store 返回失败就只出声）',
+    /if\s*\(!r\.ok\)[\s\S]{0,120}return/.test(styleJs), true)
+
+  // ── O. 资料页：四个键的**落点**都对 ────────────────────────────────
+  const profJs10 = stripJs(fs.readFileSync(R('妆历小程序/pages/my-profile/my-profile.js'), 'utf8'))
+  /* 弹框那两个键必须走 editable:true 的 showModal，而 content 就是当前值
+     （editable 模式下 content 是输入框**初值**，传提示语就变成预填提示语了）。 */
+  eq('🔴★ 昵称/城市用 editable 弹框改，而且 content 传的是当前值',
+    /editable:\s*true/.test(profJs10) && /content:\s*cur/.test(profJs10), true)
+  eq('🔴★ 弹框按钮写动作（保存/返回），⛔ 不用「确定/取消」',
+    /confirmText:\s*'保存'/.test(profJs10) && /cancelText:\s*'返回'/.test(profJs10), true)
+  /* 规矩 22：弹框根本没打开也要出声，不然就是「点了行、什么都没发生」。 */
+  eq('🔴★ 弹框 fail 分支会出声（⛔ 不静默）',
+    /fail:[\s\S]{0,200}showToast/.test(profJs10), true)
+  eq('★ 点「返回」刻意不出声（那不是失败，是改主意）—— 这一条写进注释了',
+    /改主意/.test(fs.readFileSync(R('妆历小程序/pages/my-profile/my-profile.js'), 'utf8')), true)
+  /* ⚠️ 保存后不退回：她多半还要接着改下一项。 */
+  eq('★ 保存后【不】navigateBack（还要接着改下一项）',
+    /navigateBack/.test(profJs10), false)
+  eq('★ 成功后重读一遍 storage（而不是信 saveArtist 的返回值）',
+    /refresh\(\)/.test(profJs10), true)
+  eq('🔴★ 重读放在 onShow（从子页返回时 onLoad 不会重跑）',
+    /onShow[\s\S]{0,80}refresh\(\)/.test(profJs10), true)
+  /* 🔴 上一版这里是反向断言「整页没有任何 bindtap」。现在反过来了，
+     但**精神不变**：每个键都要有着落。页面级的「每个 bindtap 都有同名函数」
+     那条断言在 ⑨-E，这里补的是「4 个键的落点分类」。 */
+  eq('🔴 资料页四行 = 两个弹框 + 两个整页',
+    ['editNickname', 'editCity', 'goStyle', 'goIntro']
+      .filter((n) => !new RegExp(n + '\\s*:').test(profJs10)), [])
+
+  // ── P. 🔴 简介在顾客端的落点 ───────────────────────────────────────
+  const landWxml10 = stripHtml(fs.readFileSync(R('妆历小程序/pages/landing/landing.wxml'), 'utf8'))
+  eq('🔴★ C1 落地上有简介这一段', /artist\.intro/.test(landWxml10), true)
+  eq('★ 没写就整段不出现（⛔ 不留一个空标题）',
+    /wx:if="\{\{artist\.intro\}\}"/.test(landWxml10), true)
+  /* 🔴 位置：简介必须在【妆位表下面】。C1 的头等大事是「选这个妆位」，
+     200 字摆上去会把它挤到首屏外。 */
+  eq('🔴★ 简介排在妆位表【后面】（⛔ 不能插在妆位表和预期说明条中间）',
+    landWxml10.indexOf('可约妆位') < landWxml10.indexOf('artist.intro'), true)
+  /* ⛔ 不做行数截断：截断了顾客再也看不到全文，而全站没有第二个地方能看。 */
+  eq('🔴★ C1 的简介【不做】行数截断（截断 = 假承诺）',
+    /line-clamp/.test(fs.readFileSync(R('妆历小程序/app.wxss'), 'utf8')) === false ||
+    !/intro[^}]*line-clamp/.test(fs.readFileSync(R('妆历小程序/app.wxss'), 'utf8')), true)
+  eq('★ 换行保留（她分的段落不能被吃掉）',
+    /\.intro\{[^}]*white-space:pre-wrap/.test(fs.readFileSync(R('妆历小程序/app.wxss'), 'utf8')),
+    true)
+  /* ⛔ 「我的」Tab 那张卡片刻意不显示简介：那是她自己的页头，塞 200 字会撑开。 */
+  eq('🔴★「我的」页那张卡片【不】显示简介（那是她自己的页头）',
+    /artist\.intro/.test(stripHtml(fs.readFileSync(R('妆历小程序/pages/mine/mine.wxml'), 'utf8'))),
+    false)
+  /* 🔴 三处写死的「示」必须都没了 —— 改了昵称头像首字不跟着变，是同一个病。 */
+  eq('🔴★ 三处写死的「示」都换成 {{artist.initial}} 了',
+    ['pages/landing/landing.wxml', 'pages/guest-home/guest-home.wxml', 'pages/mine/mine.wxml']
+      .filter((p) => /class="ava[^"]*">[^<{]/.test(
+        stripHtml(fs.readFileSync(R('妆历小程序/' + p), 'utf8')))), [])
+  eq('★ C1 的导航栏标题也跟着昵称走（原先写死「示例的妆位」）',
+    /title="\{\{artist\.nickname\}\}的妆位"/.test(landWxml10), true)
+
+  // ── Q. 🔴 规矩 23：写回用【未过滤的】列表 ─────────────────────────
+  const ssStore10 = stripJs(fs.readFileSync(R('妆历小程序/utils/scheduleStore.js'), 'utf8'))
+  eq('🔴★ addSchedule / updateSchedule / cancelSchedule 都用 rawList() 当底稿',
+    ['addSchedule', 'updateSchedule', 'cancelSchedule']
+      .filter((n) => !new RegExp(n + '[\\s\\S]{0,300}?rawList\\(\\)').test(ssStore10)), [])
+  eq('🔴★ 而且没有一处拿 getSchedules() 当写回底稿',
+    /getSchedules\(\)[^\n]{0,40}\n[^\n]{0,40}setStorageSync/.test(ssStore10), false)
+
+  // ── R. app.json 的页数账本 ─────────────────────────────────────────
+  eq('🔴 页数是 16（= 14 + 风格页 + 简介页），加页要主动改这一条',
+    appJson10.pages.length, 16)
+  eq('★ 而且没有重复注册',
+    appJson10.pages.length, new Set(appJson10.pages).size)
+
+  // ── S. 红线 10：新加的话术里不许有「开发中」那类承诺 ────────────────
+  const red10_10 = /开发中|敬请期待|即将上线|暂不支持/
+  const newCopy10 = [
+    fs.readFileSync(R('妆历小程序/pages/style-edit/style-edit.wxml'), 'utf8'),
+    fs.readFileSync(R('妆历小程序/pages/intro-edit/intro-edit.wxml'), 'utf8'),
+    fs.readFileSync(R('妆历小程序/pages/booking-form/booking-form.wxml'), 'utf8'),
+    fs.readFileSync(R('妆历小程序/utils/toast.js'), 'utf8')
+  ].join('\n')
+  eq('⛔ 新加的文案里没有「开发中」那类承诺（红线 10）',
+    red10_10.test(newCopy10.replace(/\/\*[\s\S]*?\*\//g, '')), false)
+
+  // ── T. 妆师端代填不许把金额说出来（顾客端红线 2 的邻接面）────────────
+  eq('🔴★ 代填生成的单定金默认 0（¥0 = 没谈定金，⛔ 不许瞎填一个 50）',
+    /deposit_amount:\s*Number\(p\.deposit_amount\)\s*\|\|\s*0/.test(
+      stripJs(fs.readFileSync(R('妆历小程序/utils/bookingStore.js'), 'utf8'))), true)
 }
 
 restoreBookings()

@@ -10,17 +10,41 @@
  *    M0 是单机假数据，一份内存就够；M1 换成云开发的 booking 集合时把
  *    这一整个文件替掉即可，调用方一行不动。
  *
- * 页面改状态的路径【只有这一条】（updateBooking / applyBatch）——
+ * 🔴 2026-09-30（第十七处）：做「代填真生成一条单」时我本来打算把这一份
+ *    **storage 化**，想清楚之后**否掉了**。两条理由，都不是「懒得做」：
+ *      ① 全项目的单子本来就是**会话级**的 —— 妆娘标已确认、翻定金、批量处理，
+ *         重启一趟全部回到初始值。只把「新代填的那几张」持久化，会造出一个
+ *         **新的不对称**：重启后新增的还在、原来的改动全没了，
+ *         这比「全都丢」更难跟用户解释。
+ *      ② 自测 ⑥ 段的 restoreBookings() 是**就地改**这个数组的
+ *         （`list.length = 0` 再 push 回快照）。storage 化之后那些写回只落在
+ *         内存、不再影响后面各段读到的值 —— 它会变成一个**静默失效**的兜底，
+ *         而静默失效正是这个项目吃过最多亏的那类 bug。
+ *    ⇒ 这一轮只做**读入口统一**（那才是当时真正存在的违规，见下面那段）。
+ *
+ * 页面改状态的路径【只有这一条】（updateBooking / applyBatch / addBooking）——
  * 就是为了别再出现「某个页面自己 setData 了一下，别的地方看不到」。
  */
 const { BOOKINGS } = require('../mock/data')
 
+/* ══ 读入口 —— 全项目唯一 ═════════════════════════════════════════════
+   🔴 下面**每一个**读函数都必须经过这里。⛔ 别在别处再写 `BOOKINGS.filter(...)`。
+      2026-09-30 之前 getBooking / bookingsOfSchedule 就是直接读 import 进来那份，
+      于是「统一读入口」这句话只对了一半。当时真正踩到的坑在顾客端：
+      pages/guest-bookings 自己 require 了 BOOKINGS，绕开了这一整层。
+      自测里有一条**源码级**断言专门钉这件事（扫这个文件里还有没有裸的 BOOKINGS）。
+   ⚠️ 返回的是**数组本身**（不是副本）：updateBooking / applyBatch 都是原地改，
+      页面 setData 进来的引用跟着变，不用手工同步两份 —— 这是故意留的。 */
 function getBookings() {
   return BOOKINGS
 }
 
 function getBooking(id) {
-  return BOOKINGS.filter((b) => b.booking_id === id)[0] || null
+  return getBookings().filter((b) => b.booking_id === id)[0] || null
+}
+
+function newId() {
+  return 'bk-' + Date.now()
 }
 
 /* ══ 妆位「已经有人了」的判定 ═════════════════════════════════════════
@@ -54,7 +78,7 @@ function belongsToSchedule(b, s) {
 
 /* 这一场档期上的全部单 */
 function bookingsOfSchedule(s) {
-  return BOOKINGS.filter((b) => belongsToSchedule(b, s))
+  return getBookings().filter((b) => belongsToSchedule(b, s))
 }
 
 /* 这一场档期上【已经被占住】的妆位序号 */
@@ -86,6 +110,81 @@ const OPEN_STATUS = { pending: true, confirmed: true, cancel_requested: true }
 
 function isScheduleSettled(s) {
   return !bookingsOfSchedule(s).some((b) => OPEN_STATUS[b.status])
+}
+
+/* ══ 新建一单（2026-09-30 第十七处 · 妆师端「代填」）═══════════════════
+   🔴 全项目【第一处】创建预约单的代码 —— 之前所有单都是 mock 里手写的。
+      所以这个函数的形状是照 `bk-1` **一个键一个键抄的**，⛔ 一个键都不能少：
+      详情页会读 extra / note / phone / styles，缺了就是 undefined 渲染成空白，
+      而那种空白在真机上跟「她没填」长得一模一样。
+      自测里有一条断言：`Object.keys(buildBooking({})).sort()`
+      必须跟 `Object.keys(BOOKINGS[0]).sort()` **逐字相等**。
+      ⚠️ 加字段时**两边一起加**，否则那条断言当场红（这是它存在的意义）。
+
+   ⚠️ 纯函数：不碰 storage、不碰 BOOKINGS、不生成 Date.now() 之外的副作用，
+      所以能直接进 node 自测。
+   ⚠️ `deposit_amount` 默认 **0**，⛔ 不许瞎填一个 50：
+      代填是【线下谈好的】单，表单里根本没有让她填定金的字段（加一个是范围外，
+      而且金额字段离红线 2 太近）。0 是「没谈定金」的诚实表示；
+      `deposit_paid: false` 让「定金一键已支付」那个批量键有事可做。
+   ⚠️ `slot_time` 的分隔符是 **`–`（U+2013 短破折号）**，⛔ 不是连字符 `-`：
+      要跟 mock 里那 7 张单、以及 scheduleStore 生成妆位时用的那个字符逐字一致，
+      否则同一场档期的妆位在这一单上显示成「10:30 - 11:50」、在别处是另一种。
+      照抄的时候别让编辑器自动替换（这个字符在全项目都是这么写的）。 */
+function buildBooking(patch) {
+  const p = patch || {}
+  return {
+    booking_id: p.booking_id || newId(),
+    artist_id: p.artist_id || 'demo',
+    // ⚠️ 只看 schedule_id 就能认出这一单属于哪一场（见 belongsToSchedule）
+    schedule_id: p.schedule_id || '',
+    /* ⚠️ 妆师端代填出来的单**没有**顾客端那个 slot_id（那是 C1 落地页的
+       SLOTS 夹具才有的东西，形如 `demo-s2`）。所以这里留空串，
+       ⛔ 不要去借一个 —— 借来的 slot_id 会指向一场她根本不存在的漫展，
+       而那正是这一轮要修掉的那个 bug。妆位身份 = (schedule_id, seq)。 */
+    slot_id: p.slot_id || '',
+    event: p.event || '',
+    date: p.date || '',
+    slot_time: p.slot_time || '',
+    seq: Number(p.seq) || 0,
+    created_by: p.created_by || 'artist',
+    role: p.role || '',
+    cn: p.cn || '',
+    eye: Array.isArray(p.eye) ? p.eye.slice() : [],
+    skin: Array.isArray(p.skin) ? p.skin.slice() : [],
+    gender: p.gender || '',
+    is_minor: !!p.is_minor,
+    guardian_consent: !!p.guardian_consent,
+    styles: Array.isArray(p.styles) ? p.styles.slice() : [],
+    extra: Array.isArray(p.extra) ? p.extra.slice() : [],
+    note: p.note || '',
+    wechat: p.wechat || '',
+    phone: p.phone || '',
+    status: p.status || 'pending',
+    deposit_amount: Number(p.deposit_amount) || 0,
+    deposit_paid: !!p.deposit_paid,
+    created_at: p.created_at || nowText()
+  }
+}
+
+/* `2026-05-01 20:14` —— 跟 mock 里那 7 张单同一个写法（本地时间，非 ISO）。
+   ⛔ 别用 toISOString()：那是 UTC，会带上 T 和 Z，详情页直接把它当字符串印出来。 */
+function nowText() {
+  const d = new Date()
+  const p2 = (n) => (n < 10 ? '0' + n : '' + n)
+  return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) +
+         ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes())
+}
+
+/* 把一单塞进去。⚠️ 走 getBookings()（唯一的读入口），⛔ 不直接用 BOOKINGS ——
+   这样「新单」和「老单」天然在同一个数组里，bookedSeqsOfSchedule() /
+   blockingBookings() / 「N 人已预约」全都立刻算得出这一单：
+   妆位当场从「可约」变「已被占」。
+   🔴 这一条就是「代填建了单、妆位却还显示空闲」那类静默不一致的解药。 */
+function addBooking(rec) {
+  if (!rec) return null
+  getBookings().push(rec)
+  return rec
 }
 
 /* 改一单。原地改、返回【同一个对象】—— 页面 setData 进来的引用跟着变，
@@ -199,6 +298,7 @@ function matchesKeyword(b, kw) {
 module.exports = {
   BATCH, BATCH_ORDER, BOOKED_STATUS, OPEN_STATUS,
   getBookings, getBooking, updateBooking,
+  buildBooking, addBooking, newId, nowText,
   belongsToSchedule, bookingsOfSchedule, bookedSeqsOfSchedule, blockingBookings,
   isScheduleSettled,
   batchButtonsOf, pickableIds, canPick, applyBatch, matchesKeyword

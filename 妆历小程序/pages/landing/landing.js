@@ -1,16 +1,31 @@
-const { ARTIST_PUBLIC, SCHEDULE, SLOTS } = require('../../mock/data')
+const { SCHEDULE, SLOTS } = require('../../mock/data')
+const { getArtist } = require('../../utils/artistStore')
 const { getContact } = require('../../utils/contact')
 const { TOAST } = require('../../utils/toast')
 
 Page({
   data: {
-    // ⛔ artist 里没有 wechat_id，也不会有 —— 见 utils/contact.js
-    artist: ARTIST_PUBLIC,
+    /* ⛔ artist 里没有 wechat_id，也不会有 —— 见 utils/contact.js。
+       ⚠️ 2026-09-30（第十七处）：数据源从 `mock/data.js` 的 ARTIST_PUBLIC
+          换成 artistStore.getArtist()。决定 2 说的是「资料改动要同步给顾客看」，
+          而这一页就是**顾客看的那一页**（提审截图 ②）—— 妆娘改了昵称/城市/风格，
+          这里必须跟着变。字段名一个字没改，所以 wxml 那段 `{{artist.xxx}}` 照旧。
+       ⚠️ 初值只给个能渲染的空壳，真数据在 onShow 里灌 —— 理由见下面 onShow。 */
+    artist: { nickname: '', city: '', style_text: '', intro: '', initial: '妆' },
     // ⛔ 微信号只能落在这个字段里，来源只能是 getContact()
     contact: {},
     schedule: SCHEDULE,
     slots: SLOTS,
     copied: false
+  },
+
+  /* ⚠️ 必须在 onShow 里读，⛔ 不能写进 data 的初值（`artist: getArtist()`）。
+     小程序的页面模块【只求值一次】然后被缓存：第二次进这一页时，
+     data 初值还是第一次那一份 —— 妆娘改了资料，顾客这边纹丝不动，
+     而且没有任何报错。这正是「同步」那条决定最容易假实现的地方。
+     ⚠️ onShow 也覆盖了「从填写页退回来」这条路径（不必是 onLoad）。 */
+  onShow() {
+    this.setData({ artist: getArtist() })
   },
 
   onLoad(options) {

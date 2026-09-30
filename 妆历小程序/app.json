@@ -13,7 +13,9 @@
     "pages/booking-form/booking-form",
     "pages/booking-detail/booking-detail",
     "pages/landing/landing",
-    "pages/my-profile/my-profile"
+    "pages/my-profile/my-profile",
+    "pages/style-edit/style-edit",
+    "pages/intro-edit/intro-edit"
   ],
   "window": {
     "navigationStyle": "custom",

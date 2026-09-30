@@ -1,0 +1,33 @@
+<!-- 简介（妆师端 · 200 字以内）
+     落点：我的资料 →「简介」行。
+     ⚠️ 界面稿 §9.4 的 14 个可点元素里没有这一屏 —— 第十七处新增。见 README §4。
+
+     🔴 「保存」放在**导航栏右侧**，不是底部。这是这一页唯一的要点：
+        下面的 textarea 一聚焦，键盘从底部升起来，底部那条 `.footbar`
+        正好被压住 —— 手指落下去点到的是键盘，可按钮看着就在那儿。
+        这就是「点了没反应」的第 5 种长相，项目已经在那个坑里待过四轮。
+        导航栏在最上面，键盘够不着。先例：guest-home.wxml 也是这么放的。
+     ⚠️ 样式全在 app.wxss（`.note` / `.ta` / `.ta-ph` / `.cnt`），
+        这一页没有自己的 .wxss —— 照 pages/settings/ 的形状。
+     ⚠️ `maxlength` 是【UI 层】拦截，让 store 的 validateIntro 当判据 ——
+        两个都留着，一个挡「打进去才发现」，一个挡「粘进来 / 老数据超长」。
+        ⛔ 别把 maxlength 直接绑成 {{max}} 之外的别的数，它就是 INTRO_MAX。 -->
+<view class="app">
+  <nav-bar title="简介" back="{{true}}">
+    <view slot="right" class="nv-act" bindtap="onSave" hover-class="nv-hover" hover-stay-time="80">保存</view>
+  </nav-bar>
+
+  <view class="body tight">
+    <view class="note">
+      这段字会出现在你的分享页上，摆在妆位表的下面 —— 想多了解你的人才会往下看。
+      写接妆习惯、擅长的题材、需要客人提前准备什么，都行。
+    </view>
+
+    <textarea class="ta" value="{{intro}}" maxlength="{{max}}"
+              placeholder="例如：展妆提前 40 分钟到，眼妆我能做得很细；请自备隐形眼镜和卸妆巾。"
+              placeholder-class="ta-ph"
+              bindinput="onInput" cursor-spacing="24"></textarea>
+
+    <view class="cnt">{{len}}/{{max}}</view>
+  </view>
+</view>

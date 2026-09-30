@@ -17,11 +17,20 @@
     <view class="sec-ttl">可约妆位</view>
     <view class="card tight slot-card" hover-class="btn-hover" hover-stay-time="80" bindtap="goLanding">
       <view class="row">
-        <view class="ava">示</view>
+        <view class="ava">{{artist.initial}}</view>
         <view style="flex:1;min-width:0">
           <view class="m-name">{{artist.nickname}}</view>
           <view class="meta">{{artist.city}} · {{artist.style_text}}</view>
           <view class="meta">{{schedule.name}} · {{schedule.date}} · {{slots.length}} 个妆位</view>
+          <!-- 简介（2026-09-30 第十七处）· 没写就整行不出现。
+               ⚠️ 就用现成的 `.meta`（小号灰字），⛔ 不做行数截断 ——
+                  截断是假承诺，看得到的应该是她真写下的那一段。
+               ⚠️ 顺带说明它为什么在这儿不违和：整张卡片是可点的
+                  （bindtap="goLanding" → 分享页），简介跟着一起点得动，
+                  落点正是「看了这段字想多了解她」该去的地方，不是死文字。
+               ⛔ 「我的」Tab 那张卡片**故意不放**简介：那是她自己的页头，
+                  塞 200 字会把它撑开，而她想看正文点「我的资料」就有。 -->
+          <view wx:if="{{artist.intro}}" class="meta">{{artist.intro}}</view>
         </view>
         <view class="btn pri xs">查看</view>
       </view>

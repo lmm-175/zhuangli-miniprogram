@@ -18,7 +18,12 @@
 
   <view class="body tight">
     <view class="card tight row">
-      <view class="ava sm">示</view>
+      <!-- ⚠️ 2026-09-30（第十七处）：原先这里**写死一个「示」**，
+           改了昵称头像首字也不动。现在由 artistStore.initialOf(nickname) 算
+           （一处实现，⛔ 不各页 slice(0,1) 一遍）。
+           ⛔ 这张卡片**故意不显示简介**：它是她自己这个 Tab 的页头，
+              塞 200 字会把它整个撑开；正文点「我的资料」就看得到。 -->
+      <view class="ava sm">{{artist.initial}}</view>
       <view style="flex:1;min-width:0">
         <view style="font-size:31rpx;font-weight:700">{{artist.nickname}}</view>
         <view class="meta">{{artist.city}} · {{artist.style_text}}</view>

@@ -1,7 +1,34 @@
-.grp-sec{margin-top:14rpx}
-.grp-tag{font-size:24rpx;color:var(--t3);margin:9rpx 4rpx 4rpx}
+/* 预约单填写页 · 页面级样式（其余全在 app.wxss）
+   ⚠️ `.grp-sec` / `.grp-tag` 原本长在这里，2026-09-30（第十七处）
+      **整块上提到 app.wxss** —— 因为 style-edit 页要用同一套分组小标题长相，
+      两份实现就是两份真相。⛔ 别搬回来。 */
 .guard-row{display:flex;align-items:center;gap:18rpx;background:#fff;border-radius:var(--r);
            padding:22rpx 26rpx;margin-top:13rpx}
 .ck{width:44rpx;height:44rpx;border-radius:12rpx;border:2rpx solid var(--line);flex:none;
     display:flex;align-items:center;justify-content:center;font-size:26rpx;color:#fff}
 .ck.on{background:var(--brand);border-color:var(--brand)}
+
+/* ── 妆师代填 · 场次 / 妆位两个下拉（2026-09-30 第十七处）──────────────
+   🔴 `.pk-hit` 的 `min-height:88rpx` 不是随便定的：微信建议的可点区域是
+      **88rpx**。这个项目已经因为「命中面积不够」栽过一轮 —— 用户原话是
+      「取消按键完全没动静，你还在编码的时候我试了一下是可以用的」，
+      而那种「有时能点中、有时没动静」的成因就是面积太小（README 第 21 条）。
+      ⛔ 别为了「看起来紧凑」把它压下去。
+   ⚠️ 用 `padding` 撑开、⛔ 不用 `margin` —— margin 是**点不到的空白**，
+      而 picker 的点击要落在 `pk-hit` 自己的盒子里才作数。
+   ⚠️ 两个下拉上下摞着（`flex-direction:column`），⛔ 不并排：
+      并排的话「第 2 位 · 10:30 – 11:50」这种文案会被挤到折行，
+      而折行的下拉一点开就跳位置，手指正好落在缝里。 */
+.pk-row{display:flex;flex-direction:column;gap:12rpx;margin-top:16rpx}
+.pk{display:block}
+.pk-hit{display:flex;align-items:center;gap:16rpx;min-height:88rpx;
+        box-sizing:border-box;padding:12rpx 22rpx;background:#fff;
+        border:1px solid var(--line);border-radius:15rpx}
+.pk-hit.dis{background:#F7F7F8;color:var(--t3)}
+.pk-lb{flex:none;font-size:25rpx;color:var(--t3)}
+.pk-vl{flex:1;min-width:0;font-size:29rpx;color:var(--t1);
+       overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pk-vl.ph{color:var(--t4)}
+.pk-ar{flex:none;font-size:24rpx;color:var(--t3)}
+/* C1 分支：一场档期都没建过 */
+.pk-empty{font-size:28rpx;color:var(--brand-d);line-height:1.7;margin-top:10rpx}

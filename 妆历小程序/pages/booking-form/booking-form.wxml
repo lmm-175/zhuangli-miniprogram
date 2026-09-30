@@ -8,10 +8,56 @@
   <nav-bar title="{{title}}" back="{{true}}"></nav-bar>
 
   <view class="body tight">
-    <!-- 你选的妆位 -->
+    <!-- 妆位
+         · 顾客自填（mode==='user'）：妆位是她自己在 C1 上点「选这个妆位」定下的，
+           **只读**，不给改 —— 所以她那一支还是原来那一行字。
+         · 妆师代填（mode==='artist'）：两个原生下拉（场次 + 妆位）。
+           🔴 2026-09-30（第十七处）新增，修的是「代填的妆位选不了、静默落到
+              顾客端示例妆位上」那个真 bug。见 README §4 第十七处。
+           ⚠️ 用 `<picker mode="selector">`（**原生** picker）：小程序的原生 picker
+              是**程序叫不动**的（没法用 JS 替用户弹出来），所以它自己就得是那个键 ——
+              ⛔ 不要做成「点一下再帮用户打开」那种两层结构。
+           ⚠️ 下拉里【只有还空着的妆位】（用户 2026-09-30 定的）：
+              已约满的整条不出现。代价是「已订」那一行也看不见了，
+              所以下面那个空态必须说清是哪一种空（规矩 28）。 -->
     <view class="card tight picked">
       <view class="pt">{{mode === 'artist' ? '代填的妆位' : '你选的妆位'}}</view>
-      <view class="pv">{{slotText}}</view>
+
+      <view wx:if="{{mode !== 'artist'}}" class="pv">{{slotText}}</view>
+
+      <block wx:else>
+        <!-- 一场档期都没建过（C1 分支）· ⛔ 不是死胡同：给一个真落点 -->
+        <view wx:if="{{noSchedule}}" class="pk-empty">
+          <view>你还没有建过档期。先去「档期」建一场，再回来代填。</view>
+          <view class="btn sec sm" style="margin-top:18rpx" bindtap="goSchedule"
+                hover-class="btn-hover" hover-stay-time="80">去建档期</view>
+        </view>
+
+        <view wx:else class="pk-row">
+          <picker class="pk" mode="selector" range="{{schedLabels}}"
+                  value="{{schedIdx}}" bindchange="pickSched">
+            <view class="pk-hit">
+              <text class="pk-lb">场次</text>
+              <text class="pk-vl {{pickedSched ? '' : 'ph'}}">{{pickedSched ? schedLabels[schedIdx] : '请选择场次'}}</text>
+              <text class="pk-ar">▾</text>
+            </view>
+          </picker>
+
+          <!-- 有可选的妆位才给下拉；空的三种原因各说各的（C1/C2/C3） -->
+          <picker wx:if="{{slotOptions.length}}" class="pk" mode="selector"
+                  range="{{slotLabels}}" value="{{slotIdx}}" bindchange="pickSlot">
+            <view class="pk-hit">
+              <text class="pk-lb">妆位</text>
+              <text class="pk-vl {{pickedSeq ? '' : 'ph'}}">{{pickedSeq ? slotLabels[slotIdx] : '请选择妆位'}}</text>
+              <text class="pk-ar">▾</text>
+            </view>
+          </picker>
+          <view wx:else class="pk-hit dis">
+            <text class="pk-lb">妆位</text>
+            <text class="pk-vl">{{pickedSched ? slotEmptyText : '请先选场次'}}</text>
+          </view>
+        </view>
+      </block>
     </view>
 
     <!-- 顾客档案层，整体排在最前（2026-09-29 调整顺序）：

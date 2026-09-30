@@ -6,7 +6,7 @@
      ⛔ 没有金额 / 价格 / 定金（红线 2）
      📌 妆位行只有三样东西：序号 · 时段 · 可约状态。多一个字段都要问自己为什么。 -->
 <view class="app">
-  <nav-bar title="示例的妆位" back="{{true}}">
+  <nav-bar title="{{artist.nickname}}的妆位" back="{{true}}">
     <view slot="right" class="nv-act" bindtap="goMyBookings" hover-class="nv-hover" hover-stay-time="80">我的预约</view>
   </nav-bar>
 
@@ -14,7 +14,7 @@
     <!-- ① 化妆师信息 -->
     <view class="card">
       <view class="row">
-        <view class="ava">示</view>
+        <view class="ava">{{artist.initial}}</view>
         <view style="flex:1;min-width:0">
           <view style="font-size:32rpx;font-weight:700">{{artist.nickname}}</view>
           <view class="meta">{{artist.city}} · {{artist.style_text}}</view>
@@ -57,10 +57,26 @@
 
     <!-- ④ 预期说明条 · 常驻 · 不可点
          📌 这是产品必需的，不是装饰：化妆师拒绝顾客时没有任何通道能通知他，
-            必须在落地页就把预期说清楚。它同时替掉了那条发不出去的订阅消息。 -->
+            必须在落地页就把预期说清楚。它同时替掉了那条发不出去的订阅消息。
+         ⚠️ 它必须【紧挨着妆位表】—— 所以下面那段简介是加在它**后面**的，
+            不是插在妆位表和它中间。别为了「简介该靠上」把它俩拆开。 -->
     <view class="noti info">
       <text>ℹ️</text>
       <text>提交后化妆师会主动联系你。<text style="font-weight:600">如果你填完很久没人联系，可以直接加化妆师的微信。</text></text>
+    </view>
+
+    <!-- ⑤ 简介（2026-09-30 第十七处新增）· 妆娘自己写的一段字
+         🔴 为什么排在【妆位表下面】而不是上面：这一页的头等大事是
+            「选这个妆位」（界面稿 §9.4 的 #9/#10），200 字摆上去会把它
+            挤到首屏外。简介是「想多了解她的人往下看」的东西，本来就该在后面。
+         ⚠️ 没写就整段不出现（`wx:if`），⛔ 不留一个空标题。
+         ⚠️ ⛔ 不做行数截断（`-webkit-line-clamp`）：截断了顾客**再也看不到全文**，
+            而全站没有第二个地方能看 —— 那是假承诺。200 字是上限，不是目标。
+         ⚠️ 里面写微信号**不拦**（用户 2026-09-30 定的）—— 那是她自己写的正文，
+            不是数据库字段；微信号的程序出入口仍然只有 utils/contact.js 那一条。 -->
+    <view wx:if="{{artist.intro}}">
+      <view class="sec-ttl">简介</view>
+      <view class="card tight"><view class="intro">{{artist.intro}}</view></view>
     </view>
   </view>
 </view>

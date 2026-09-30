@@ -1,0 +1,26 @@
+/* 我的资料 · 页面级样式（其余全在 app.wxss）
+
+   这一页只有一处需要压全局：右侧那个值可能很长 ——
+   接妆风格最多能选满 16 个词，`style_text` 拼出来是
+   「建模感 / 浓系 / 展妆 / 古风妆 / 韩妆 / …」这种长串。
+   app.wxss 的 `.cell` 是 `justify-content:space-between`，
+   值一长就把「›」顶出屏幕（那正是「看着像键、其实点不到」的成因）。
+
+   ⚠️ 选择器必须写成【两级】`.cell .cr`，⛔ 不能只写 `.cr`：
+      app.wxss 里那条就是 `.cell .cr`（权重 0,2,0），
+      裸 `.cr` 只有 0,1,0 —— 页面样式表【加载顺序在全局之后也没用】，
+      权重低就是低，`max-width` 会静默不生效（不报错、只是没效果）。
+   ⚠️ 必须覆盖成 `display:block`：app.wxss 的 `.cr` 是 `display:flex`，
+      而 `text-overflow:ellipsis` 对 flex 容器无效（省略号是给
+      会溢出的行内内容用的，flex 容器里那句话变成匿名 flex item）。
+      `display:block` 之后垂直居中仍然由 `.cell` 的 `align-items:center` 管。
+   📌 截断在这里【不是假承诺】：完整文案在正上方那张卡片的 `.meta` 里
+      换行显示着（`{{artist.city}} · {{artist.style_text}}`），
+      ⛔ 所以本条不适用于「全站只有一处能看」的字段。 */
+.cell .cr{
+  display:block;
+  max-width:62%;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
