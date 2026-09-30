@@ -25,7 +25,11 @@
          ⚠️ 输入框【平时空着】，场次名单独放左边 —— 它俩是两件事，塞进一个框里
             会出现「框里那行字到底是我要搜的词，还是当前这一场」的歧义。
          ⚠️ 输入框和场次名都【常驻】，不藏在面板里：要搜就直接点框打字，
-            不用先点开面板把它找出来。 -->
+            不用先点开面板把它找出来。
+         🔴 2026-09-30 方案 B（用户定的）：这四件是【两套互不相干】的控件 ——
+            左边两件只管选场次，右边两件只管搜 CN / 展名。
+            打字⛔ 不再弹面板、也不再筛面板里的清单（原来那样做，面板会替
+            一个 CN 下「没有」的假结论，见下面面板那段注释）。 -->
     <view class="sched-bar">
       <view class="sb-pick" bindtap="toggleSched" hover-class="btn-hover" hover-stay-time="80">
         <text class="sb-lb">{{schedLabel}}</text>
@@ -60,16 +64,17 @@
     <view wx:if="{{schedOpen}}" class="sp-mask" bindtap="closeSched"></view>
     <view wx:if="{{schedOpen}}" class="sched-panel">
       <view class="sp-list">
-        <view wx:for="{{schedOptions}}" wx:key="id"
+        <view wx:for="{{schedChips}}" wx:key="id"
               class="sp-item {{schedId === item.id ? 'on' : ''}}"
               data-id="{{item.id}}" bindtap="pickSched" hover-class="btn-hover" hover-stay-time="80">
           <text class="sp-nm">{{item.label}}</text>
           <text wx:if="{{item.sub}}" class="sp-sub">{{item.sub}}</text>
         </view>
-        <!-- 清单跟着【输入框里正在打的字】缩（见 booking.js 的 onKwInput）。
-             ⚠️「全部」永远留着，所以有匹配时节清单至少是 1 项 ——
-                「一项都没有」= 真的没匹配上。 -->
-        <view wx:if="{{kwInput && schedOptions.length <= 1}}" class="sp-none">没有叫这个名字的展子 / CN</view>
+        <!-- 🔴 2026-09-30 方案 B：这里原先还有一行「没有叫这个名字的展子 / CN」。
+             它在【往输入框里打 CN】时冒出来，可上面这份清单只匹配【场次名】——
+             等于一个字没查过 CN，就替 CN 下了「没有」的结论。人明明在，它说没有，
+             她再点放大镜，这回真去查 CN 又搜到了 —— 用户报的「过程有问题」就是它。
+             现在面板只管选场次、⛔ 不认输入框里的字，那句假话连同它的条件一起删。 -->
       </view>
     </view>
   </view>

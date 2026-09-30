@@ -103,16 +103,24 @@ function chipLabel(chips, id) {
   return c ? c.label : '全部'
 }
 
-/* 面板里列出来的几项。搜漫展名时这个列表跟着缩 ——
-   用户说的「点击可在下拉菜单输入漫展场次搜索展子」就是这个。
-   ⚠️「全部」在搜索时【也留着】：搜完展子还想退回来看全量，
-      要是它被筛没了，她就得先清空关键词才点得回去。
-   ⛔ 但它不参与名字匹配 —— 它本来就不是一个展子的名字。 */
-function schedOptions(chips, kw) {
-  const q = String(kw == null ? '' : kw).trim().toLowerCase()
-  if (!q) return chips || []
-  return (chips || []).filter((c) => c.id === ALL || c.label.toLowerCase().indexOf(q) >= 0)
-}
+/* ══ 2026-09-30 删掉了 schedOptions(chips, kw) ══════════════════════
+   原先这条条子上是【一个输入框带着两套搜索】，而且范围还不一样：
+     · 下拉面板 —— 只匹配场次名（label = 漫展名 · 日期）
+     · 主列表   —— 匹配顾客 CN 或漫展名，且【跨全部场次】
+
+   用户报的症状：打一个 CN（「千夏」），面板里一场都对不上 → 清单只剩
+   「全部」→ 弹出「没有叫这个名字的展子 / CN」。
+   🔴 那句是【假的】：它宣称 CN 也查过了，其实只查了场次名 —— 人明明在，
+      它说没有。然后她点放大镜，这回真去查 CN 了，又找到了。
+      表现就是「结果对、过程错」，看着像搜索坏了。
+
+   用户 2026-09-30 定的解法（方案 B）：两个控件【彻底拆开】——
+     [当前场次][▾] 只管选场次     [输入框][🔍] 只管搜 CN / 漫展名
+   打字⛔ 不再碰面板，面板也不再被关键词筛。歧义从根上消失：
+   一个输入框只对应一套范围，谁也不会再替谁下结论。
+
+   ⚠️ 代价（已当面跟用户讲明）：他 2026-09-29 定的「点击可在下拉菜单
+      输入漫展场次搜索展子」这个功能【没有了】—— 选场次回到纯点选。 */
 
 /* 批量处理完之后跟用户说的一句人话。N 换成单数 */
 const RESULT_TEXT = {
@@ -148,17 +156,16 @@ Page({
     schedId: ALL,       // 当前筛的哪一场；ALL = 不筛
     schedOpen: false,   // 下拉面板展开着没
     /* 搜索是【两级】状态（2026-09-30 用户定的），别合并成一个：
-         kwInput —— 输入框里正在打的字。驱动【面板里的场次清单】跟着缩，
-                    每敲一个字就重算一次，但【不重建主列表】。
+         kwInput —— 输入框里正在打的字。⛔ 它【不驱动任何东西】，就是框里那个字。
+                    （方案 B 之前它还负责筛面板里的场次清单，那一套已经拆掉了，
+                      见上面删掉 schedOptions() 那段说明。）
          kw      —— 已提交的关键词（回车或点放大镜）。驱动主列表和 searching。
        合成一个的话，打字打到「千」主列表就开始跨全部场次筛 ——
-       她还没输完，列表已经翻过一遍了，而且每个字符重建一次列表纯属白费。
-       输入框现在【长在条子上】（永远看得见），所以这两级各自都有落点。 */
+       她还没输完，列表已经翻过一遍了，而且每个字符重建一次列表纯属白费。 */
     kwInput: '',
     kw: '',             // 搜索关键词（顾客 CN 或 漫展名）
     // 下面几个是 paint() 现算的，放在 data 里只为 wxml 读得到
     schedLabel: '全部',
-    schedOptions: [],
     searching: false    // kw 非空 —— 此时【跨全部场次】找
   },
 
@@ -268,8 +275,6 @@ Page({
       selApply: cfg ? cfg.apply : '',
       footBtns: batchButtonsOf(tabKey, rows.length),
       schedLabel: chipLabel(this.data.schedChips, this.data.schedId),
-      // 面板清单跟的是【输入框里正在打的字】，不是已提交的 kw —— 见 data 里的说明
-      schedOptions: schedOptions(this.data.schedChips, this.data.kwInput),
       searching: !!this.data.kw
     })
   },
@@ -285,34 +290,27 @@ Page({
      cn/展名，点击图标/回车键进行搜索。点击下拉菜单那个图标时就可以下拉
      菜单选择。」
 
-     一条上从左到右四件：
-       [当前场次] [输入框] [▾] [🔍]
-     · 输入框【平时空着】—— 场次名单独放左边，搜索框不兼职显示场次名
-     · 点 ▾ → 展开场次面板
-     · 文本框里打字 → 面板里的场次清单跟着缩（原来那个「在下拉菜单里搜展子」）
-     · 回车 / 点 🔍 → 真的搜（跨全部场次找 CN 或漫展名） */
+     一条上从左到右四件，⚠️ 但它们是【两套互不相干】的控件：
+       [当前场次][▾] ── 只管选场次，⛔ 不认输入框里的字
+       [输入框][🔍] ── 只管搜 CN / 漫展名，⛔ 不碰面板
+     2026-09-30 方案 B 之前这两套是【串着的】（打字顺手把面板里的场次清单
+     筛一遍），结果同一个框对应两套范围，面板还会替 CN 下一个「没有」的
+     假结论。拆开之后一个输入框只对一套范围，见删掉 schedOptions() 那段。 */
   toggleSched() {
-    // 展开时按输入框里现有的字重算一遍清单 —— 上次收起前搜过的话，
-    // 再展开还列全量会让人以为「我刚搜的没了」。
-    this.setData(this.data.schedOpen
-      ? { schedOpen: false }
-      : { schedOpen: true, schedOptions: schedOptions(this.data.schedChips, this.data.kwInput) })
+    this.setData({ schedOpen: !this.data.schedOpen })
   },
 
   closeSched() {
     this.setData({ schedOpen: false })
   },
 
-  /* 打字：只重算【面板里那份清单】，⛔ 不重建主列表 ——
-     主列表只认已提交的 kw（回车 / 放大镜）。每个字符重建一次列表
-     既卡又白费，而且她字还没打完列表就翻过一遍了。
-     ⚠️ 打字顺手把面板带出来：输入框长在条子上，面板不收起来的话
-        她看不到清单在缩，原来那个「在下拉菜单里搜展子」就白留了。 */
+  /* 打字：⛔ 什么都不做，就是把字存进 kwInput。
+     · 不重建主列表 —— 主列表只认已提交的 kw（回车 / 放大镜）。
+       每个字符重建一次列表既卡又白费，而且她字还没打完列表就翻过一遍了。
+     · 也⛔ 不再弹面板 / 不再筛面板里的清单（2026-09-30 方案 B）。
+       打字只跟「搜索」有关，面板只跟「选场次」有关，两件事互不干涉。 */
   onKwInput(e) {
-    const v = e.detail.value
-    const patch = { kwInput: v, schedOptions: schedOptions(this.data.schedChips, v) }
-    if (!this.data.schedOpen) patch.schedOpen = true
-    this.setData(patch)
+    this.setData({ kwInput: e.detail.value })
   },
 
   /* 回车 / 点放大镜：这一下才真的搜。

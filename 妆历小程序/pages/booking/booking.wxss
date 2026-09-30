@@ -65,7 +65,10 @@
              background:#fff;border-bottom:1px solid var(--line);
              box-shadow:0 12rpx 28rpx rgba(0,0,0,.10);
              max-height:640rpx;overflow:hidden;display:flex;flex-direction:column}
-/* 面板里已经没有搜索框了（它搬到了条子上），所以上沿自己留一点空 */
+/* 面板里没有搜索框（它搬到了条子上），所以上沿自己留一点空。
+   ⚠️ 2026-09-30 方案 B 之后面板就是【纯场次清单】了：不再被关键词筛，
+      所以也不会再出现「一项都没剩下」的样子，「没有叫这个名字的展子 / CN」
+      那行（原 .sp-none）连同样式一起删了。 */
 .sp-list{overflow-y:auto;padding:12rpx 0}
 .sp-item{display:flex;align-items:center;justify-content:space-between;gap:16rpx;
          padding:24rpx 26rpx;font-size:28rpx;color:var(--t1)}
@@ -74,7 +77,6 @@
 .sp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sp-sub{flex:none;font-size:22rpx;color:var(--t4);font-weight:400}
 .sp-item.on .sp-sub{color:var(--brand-d)}
-.sp-none{padding:26rpx;font-size:25rpx;color:var(--t3);text-align:center}
 
 .b-tabs{display:flex;background:#fff;border-bottom:1px solid var(--line);flex:none}
 .b-tab{flex:1;text-align:center;padding:24rpx 0;font-size:29rpx;color:var(--t2);position:relative}

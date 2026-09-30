@@ -1431,7 +1431,8 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
      下面那些断言读起来还是「切到某一场」的意思。 */
   const onSched = (id) => pg.pickSched({ currentTarget: { dataset: { id } } })
   /* 搜索是【两级】的（2026-09-30）：
-       typeKw  = 往输入框里打字 —— 只缩面板里的场次清单，不重建主列表
+       typeKw  = 往输入框里打字 —— ⛔ 什么都不驱动了，就是把字存进 kwInput
+                 （方案 B 之前它还负责筛面板里的场次清单，已拆掉）
        search  = 打完字按回车 / 点放大镜 —— 这一下才真的搜
      分开写是为了让「打字不搜」「提交才搜」这两件事各自能被断言到。 */
   const typeKw = (v) => pg.onKwInput({ detail: { value: v } })
@@ -1484,7 +1485,9 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
   eq('一开始面板是收着的', pg.data.schedOpen, false)
   pg.toggleSched()
   eq('点下拉条 → 面板展开', pg.data.schedOpen, true)
-  eq('展开时列的是全部可选项', pg.data.schedOptions.length, 4)
+  eq('展开时列的是全部可选项', pg.data.schedChips.length, 4)
+  eq('🔴★ 面板直接读 schedChips（那个「筛过的清单」字段已整个删掉）',
+    'schedOptions' in pg.data, false)
   pg.toggleSched()
   eq('再点一下 → 收回去（同一个键开关）', pg.data.schedOpen, false)
   pg.toggleSched()
@@ -1521,24 +1524,38 @@ console.log('\n[⑥-B] 预约单列表页 · 勾选态')
     pg.data.rows.filter((r) => r.wantCancel).map((r) => r.id).join(','), 'bk-7')
   goto('待处理')
 
-  // ── 搜索：打字只缩清单，回车/放大镜才真的搜 ──
+  // ── 搜索：打字不动列表，回车/放大镜才真的搜 ──
   console.log('\n  搜索「千夏」')
   typeKw('千夏')
   eq('★ 打字：输入框里有字了', pg.data.kwInput, '千夏')
   eq('★ 打字【还没】真的搜 —— 主列表纹丝不动', pg.data.searching, false)
-  eq('★ 打字顺手把面板带出来，不然看不到清单在缩', pg.data.schedOpen, true)
-  /* ⚠️ 面板里那一列筛的是【场次名】，跟主列表搜的 CN 不是一回事：
-     打「千夏」（一个人的圈名）时一场都对不上 —— 只剩「全部」。
-     这不是 bug，是这两件事本来就不同：CN 是「跨场找这个人」，
-     场次清单是「我这几场里哪场叫这个名字」。 */
-  eq('★ 打 CN 时场次清单里一场都对不上（CN ≠ 场次名）', pg.data.schedOptions.length, 1)
-  eq('★ 但「全部」永远留着（不然想退回全量得先清空关键词）',
-    pg.data.schedOptions[0].id, 'all')
-  // 打个【场次名】才是它该缩的时候
-  typeKw('示例')
-  eq('★ 打场次名 → 面板里的场次跟着缩', pg.data.schedOptions.length, 3)
-  eq('★ 而主列表这会儿【还是】没动（没提交就不搜）', pg.data.searching, false)
-  typeKw('千夏')
+  /* 🔴 2026-09-30 方案 B（用户定的）：面板（选场次）和输入框（搜人）
+     【彻底拆开】。打字只往框里塞字，⛔ 不许碰面板。
+     拆开之前是这样：打字会自动弹面板、还会把面板里的场次清单按键词筛掉，
+     而那份清单只匹配【场次名】—— 打一个 CN 就一场都对不上，面板于是弹出
+     「没有叫这个名字的展子 / CN」。🔴 那句话是假的：它宣称 CN 也查过了，
+     其实一个字没查，人明明在。用户报的「过程有问题」正是它。 */
+  eq('★ 打字【不】再自动弹面板（面板只管选场次）', pg.data.schedOpen, false)
+  eq('★ 打字也不筛面板里的清单了（4 项原样都在）', pg.data.schedChips.length, 4)
+  eq('★ 主列表这会儿还是没动（没提交就不搜）', pg.data.searching, false)
+
+  // 🔴 钉住那句假话【真的没了】。node 里没有渲染引擎，只能读 wxml 原文钉结构。
+  //    ⚠️ 读之前必须【先摘掉注释】—— 我在那儿留了一段解释，里面引用了这句话本身。
+  {
+    const bwRaw = require('fs').readFileSync(R('妆历小程序/pages/booking/booking.wxml'), 'utf8')
+    const bw = bwRaw.replace(/<!--[\s\S]*?-->/g, '')
+    eq('🔴★ 面板里那句「没有叫这个名字的展子 / CN」已经删干净（只剩 1 处）',
+      bw.split('没有叫这个名字的展子 / CN').length - 1, 1)
+    eq('★ 剩下的那一处在【主列表空态】里（搜不到人时才说，这话查过 CN 了、是真的）',
+      /wx:if="\{\{searching\}\}"[\s\S]{0,400}?没有叫这个名字的展子 \/ CN/.test(bw), true)
+    eq('★ 面板现在直接循环 schedChips（⛔ 不再有 schedOptions）',
+      /wx:for="\{\{schedChips\}\}"/.test(bw), true)
+
+    const bwss = require('fs')
+      .readFileSync(R('妆历小程序/pages/booking/booking.wxss'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+    eq('⛔ .sp-none 那套样式也跟着删了（不留死代码）', /\.sp-none/.test(bwss), false)
+  }
 
   pg.doSearch()
   eq('★ 回车 / 点放大镜 → 这一下才真的搜', pg.data.searching, true)
