@@ -1,6 +1,12 @@
-<!-- 「我的」（约妆端）· 约妆端 tabBar 第 2 格。
-     ⚠️ 上面那一格「我约过的妆娘」在 pages/artist-list/，两块内容各有各的页
+<!-- 「我的」（约妆端）· 约妆端 tabBar 第 3 格。
+     ⚠️ 另两格各有各的页：「我约过的妆娘」在 pages/artist-list/（第 1 格）、
+        「我的预约」在 pages/guest-bookings/（第 2 格）—— 三块内容各占一页
         （用户原话：「不要放在同一个页面里面」）。
+     🔴 2026-10-01 第二轮：用户说「底栏变成三个，把我的预约也放进去，
+        **「我的」里面只有切换身份 反馈 设置**」⇒ 「我的预约」那一行【删了】
+        （它变成 tab 2 了，留着就是同一个落点两个入口）。
+        ⚠️ 删的是**重复入口**，⛔ 不是删功能 —— 页面和那批单一个都没动
+           （第十九处那条判据，在这里第二次用）。
      ⚠️ 根容器带 `tabbed`：自定义 tabBar 不会替页面扣底部高度，
         少了这个类，最后一行会被压在条子底下（见 app.wxss 的 .app.tabbed）。
      ⛔ 没有返回箭头（nav-bar 的 back 默认就是 false）—— 这是 tab 页，
@@ -10,14 +16,24 @@
 
   <view class="body tight">
     <view class="grp">
-      <view class="cell" bindtap="goMyBookings" hover-class="btn-hover" hover-stay-time="80">
-        <text class="cl">我的预约</text><text class="cr">›</text>
-      </view>
       <view class="cell" bindtap="switchRole" hover-class="btn-hover" hover-stay-time="80">
         <text class="cl">切换身份</text><text class="cr">约妆 / 妆师 ›</text>
       </view>
+      <!-- ⚠️ 这一行和妆师端「我的」页那一行**指向同一个页面、写同一个词**
+           （「问题反馈」，⛔ 不简写成「反馈」）—— 她把「反馈」点进去看到标题
+           写着「问题反馈」，会以为进错了地方（规矩 25：同一件事同口径）。 -->
+      <view class="cell" bindtap="goFeedback" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">问题反馈</text><text class="cr">›</text>
+      </view>
+      <!-- ⚠️ 设置页和妆师端**是同一页**（pages/settings/，规矩 37：搬家不是复制）。
+           唯一的差别在那一页里：顶上那个「在分享页展示我的微信号」开关
+           **只对妆娘画** —— 顾客没有分享页，也没有微信号要展示
+           （用户 2026-10-01：「顾客没有展示微信号的开关，顾客不展示」）。 -->
+      <view class="cell" bindtap="goSettings" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">设置</text><text class="cr">›</text>
+      </view>
     </view>
 
-    <view class="hint">提交过的预约单都在「我的预约」里。</view>
+    <view class="hint">你提交过的预约单都在「我的预约」那一格。</view>
   </view>
 </view>

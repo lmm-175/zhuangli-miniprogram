@@ -427,8 +427,14 @@ Page({
         // 妆师代填完 → 回到妆师端预约单列表
         wx.navigateBack({ delta: 1, fail() { wx.switchTab({ url: '/pages/booking/booking' }) } })
       } else {
-        // 顾客填完 → 我的预约（约妆端）
-        wx.redirectTo({ url: '/pages/guest-bookings/guest-bookings' })
+        /* 顾客填完 → 我的预约（约妆端第 2 格）。
+           🔴 2026-10-01（第二十一处第二轮）：原来是 `redirectTo` —— 那一页
+              **升成 tab 页之后，`redirectTo` 会静默失败**（不报错、不跳转、
+              屏幕上一个字都没有），顾客提交完会**停在原地**，以为没提交上。
+              tab 页只有 `wx.switchTab` 跳得过去。
+           ⚠️ 这一处和 `pages/landing/` 那个「我的预约」是同一轮里被同一条规则
+              逮到的两处 —— 自测里那条**全项目扫描**就是干这个的。 */
+        wx.switchTab({ url: '/pages/guest-bookings/guest-bookings' })
       }
     }, 1800)
   }

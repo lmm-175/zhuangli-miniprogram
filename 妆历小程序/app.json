@@ -35,6 +35,7 @@
       { "pagePath": "pages/booking/booking", "text": "预约单" },
       { "pagePath": "pages/mine/mine", "text": "我的" },
       { "pagePath": "pages/artist-list/artist-list", "text": "我约过的妆娘" },
+      { "pagePath": "pages/guest-bookings/guest-bookings", "text": "我的预约" },
       { "pagePath": "pages/guest-mine/guest-mine", "text": "我的" }
     ]
   },

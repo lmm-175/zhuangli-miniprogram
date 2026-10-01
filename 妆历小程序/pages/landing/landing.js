@@ -268,9 +268,14 @@ Page({
   },
 
   /** §9.4 #7 · 我的预约。落地页是顾客端，去约妆端「我的预约」。
-       ⛔ 空态里绝不放「浏览化妆师」按钮。 */
+       ⛔ 空态里绝不放「浏览化妆师」按钮。
+       🔴 2026-10-01（第二十一处第二轮）：原来是 `navigateTo` —— 那一页
+          **升成 tab 页之后，`navigateTo`（和 `redirectTo`）都会静默失败**：
+          不报错、不跳转、屏幕上一个字都没有，用户看到的就是「点了没反应」。
+          这是 C1 上唯一那个按钮，它坏掉等于落地页少了半条路。
+       ⚠️ 同一轮里 `pages/booking-form/` 提交完那一跳是同一个病，一起改的。 */
   goMyBookings() {
-    wx.navigateTo({ url: '/pages/guest-bookings/guest-bookings' })
+    wx.switchTab({ url: '/pages/guest-bookings/guest-bookings' })
   }
 
   /* ⛔ 本页不实现 onShareTimeline —— 见 pages/schedule-edit 里的说明。

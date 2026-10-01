@@ -2350,7 +2350,15 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
   eq('定时器排上了', timers.length, 1)
   eq('就是 1.8 秒', timers[0].ms, 1800)
   flush()
-  eq('★ 顾客填完进「我的预约」', redirs[0], '/pages/guest-bookings/guest-bookings')
+  /* 🔴 2026-10-01（第二十一处第二轮）：「我的预约」升成 tab 页之后，
+     这一跳**从 redirectTo 换成 switchTab** —— 用 redirectTo 跳 tab 页是
+     **静默失败**（顾客提交完停在原地，以为没提交上，一个字都不报）。
+     ⚠️ 桩里 switchTab 记进 `navs`、redirectTo 记进 `redirs`，
+        所以下面两条一起来：**落在 navs 里** + **redirs 是空的**。 */
+  eq('★ 顾客填完进「我的预约」（走 switchTab —— 那一页现在是 tab 页）',
+    navs[0], '/pages/guest-bookings/guest-bookings')
+  eq('🔴★ 而且没有再顺手 redirectTo 一次（那条路在 tab 页上是静默失败）',
+    redirs.length, 0)
 
   /* ══════════════════════════════════════════════════════════════════
      ⑤ 妆师端「代填」（2026-09-30 第十七处大改）
@@ -3025,15 +3033,15 @@ console.log('\n════ ⑨ 我的资料页 + 设置页去重（作品页已
         只删不加（17）或者只加不删（19）都会红。 */
   eq('🔴 app.json 的 pages 是 18 项（第二十一处删 guest-home + 加 guest-mine，一进一出）',
     appJson.pages.length, 18)
-  /* 🔴 2026-10-01（第二十一处）：tabBar 从原生 3 项变成了**自定义的 5 项** ——
-     妆师端 3 格 + 约妆端 2 格，两个角色共用 app.json 里唯一的那个 tabBar，
+  /* 🔴 2026-10-01（第二十一处）：tabBar 从原生 3 项变成了**自定义的 6 项** ——
+     妆师端 3 格 + 约妆端 3 格，两个角色共用 app.json 里唯一的那个 tabBar，
      所以清单是并集，由 custom-tab-bar 按角色挑一排画。
      ⚠️ 完整的核对（和 utils/tabbar.js 两份清单逐项比序）在 ⑩ 的 AC 段，
-        这里只钉「它确实变成了 5 项、而且 custom 打开了」——
-        少了 `custom: true` 的话微信会按原生画**全部 5 格**，
+        这里只钉「它确实变成了 6 项、而且 custom 打开了」——
+        少了 `custom: true` 的话微信会按原生画**全部 6 格**，
         也就是妆娘会在自己的档期页底下看见「我约过的妆娘」。 */
-  eq('🔴★ tabBar 是自定义的 5 项（3 妆师 + 2 约妆）', appJson.tabBar.list.length, 5)
-  eq('🔴★ 而且 custom 打开了（关掉的话原生会把 5 格全画出来）',
+  eq('🔴★ tabBar 是自定义的 6 项（3 妆师 + 3 约妆）', appJson.tabBar.list.length, 6)
+  eq('🔴★ 而且 custom 打开了（关掉的话原生会把 6 格全画出来）',
     appJson.tabBar.custom, true)
   eq('★ 跳的路径确实都在 pages 里（拼错了就是白屏）',
     navs.every((u) => appJson.pages.indexOf(u.slice(1)) >= 0), true)
@@ -3560,8 +3568,14 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('★ 代填真的会建单（调 addBooking）', /addBooking\(/.test(bfJs), true)
   eq('🔴★ 用的是 buildBooking（键的形状在 store 里统一，⛔ 不在页面里手拼一个对象）',
     /buildBooking\(/.test(bfJs), true)
-  eq('★ 顾客自填那一条出口一个字没动（还是 redirectTo 到我的预约）',
+  /* 🔴 2026-10-01（第二十一处第二轮）：落点一个字没动（还是「我的预约」），
+     但**跳法变了** —— 那一页升成 tab 页，`redirectTo` 在那上面是**静默失败**
+     （顾客提交完停在原地，以为没提交上）。⇒ 所以这里钉的是
+     「落点还在」+「用的是 switchTab」，两条**缺一不可**。 */
+  eq('★ 顾客自填那一条出口还在（落点仍是「我的预约」）',
     /guest-bookings\/guest-bookings/.test(bfJs), true)
+  eq('🔴★ 而且它是 switchTab 过去的（tab 页用 redirectTo 会静默失败）',
+    /switchTab\(\{\s*url:\s*['"]\/pages\/guest-bookings\/guest-bookings['"]/.test(bfJs), true)
 
   // ── J. 🔴 规矩 27：同一份来源喂两个端 —— 不许再有第二处直接 require ──
   /* 这次把 4 个消费者从 ARTIST_PUBLIC 换成了 artistStore.getArtist()，
@@ -4853,19 +4867,22 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     /data-sid="\{\{schedId\}\}"[\s\S]{0,120}data-seq="\{\{item\.seq\}\}"/.test(landWxml10), true)
 
   /* ════════════════════════════════════════════════════════════════════
-     AC. 底部 tabBar：两个角色共用一条条子（第二十一处）
+     AC. 底部 tabBar：两个角色共用一条条子（第二十一处 + 第二轮）
      ════════════════════════════════════════════════════════════════════
      🔴 起因：用户原话「用户端预约过的妆娘是一个页面，我的是一个页面，
         不要放在同一个页面里面」。而小程序**全局只有一个 tabBar**，
         妆师端已经用掉了 3 格 ⇒ 只能改成 `"custom": true` + `custom-tab-bar/`，
         由组件按当前角色决定画 3 格还是 2 格。
+     📌 第二轮（同日）：约妆端也从 2 格变 3 格 ——「我的预约」从「我的」的
+        下一层**升成 tab 2**，设置页改成**两个角色共用**。⚠️ 升格这件事
+        **每一条连带伤都是静默的**，所以这一块随之长了 20 条，见下面的 4/4.5 两节。
 
      ⚠️ 这一块钉的全是**会静默出错**的那一类 —— 它们的共同点是
         「屏幕上不报任何错，只是看起来有点不对」，正是这个项目最怕的形状：
         · 自定义 tabBar 微信**不会**替页面扣底部高度 ⇒ 少一个 `tabbed` 类，
           页面最后一行被压在条子底下；
-        · 跳 tab 页必须 `switchTab`，用 `redirectTo` 是**静默失败**
-          （人卡在原地，没有 toast、没有报错）；
+        · 跳 tab 页必须 `switchTab`，用 `redirectTo` **或 `navigateTo`**
+          都是**静默失败**（人卡在原地，没有 toast、没有报错）；
         · `app.json` 的清单和 `utils/tabbar.js` 的清单是同一件事的两半，
           只改一边 ⇒ 画出来的格子和点得动的格子不是同一个；
         · 安全区只补一边 ⇒ iPhone 上要么盖住一条、要么空出一条。 */
@@ -4891,8 +4908,8 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   /* ── 3. 两个角色各几格、兜底往哪边倒 ───────────────────────────────── */
   eq('★ 妆师端 3 格（档期 / 预约单 / 我的）',
     TB.TABS.artist.map((t) => t.text).join(' / '), '档期 / 预约单 / 我的')
-  eq('🔴★ 约妆端 2 格（我约过的妆娘 / 我的）—— 用户点名要的就是这两块分家',
-    TB.TABS.guest.map((t) => t.text).join(' / '), '我约过的妆娘 / 我的')
+  eq('🔴★ 约妆端 3 格（我约过的妆娘 / 我的预约 / 我的）',
+    TB.TABS.guest.map((t) => t.text).join(' / '), '我约过的妆娘 / 我的预约 / 我的')
   /* ⚠️ 第 1 格的字和「我约过的妆娘」这一层的 TITLE 必须是同一句（规矩 11 / 25）：
      两处各写一遍的代价是顾客发现标题换了个说法，怀疑是不是同一个地方。 */
   eq('🔴★ 约妆端第 1 格的字 === myArtists.TITLE（⛔ 不许各写各的）',
@@ -4901,16 +4918,21 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
      倒向妆师端的话，一个刚进来的人会看见妆娘的入口（档期 / 预约单），
      而那是她自己的私人班表。 */
   eq('🔴★ 角色认不出来时画约妆端那一排（⛔ 不是妆师端——那是她的私人班表）',
-    TB.tabsOf('').map((t) => t.text).join('/'), '我约过的妆娘/我的')
-  eq('★ 拼错 / 大写的角色名同样退回约妆端', TB.tabsOf('ARTIST').length, 2)
+    TB.tabsOf('').map((t) => t.text).join('/'), '我约过的妆娘/我的预约/我的')
+  eq('★ 拼错 / 大写的角色名同样退回约妆端', TB.tabsOf('ARTIST').length, 3)
   eq('★ 妆师端照旧 3 格', TB.tabsOf('artist').length, 3)
 
   /* ── 4. 全项目扫一遍：跳 tab 页只能 switchTab ────────────────────────
-     🔴 这一块里最值钱的两条。`wx.redirectTo` 跳到 tabBar 页会**直接失败**，
-        而这个项目已经在「点了没反应」上栽过四轮（README 第 20/21/22/26 条）——
-        那四轮的病各不相同，这一种又是新的：**静默**失败，连 toast 都没有。
-        反向那条同样重要：`switchTab` 跳**非** tab 页也失败
-        （「我的预约」很容易被顺手写成 tab 页）。 */
+     🔴 这一块里最值钱的那几条。`wx.redirectTo` / `wx.navigateTo` 跳到 tabBar
+        页都会**直接失败**，而这个项目已经在「点了没反应」上栽过四轮
+        （README 第 20/21/22/26 条）—— 那四轮的病各不相同，这一种又是新的：
+        **静默**失败，连 toast 都没有。
+        反向那条同样重要：`switchTab` 跳**非** tab 页也失败。
+     📌 2026-10-01 第二轮：「我的预约」升成 tab 页时，**真逮到两处**
+        （`pages/landing/` 那个按钮是 `navigateTo`、`pages/booking-form/`
+        提交完那一跳是 `redirectTo`）—— 而原来这一块**只扫 redirectTo**，
+        C1 那一处是靠人工 grep 才发现的。⇒ 这次把 `navigateTo` 也纳进来：
+        「跳 tab 页用错 API」这件事，三个 API 里有两个是错的，就得三个都扫。 */
   const projFiles = (ext) => {
     const out = []
     const walk = (d) => {
@@ -4934,32 +4956,116 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   const tabPaths = appJsonTab.list.map((t) => '/' + t.pagePath)
   const redirectsAll = []
   const switchAll = []
+  const navToAll = []
   projFiles('.js').forEach((rel) => {
-    const src = fs.readFileSync(R('妆历小程序/' + rel), 'utf8')
+    /* ⚠️ 扫的是**摘掉注释之后**的源码：这个项目里到处是
+       「⛔ 别写回 redirectTo」这种说明性注释，扫原文的话，
+       哪天有人在注释里举个反例就会被当成真违规 —— 那是假报警，
+       而假报警会让人开始不信任这一条。被执行到的调用才算数。 */
+    const src = stripJs(fs.readFileSync(R('妆历小程序/' + rel), 'utf8'))
     targetsOf(src, 'redirectTo').forEach((u) => redirectsAll.push({ f: rel, u }))
     targetsOf(src, 'switchTab').forEach((u) => switchAll.push({ f: rel, u }))
+    targetsOf(src, 'navigateTo').forEach((u) => navToAll.push({ f: rel, u }))
   })
   eq('🔴★ 没有一处用 redirectTo 跳 tab 页（静默失败：人卡在原地、一个字不报）',
     redirectsAll.filter((x) => tabPaths.indexOf(x.u) >= 0).map((x) => x.f + ' → ' + x.u), [])
+  /* 🔴 2026-10-01 第二轮新加：`navigateTo` 跳 tab 页也是**静默失败**，和
+     redirectTo 一模一样。原来这一块只扫 redirectTo，C1 上那一处
+     （`pages/landing/landing.js` 的「我的预约」，navigateTo）是人工 grep
+     才发现的 —— 靠人眼发现的检查项不算检查项。 */
+  eq('🔴★ 也没有一处用 navigateTo 跳 tab 页（和 redirectTo 一样静默，一样要扫）',
+    navToAll.filter((x) => tabPaths.indexOf(x.u) >= 0).map((x) => x.f + ' → ' + x.u), [])
   eq('🔴★ 也没有一处用 switchTab 跳非 tab 页（同样静默失败）',
     switchAll.filter((x) => tabPaths.indexOf(x.u) < 0).map((x) => x.f + ' → ' + x.u), [])
-  /* ⚠️ 上面两条要是扫描本身没扫到东西，就永远是绿的 —— 这一条钉住扫描有效。 */
-  eq('★ 这两条不是空断言：确实扫到了 switchTab 和 redirectTo 若干处',
-    switchAll.length >= 5 && redirectsAll.length >= 1, true)
+  /* ⚠️ 上面三条要是扫描本身没扫到东西，就永远是绿的 —— 下面钉住扫描有效。
+     📌 原先这里是「redirectsAll.length >= 1」，第二轮把全项目最后两处
+        redirectTo 改成 switchTab 之后，这条**因为项目里一个 redirectTo 都不剩
+        了而变红**。⚠️ 注意它红得是对的、但红的原因不对：病不在被检代码，
+        在**这条守卫自己**——它把「扫到了几个」当成了「扫得对不对」。
+     ⇒ 换成【给扫描器喂一段合成的源码】：三个 API 各来一次，能不能认出来。
+        这比数个数硬：以后就算某类调用真的一个不剩，扫描器的能力照样被验着，
+        ⛔ 不会出现「这类的守卫悄悄退役了」。
+        非平凡性（不是对着空数组断言）改由 switchAll/navToAll 的数量守 ——
+        这两类**一定**还有（tab 页之间跳、普通页之间跳，各有若干）。 */
+  const scannerProbe =
+    "wx.redirectTo({ url: '/pages/a/a' })\n" +
+    "wx.switchTab({ url: '/pages/b/b' })\n" +
+    "wx.navigateTo({ url: '/pages/c/c' })\n"
+  eq('★ 扫描器自检：三种跳转 API 各喂一条，三个都认得出来（否则上面三条全是空断言）',
+    ['redirectTo', 'switchTab', 'navigateTo'].map((a) => targetsOf(scannerProbe, a).join(',')).join(' | '),
+    '/pages/a/a | /pages/b/b | /pages/c/c')
+  /* 注释里的反面例子不算违规。⚠️ 这条得**两支都断言**（规矩 35）：
+     只断「摘了注释之后是空的」的话，把扫描器整个写成「永远返回空」
+     也是绿的 —— 所以底下同时钉住「不摘注释的话它确实认得出来」，
+     证明这段探针本身是有效的，不是一段扫不出东西的哑文本。 */
+  const commentProbe = "// wx.redirectTo({ url: '/x' })\n/* wx.switchTab({ url: '/y' }) */\n"
+  eq('★ 注释里举的反例不算违规（扫描前先摘注释）',
+    targetsOf(stripJs(commentProbe), 'redirectTo').concat(targetsOf(stripJs(commentProbe), 'switchTab')),
+    [])
+  eq('★ 而同一段探针不摘注释时是认得出的（否则上一条是空断言）',
+    targetsOf(commentProbe, 'redirectTo').join(','), '/x')
+  eq('★ 非平凡：switchTab 和 navigateTo 全项目都确实扫到了若干处',
+    switchAll.length >= 5 && navToAll.length >= 5, true)
 
-  /* ── 5. 5 个 tab 页的「两件套」必须同时做到 ────────────────────────── */
+  /* ── 5. 6 个 tab 页的「两件套」必须同时做到 ────────────────────────── */
   const tabPagePaths = tabPaths.map((p) => p.slice(1))
-  eq('🔴★ 5 个 tab 页的 onShow 都调了 syncTabBar（少一个 = 切过去那一格不亮）',
+  eq('🔴★ 6 个 tab 页的 onShow 都调了 syncTabBar（少一个 = 切过去那一格不亮）',
     tabPagePaths.filter((p) =>
       !/syncTabBar\(this\)/.test(fs.readFileSync(R('妆历小程序/' + p + '.js'), 'utf8'))), [])
-  eq('🔴★ 5 个 tab 页的根容器都带 tabbed 类（少了 = 最后一行被条子盖住，不报错）',
+  eq('🔴★ 6 个 tab 页的根容器都带 tabbed 类（少了 = 最后一行被条子盖住，不报错）',
     tabPagePaths.filter((p) =>
       !/<view class="app tabbed">/.test(fs.readFileSync(R('妆历小程序/' + p + '.wxml'), 'utf8'))), [])
-  eq('🔴★ 而且【只有】这 5 页带 tabbed（别的页带上就是白多出一截空底）',
+  eq('🔴★ 而且【只有】这 6 页带 tabbed（别的页带上就是白多出一截空底）',
     projFiles('.wxml')
       .filter((f) => /class="app tabbed"/.test(fs.readFileSync(R('妆历小程序/' + f), 'utf8')))
       .sort(),
     tabPagePaths.map((p) => p + '.wxml').sort())
+  /* 🔴 第二十一处第二轮：「我的预约」从「我的」的**下一层升成 tab 页**，
+     两个连带都得钉住 —— 它们全都是「不报错的错」：
+     ① tab 页⛔ 不许有返回箭头（页面上根本没有「上一页」）；
+     ② 那一页原先的入口（「我的」页那一行）**必须删掉**，否则同一个落点两个入口。 */
+  eq('🔴★ 「我的预约」现在是 tab 页了（第 2 格）',
+    tabPaths.indexOf('/pages/guest-bookings/guest-bookings') >= 0, true)
+  eq('🔴★ 而 tab 页上没有返回箭头（它自己那一页的 nav-bar 不许带 back）',
+    /back="\{\{true\}\}"/.test(
+      fs.readFileSync(R('妆历小程序/pages/guest-bookings/guest-bookings.wxml'), 'utf8')), false)
+  eq('🔴★ 「我的」页里【不再有】「我的预约」那一行（升成 tab 之后它就是第二处入口）',
+    /goMyBookings/.test(
+      fs.readFileSync(R('妆历小程序/pages/guest-mine/guest-mine.wxml'), 'utf8')), false)
+  eq('★ 同一个函数在 js 里也删干净了（⛔ 不留死代码）',
+    /goMyBookings/.test(
+      stripJs(fs.readFileSync(R('妆历小程序/pages/guest-mine/guest-mine.js'), 'utf8'))), false)
+  /* 🔴 升格最狠的一处：C1 上那个「我的预约」按钮原来是 navigateTo ——
+     tab 页上 navigateTo / redirectTo 都是**静默失败**，而那是落地页上
+     唯一一个按钮（§9.4 #7）。 */
+  eq('🔴★ C1 的「我的预约」也是 switchTab 过去的（navigateTo 同样是静默失败）',
+    /switchTab\(\{\s*url:\s*['"]\/pages\/guest-bookings\/guest-bookings['"]/.test(
+      stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))), true)
+
+  /* ── 4.5 project.config.json 的编译入口 ─────────────────────────────
+     🔴 这个文件里有个和上面同一类的坑：编译入口写错 pathName，
+        在开发者工具里**点了就白屏**，而且**没有任何报错**（那个页面不存在），
+        人只会以为「这页崩了」。
+     ⚠️ 2026-10-01 第二轮：「我的预约」升成 tab 页，顺手给它加了一个入口 ——
+        加的时候两条都得顾：入口指向的页得真在 app.json 里，
+        而且序号得跟着改（原来那个「我的（tab 2）」现在叫「tab 3」）。 */
+  const projCfg = JSON.parse(fs.readFileSync(R('妆历小程序/project.config.json'), 'utf8'))
+  const compileList = projCfg.condition.miniprogram.list
+  eq('🔴★ 6 个编译入口（第二十一处第二轮：「我的预约」也加了一个）',
+    compileList.length, 6)
+  eq('🔴★ 每一个入口都指向 app.json 里真实存在的页（指错＝工具里点了白屏，还不报错）',
+    compileList.filter((c) => appJson10.pages.indexOf(c.pathName) < 0).map((c) => c.name + ' → ' + c.pathName),
+    [])
+  eq('🔴★ 而且名字里的 tab 序号和 tabBar 里的位置对得上（⛔ 不是"改了一半"）',
+    compileList.filter((c) => /^约妆端 · /.test(c.name))
+      /* ⚠️ 按名字里写的序号排，再和 tabbar.js 那一份**逐项比** ——
+         比「序号对不对」更狠：名字、顺序、落点三样一起钉住了。
+         ⛔ 别拿 app.json 的全局下标来比：那是 6 格连排，约妆端是从第 4 格起的，
+            名字里的「tab 1」说的是**约妆端自己那一排**的第 1 格（第一版就是这么写错的）。 */
+      .sort((a, b) => Number(a.name.match(/（tab (\d)）/)[1]) - Number(b.name.match(/（tab (\d)）/)[1]))
+      .map((c) => c.name.match(/（tab (\d)）/)[1] + ':' +
+        c.name.replace(/^约妆端 · /, '').replace(/（tab \d）$/, '') + '→' + c.pathName),
+    TB.TABS.guest.map((t, i) => (i + 1) + ':' + t.text + '→' + t.path.slice(1)))
 
   /* ── 6. 高度只有一处；两边补的是同一个数 ─────────────────────────── */
   const appWxssTab = fs.readFileSync(R('妆历小程序/app.wxss'), 'utf8')
@@ -5011,8 +5117,17 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   routeStack = [{ route: 'pages/guest-mine/guest-mine' }]
   const barG = mkBar()
   barG.sync()
-  eq('🔴★ 约妆端：画 2 格', barG.data.items.length, 2)
-  eq('★ 而且点亮第 2 格「我的」', barG.data.selected, 1)
+  eq('🔴★ 约妆端：画 3 格', barG.data.items.length, 3)
+  eq('★ 而且点亮第 3 格「我的」', barG.data.selected, 2)
+  /* 🔴 第二十一处第二轮新加的那一格：路由是「我的预约」时要亮第 2 格。
+     这条顺带钉住「按路由认」这件事在**中间那一格**上也成立
+     （只测第 0 格和第 2 格的话，一个「永远点亮首尾」的实现也能全绿）。 */
+  routeStack = [{ route: 'pages/guest-bookings/guest-bookings' }]
+  barG.sync()
+  eq('🔴★ 站在「我的预约」那一页时点亮的是第 2 格（中间那一格也认得住）',
+    barG.data.selected, 1)
+  routeStack = [{ route: 'pages/guest-mine/guest-mine' }]
+  barG.sync()
 
   /* 🔴 角色会变（「我的」页里那条「切换身份」）—— 下一次 sync 必须当场换排。
      缓存住的话，切完身份底部还是旧那一排，而屏幕上没有任何提示。 */
@@ -5025,7 +5140,7 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
      页面还没换」中间那一刻。**不猜一个**：保持原来点亮的那一格。
      猜第 0 格的话，那一瞬间底部会亮着「档期」，而屏幕上根本不是档期页。 */
   eq('🔴★ 路由对不上时不乱点一格（保持原样，⛔ 不是硬选第 0 格）',
-    barG.data.selected, 1)
+    barG.data.selected, 2)
 
   const switched = []
   global.wx.switchTab = (o) => switched.push(o.url)
@@ -5050,17 +5165,30 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     forwarded.length, 1)
   global.getApp = appStubOld
 
-  /* ── 9. 约妆端第 2 格（pages/guest-mine）──────────────────────────── */
+  /* ── 9. 约妆端第 3 格（pages/guest-mine）────────────────────────────
+     🔴 第二十一处第二轮：用户说「「我的」里面只有切换身份 反馈 设置」
+        ⇒ 三行，而且**真的都跳得动**（第十四处那两行「有响应、但不跳页面」
+        就是这个项目栽过的地方，README 第 14 / 26 条）。 */
   const gm = loadPage10('pages/guest-mine/guest-mine.js')
   nav10.length = 0
   gm.onShow()
   eq('★ 进「我的」不自动跳走（没有多余的 navigateTo）', nav10.length, 0)
-  gm.goMyBookings()
   gm.switchRole()
-  eq('🔴★ 两行都【真的】跳得动（第十四处那种"有响应、但不跳页面"⛔ 不许回来）',
-    nav10.join(' | '), '/pages/guest-bookings/guest-bookings | /pages/role-select/role-select')
-  eq('★ 「我的预约」**不是** tab 页（它是第 2 格里的下一层，⛔ 不是第二处入口）',
-    tabPaths.indexOf('/pages/guest-bookings/guest-bookings'), -1)
+  gm.goFeedback()
+  gm.goSettings()
+  eq('🔴★ 三行都【真的】跳得动（第十四处那种"有响应、但不跳页面"⛔ 不许回来）',
+    nav10.join(' | '),
+    '/pages/role-select/role-select | /pages/feedback/feedback | /pages/settings/settings')
+  eq('★ 而且「我的预约」那一行真的是删了（⛔ 不是留着两个入口）',
+    typeof gm.goMyBookings, 'undefined')
+  /* ⚠️ 反馈页和设置页在妆师端是**同一个落点**（规矩 11：一个东西一处实现）。
+     两边各跳各的页，就是「同一个功能有两个入口、两处各修各的 bug」的开头。 */
+  eq('🔴★ 反馈 / 设置这两行跳的就是妆师端那两页（⛔ 不是给顾客另做的两页）',
+    nav10[1] + ' | ' + nav10[2],
+    '/pages/feedback/feedback | /pages/settings/settings')
+  eq('★ 而且这两页在 app.json 里只有一份（没有给顾客另建的第二份）',
+    appJson10.pages.filter((p) => /feedback|settings/.test(p)).sort(),
+    ['pages/feedback/feedback', 'pages/settings/settings'])
   eq('🔴★ 约妆端 tab 1 的导航栏没有返回箭头（tab 页没有"上一页"这回事）',
     /back="\{\{true\}\}"/.test(
       fs.readFileSync(R('妆历小程序/pages/artist-list/artist-list.wxml'), 'utf8')), false)
@@ -5073,6 +5201,62 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     ['components/nav/nav.js', 'pages/guest-bookings/guest-bookings.js']
       .filter((p) => !/switchTab[\s\S]{0,80}artist-list/.test(
         fs.readFileSync(R('妆历小程序/' + p), 'utf8'))), [])
+
+  /* ── 10. 共用的设置页：微信号那个开关**只对妆娘画**（第二十一处第二轮）────
+     🔴 用户原话「设置和妆娘端一模一样」+「**顾客没有展示微信号的开关，
+        顾客不展示**」⇒ 一个文件、两副面孔：顶上那块按当前角色决定画不画。
+     ⚠️ 为什么必须钉：这一块走错**不报任何错** —— 顾客那边只是多出一个
+        拨了也没意义的开关（她没有分享页），而顾客这边少画一个最坏也只是
+        少一个开关。⇒ **倒向"不画"是安全的那一边**，三条断言就是这个意思。 */
+  const settingsWxml = fs.readFileSync(R('妆历小程序/pages/settings/settings.wxml'), 'utf8')
+  const loadSettings = (role) => {
+    const prevApp = global.getApp
+    const prevPage = global.Page
+    global.getApp = () => ({ getRole: () => role })
+    let cfgS = null
+    global.Page = (c) => { cfgS = c }
+    delete require.cache[require.resolve(R('妆历小程序/pages/settings/settings.js'))]
+    require(R('妆历小程序/pages/settings/settings.js'))
+    const pgS = {}
+    for (const k in cfgS) pgS[k] = cfgS[k]
+    pgS.data = JSON.parse(JSON.stringify(cfgS.data || {}))
+    pgS.setData = function (patch) { for (const k in patch) this.data[k] = patch[k] }
+    global.getApp = prevApp
+    global.Page = prevPage
+    return pgS
+  }
+  eq('🔴★ 妆娘进来：画那个「展示微信号」开关', loadSettings('artist').data.isArtist, true)
+  eq('🔴★ 顾客进来：不画（⛔ 不是"画了但灰着"—— 那一行对顾客根本不存在）',
+    loadSettings('guest').data.isArtist, false)
+  eq('🔴★ 角色认不出来时也不画（倒向"画出来"就是把妆娘的东西摆给顾客看）',
+    loadSettings('').data.isArtist, false)
+  eq('🔴★ 而 wxml 上那一整块真的是被 isArtist 包着的（⛔ 不是只算了不画）',
+    /wx:if="\{\{isArtist\}\}"[\s\S]{0,120}sw-row/.test(settingsWxml), true)
+  eq('★ 两个角色共用这一页（全项目只有一个 wxml 有那个开关）',
+    projFiles('.wxml')
+      .filter((f) => /sw-row/.test(fs.readFileSync(R('妆历小程序/' + f), 'utf8'))).sort(),
+    ['pages/settings/settings.wxml'])
+  /* ⚠️ isArtist 的兜底方向也要钉：getApp() 取不到时必须是 `false`。
+     写反成 `!== 'guest'` 之类的话，一个顾客在 App 还没起来的那一刻
+     会看见妆娘的开关 —— 而这一条**不会报错**。 */
+  {
+    const prevApp2 = global.getApp
+    global.getApp = () => { throw new Error('App 还没起来') }
+    let threw = ''
+    let v = null
+    try {
+      delete require.cache[require.resolve(R('妆历小程序/pages/settings/settings.js'))]
+      let cfgT = null
+      const prevPage2 = global.Page
+      global.Page = (c) => { cfgT = c }
+      require(R('妆历小程序/pages/settings/settings.js'))
+      global.Page = prevPage2
+      v = cfgT.data.isArtist
+    } catch (e) { threw = String(e) }
+    global.getApp = prevApp2
+    eq('🔴★ getApp() 炸了也不传染（整页要起得来）', threw, '')
+    eq('🔴★ 而且那一瞬间默认【不画】（⛔ 不是默认画出来）', v, false)
+  }
 }
 
 restoreBookings()

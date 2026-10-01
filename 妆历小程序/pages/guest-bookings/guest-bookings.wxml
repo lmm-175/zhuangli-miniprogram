@@ -1,6 +1,12 @@
-<!-- 我的预约（约妆端）。顾客自己提交过的预约单。 -->
-<view class="app">
-  <nav-bar title="我的预约" back="{{true}}"></nav-bar>
+<!-- 我的预约（约妆端）。顾客自己提交过的预约单。
+     ⚠️ 2026-10-01（第二十一处第二轮）：它从「我的」页的**下一层升成了 tab 页**
+        （约妆端第 2 格，用户原话「底栏变成三个，把我的预约也放进去」）。
+        两个连带：
+        ① ⛔ **没有返回箭头**了（tab 页没有「上一页」这回事）；
+        ② 根容器带 `tabbed` —— 自定义 tabBar 不会替页面扣底部高度，
+           少了它空态那颗「去找妆位」会被压在条子底下（见 app.wxss 的 .app.tabbed）。 -->
+<view class="app tabbed">
+  <nav-bar title="我的预约"></nav-bar>
 
   <view class="body tight">
     <block wx:if="{{list.length}}">

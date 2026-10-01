@@ -1,6 +1,9 @@
 <!-- 壳 4 · 设置
-     落点：A1 导航栏右「设置」+ 我的页「设置」行。
+     落点：A1 导航栏右「设置」+ 妆师端「我的」页「设置」行 + 约妆端「我的」页「设置」行。
 
+     🔴 2026-10-01（第二十一处第二轮）：**妆师端和约妆端共用这一页**（规矩 37：
+        搬家不是复制）。用户原话「设置和妆娘端一模一样」——
+        唯一的例外是顶上那个开关，见下。
      📌 这个开关是本产品的政策核心，两条提示缺一不可：
         只说「关掉不影响功能」，化妆师不敢关；
         只说「会被看到」，她不敢开。
@@ -9,7 +12,14 @@
   <nav-bar title="设置" back="{{true}}"></nav-bar>
 
   <view class="body tight">
-    <view class="sw-row" bindtap="toggleWechat" hover-class="btn-hover" hover-stay-time="80">
+    <!-- 🔴 这一整块**只对妆娘画**（`isArtist`，见 settings.js）。
+         理由：分享页是妆娘的页面，顾客**没有分享页、也没有微信号要展示** ——
+         把这句话摆给顾客，就是这一页上的一个「看着能拨、其实没有任何意义」
+         的开关，正是这个项目反复在躲的那类形状。
+         用户 2026-10-01 的原话：「**顾客没有展示微信号的开关，顾客不展示**」。
+         ⛔ 别为了「一模一样」把它放出来，也 ⛔ 别给顾客另写一句话 ——
+            没有这一行才是对的。 -->
+    <view wx:if="{{isArtist}}" class="sw-row" bindtap="toggleWechat" hover-class="btn-hover" hover-stay-time="80">
       <view style="flex:1">
         <view style="font-size:30rpx">在分享页展示我的微信号</view>
         <view class="sw-tip">
