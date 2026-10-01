@@ -19,6 +19,9 @@ page{
   --bg:#F5F6F7; --white:#fff; --line:#E7E9EB; --line2:#F0F1F2;
   --danger:#D54941; --danger-l:#FDECEC; --warn:#E37318; --warn-l:#FFF4E8;
   --ok:#2BA471; --ok-l:#E8F8F2; --info:#4B7BE5; --info-l:#EDF2FD;
+  /* 🔴 2026-10-01（第二十四处）金色 —— C1 上「我约的那一位」专用的那一颗。
+     和 --warn 橙、--ava-c-amber 头像金都不是一回事，⛔ 别互相顶替。 */
+  --gold:#8A6420; --gold-l:#FDF3D7; --gold-b:#EBD9A8;
   --r:22rpx; --r-lg:30rpx;
   /* 🔴 底部导航条的高度（2026-10-01 第二十一处）。**只有这一处定义** ——
      自定义 tabBar 自己的高度（custom-tab-bar/index.wxss）和 tab 页要留的
@@ -89,6 +92,13 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 .btn.sm{height:66rpx;font-size:28rpx;padding:0 26rpx;border-radius:15rpx;display:inline-flex;width:auto}
 .btn.xs{height:55rpx;font-size:25rpx;padding:0 20rpx;border-radius:13rpx;display:inline-flex;width:auto}
 .btn.dis{background:#F0F1F2;color:var(--t4);border-color:transparent}
+/* 🔴 2026-10-01（第二十四处）金色小签：C1 上「我约的这一位」。
+   ⚠️ 它和 .btn.dis **一样大、一样不可点**，区别只有颜色和字 ——
+      用户要的是「可以和别人的区分，然后也知道自己约没约」，
+      ⛔ 不是「我的那一位能点」（点进去只能重复约自己）。
+   ⚠️ height 由 .btn.xs 给（55rpx）。这一颗**不是按钮**，没有 bindtap，
+      所以不适用 README 那条 88rpx 命中面积 —— ⛔ 别好心给它加壳。 */
+.btn.gold{background:var(--gold-l);color:var(--gold);border:1px solid var(--gold-b)}
 .btn-hover{opacity:.82}
 
 /* ── <button> 原生组件重置 ────────────────────────────────
@@ -169,6 +179,16 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 .slot-row .tm .sub{display:block;color:var(--t3);font-size:24rpx}
 .slot-row.busy{background:#FAFAFB}
 .slot-row.busy .sq{background:#F0F1F2;color:var(--t3)}
+/* 🔴 2026-10-01（第二十四处）：被占的行分两种 —— 我的（金色）／别人的（灰）。
+   ⚠️ `.mine` 那一行同时也有 `.busy` 的灰底吗？**没有** —— 下面两条要排在
+      `.busy` 之后才盖得住，而这一页给行的 class 是二选一的
+      （`item.mine ? 'mine' : (item.booked ? 'busy' : '')`）。
+      分开写是因为金底 + 灰底叠在一起会调出一个谁也没设计过的脏颜色。
+   ⛔ 别把这一条并进 `.busy`：那样「我的」和「别人的」在行底上就分不开了。 */
+/* ⚠️ 行底比小签**再淡一档**（#FFFBF0 < --gold-l #FDF3D7）——
+   一样深的话那颗金签贴在同色底上只剩一个边框，等于白做。 */
+.slot-row.mine{background:#FFFBF0}
+.slot-row.mine .sq{background:#F7E7BC;color:var(--gold)}
 
 /* ── 午休：独立一行，浅蓝，比妆位显眼 ────────────────────────────────
    📌 2026-10-01（第二十处）：这四条原先住在 pages/schedule-detail/schedule-detail.wxss。

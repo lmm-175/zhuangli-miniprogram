@@ -269,13 +269,23 @@ function insertSlot(slots, afterSeq, startMin, minutes, lunch, lunchAfter) {
 }
 
 /**
- * 把某些序号标成「已预订」。
+ * 把某些序号标成「已预订」，再单独把「**我**约的那几位」标成 `mine`。
  * M0：由 mock 假预约单推导（见页面里 bookedSeqsOf）；M1：slots.booked 字段直接带出来。
+ * 🔴 2026-10-01（第二十四处）：第三个参数 `mineSeqs` 是**可选的** ——
+ *    只有顾客端 C1 传（那一页要按「是不是我约的」分金色/灰色两种标）；
+ *    妆师端的档期详情页不传，`mine` 就是 undefined（那边没有「我」这回事）。
+ *    ⚠️ 不传时行为跟以前**逐字一致**，所以老调用方一行都不用改。
+ *    ⚠️ `mineSeqs` 是 `seqs` 的子集 —— 调用方保证；这里不替它推导，
+ *       免得「什么算我的」在这一层又长出一个说法。
  */
-function markBooked(slots, seqs) {
+function markBooked(slots, seqs, mineSeqs) {
   const set = {}
   ;(seqs || []).forEach((n) => { set[Number(n)] = true })
-  return cloneSlots(slots).map((s) => ({ ...s, booked: !!set[s.seq] }))
+  const mine = {}
+  ;(mineSeqs || []).forEach((n) => { mine[Number(n)] = true })
+  return cloneSlots(slots).map((s) => ({
+    ...s, booked: !!set[s.seq], mine: !!mine[s.seq]
+  }))
 }
 
 /**
@@ -288,14 +298,17 @@ function buildRows(slots, lunch) {
   const out = []
   for (let i = 0; i < arr.length; i++) {
     const s = arr[i]
+    /* ⚠️ 这一行是**重建**对象的（不是展开 s）—— 上面加了什么新字段，
+       这儿就得跟着加一笔，否则它在页面上凭空消失，而且一个字都不报。
+       🔴 第二十四处的 `mine` 就是这么丢过一次（C1 两颗标的颜色靠它分）。 */
     out.push({
       key: 's' + s.seq, type: 'slot', seq: s.seq, start: s.start, end: s.end,
-      minutes: s.minutes, booked: !!s.booked, nextStart: ''
+      minutes: s.minutes, booked: !!s.booked, mine: !!s.mine, nextStart: ''
     })
     if (lunch && lunch.enabled && s.seq === lunch.afterSeq) {
       out.push({
         key: 'L', type: 'lunch', seq: '', start: lunch.start, end: lunch.end,
-        minutes: lunch.min, booked: false, nextStart: ''
+        minutes: lunch.min, booked: false, mine: false, nextStart: ''
       })
     }
   }

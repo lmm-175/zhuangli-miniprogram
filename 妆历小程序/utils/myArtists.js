@@ -27,7 +27,7 @@
  *    ⚠️ 所以：**别把 myArtistsBrief 加回来**。真要在别处再显示"共约过几位"，
  *       那就说明又出现了第二个"概览"页面，先问清楚是不是要再把首页做回来。
  */
-const { getBookings, statusText } = require('./bookingStore')
+const { getBookings, statusText, isMine } = require('./bookingStore')
 const { getArtistById } = require('./artistStore')
 
 /* 这一页叫什么 —— 列表页的导航栏标题**和约妆端底部那条第一格的字**都用它。
@@ -50,9 +50,12 @@ const EMPTY_SUB = '从妆位页选一个妆位填单后，这里会记下来'
 
 /* 顾客自己的单。
    ⛔ 不能拿 getBookings() 整个数组 —— 里面有 created_by: 'artist' 的单，
-   那是妆娘【替别人代填】的（第十七处「代填」），不是「我约过的」。 */
+   那是妆娘【替别人代填】的（第十七处「代填」），不是「我约过的」。
+   🔴 2026-10-01（第二十四处）：「什么算我的」搬进 bookingStore.isMine() ——
+   C1 上那颗金标也读同一个判断。⛔ 别在这儿再写一遍 `created_by === 'user'`：
+   两处各写一份的那天，会出现「我的预约里没有它、妆位页却标成我的」。 */
 function myBookings() {
-  return getBookings().filter((b) => b && b.created_by === 'user')
+  return getBookings().filter(isMine)
 }
 
 /* 一位妆娘那一行要说的话：「最近约妆：青蓝漫展 · 2026-10-03 · 已确认」。

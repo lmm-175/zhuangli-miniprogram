@@ -6,9 +6,11 @@
       那正是 bookingStore.js 开头那段注释反复警告的事。
    ⚠️ 过滤条件 `created_by === 'user'` 一个字没改：代填出来的单是 'artist'，
       本来就不该出现在顾客的「我的预约」里。
+   🔴 2026-10-01（第二十四处）：这个过滤条件本身搬进 `bookingStore.isMine()` 了
+      —— C1 上那颗金色「已预约」读的是同一个判断。⛔ 别在这儿再写一遍字面量。
    ⚠️ 这是本次改动**唯一**碰到用户端的一处（用户 2026-09-29 说过「我目前只查
       妆娘端的问题，等会查用户端的」—— 所以这里只改数据来源，不动任何行为）。 */
-const { getBookings, statusText } = require('../../utils/bookingStore')
+const { getBookings, statusText, isMine } = require('../../utils/bookingStore')
 const { syncTabBar } = require('../../utils/tabbar')
 
 /* 📌 2026-09-30（第二十处）：这里原来自己写着一份 STATUS_TEXT。
@@ -30,7 +32,7 @@ Page({
     // 顾客只看自己提交的那几张单（M0 以 created_by === 'user' 近似）。
     // M1 换成按 user_openid 查 booking_form。
     const list = getBookings()
-      .filter((b) => b.created_by === 'user')
+      .filter(isMine)
       .map((b) => ({
         id: b.booking_id,
         event: b.event + ' · ' + b.date,

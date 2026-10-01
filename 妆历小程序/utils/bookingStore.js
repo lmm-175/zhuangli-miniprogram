@@ -108,6 +108,27 @@ function bookedSeqsOfSchedule(s) {
   return bookingsOfSchedule(s).filter((b) => BOOKED_STATUS[b.status]).map((b) => b.seq)
 }
 
+/* ══ 这一单是不是【我】的 ═════════════════════════════════════════════
+   🔴 2026-10-01（第二十四处）新增。用户要的是：C1 上**我自己约的那一位**
+      写金色的「已预约」，别人约的仍然是灰色的「已被预订」——
+      「可以和别人的区分，然后也知道自己约没约」。
+
+   ⚠️ M0 没有登录，以 `created_by === 'user'` 近似（= 顾客端提交的那些单，
+      妆师端「代填」出来的是 'artist'，不算我的）。
+   ⚠️ 全项目【只有这一处】实现这个判断：顾客端「我的预约」、「我约过的妆娘」
+      和 C1 上那颗金标都读它。各写一份的那天，就会出现
+      「我的预约里没有它、C1 上却说是我的」——而两边都不报错。
+   ⛔ 别改成比 cn / wechat：那两样是**自由文本**，重名就串了；
+      也别改成比 artist_id —— 那说的是「我不认识这位妆娘」，不是「这一单是我下的」。 */
+function isMine(b) {
+  return !!b && b.created_by === 'user'
+}
+
+/* 这一场里【我】占住的妆位序号（bookedSeqsOfSchedule 的「我的」那一半） */
+function mySeqsOfSchedule(s) {
+  return bookingsOfSchedule(s).filter((b) => BOOKED_STATUS[b.status] && isMine(b)).map((b) => b.seq)
+}
+
 /* ══ 取消一场档期之前，先看它有没有「还占着妆位」的单 ═════════════════
    2026-09-30 用户定的：档期可以取消，但【这一场没有预约单时才让取消】；
    有的话要先跟客人沟通把单子处理掉。
@@ -347,6 +368,7 @@ module.exports = {
   getBookings, getBooking, updateBooking, statusText,
   buildBooking, addBooking, newId, nowText,
   belongsToSchedule, bookingsOfArtist, bookingsOfSchedule, bookedSeqsOfSchedule, blockingBookings,
+  isMine, mySeqsOfSchedule,
   isScheduleSettled,
   batchButtonsOf, pickableIds, canPick, applyBatch, matchesKeyword
 }

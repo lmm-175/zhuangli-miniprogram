@@ -5098,6 +5098,101 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('★ 小字「可约」只给可约的行（被占的行由那颗棋子一个人说完）',
     /wx:if="\{\{!item\.booked\}\}"[^>]*>可约</.test(landWxml10), true)
 
+  /* ══ 第二十四处：被占的行再分两色 —— 我约的（金）/ 别人的（灰）══════════
+     🔴 用户原话：「只有我本人预约的单子在 xx 的妆位里面显示金色的已预约，
+        别人的是灰色的（仅用户本人视角），这样子可以和别人的区分，
+        然后也知道自己约没约」。
+     ⚠️ 这一处最容易出的错不是画不出来，是**两处各自算一遍「什么算我的」** ⇒
+        出现「我的预约里没有它、妆位页却标成我的」而两边都不报错（规矩 11）。 */
+  {
+    const fsz = require('fs')
+    const jsOf = (p) => fsz.readFileSync(R(p), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1')
+
+    /* ① 纯函数层：第三个参数是可选的，而且缺省时行为逐字不变 */
+    const _mk = S.markBooked(
+      [{ seq: 1, start: '09:00', end: '09:30', minutes: 30 },
+       { seq: 2, start: '09:30', end: '10:00', minutes: 30 }], [2], [2])
+    eq('🔴★ markBooked 第三参点名的就是「我的」', _mk[1].mine, true)
+    eq('★ 而被点名的同时也是 booked（我的必然是被占的，不可能只金不灰）',
+      _mk[1].booked, true)
+    eq('🔴★ 没点名的那一位 mine 必须是 false（⛔ 不是「booked 就算我的」）',
+      _mk[0].mine, false)
+    eq('🔴★ **不传**第三个参数时一位都不算我的 —— 妆师端档期详情页靠这条不出错',
+      S.markBooked([{ seq: 1, start: '09:00', end: '09:30' }], [1])[0].mine, false)
+    eq('★ 非平凡：同一份输入不传第三参时 booked 照样是 true',
+      S.markBooked([{ seq: 1, start: '09:00', end: '09:30' }], [1])[0].booked, true)
+
+    /* ② buildRows 是**重建**对象的那一类函数 —— mine 被吃掉是全静默的 */
+    const _rows = S.buildRows(_mk, null)
+    eq('🔴★ buildRows 不许把 mine 吃掉（它是重建对象，少抄一笔就凭空消失）',
+      _rows.filter((r) => r.type === 'slot' && r.seq === 2)[0].mine, true)
+    eq('★ 非平凡：同一行也没丢 booked',
+      _rows.filter((r) => r.type === 'slot' && r.seq === 2)[0].booked, true)
+    eq('★ 午休那一行的 mine 是 false（它不是一个被人占住的妆位）',
+      S.buildRows([{ seq: 1, start: '09:00', end: '09:30' }],
+        { enabled: true, afterSeq: 1, start: '12:00', end: '13:00', min: 60 })
+        .filter((r) => r.type === 'lunch')[0].mine, false)
+
+    /* ③ 真实数据：示例那场上「既有我的、也有别人的」—— 这正是要看出来的区别 */
+    const _s502b = S.markBooked(
+      (((AS.scheduleById('sched-demo-0502') || {}).slots) || []),
+      BS.bookedSeqsOfSchedule(AS.scheduleById('sched-demo-0502')),
+      BS.mySeqsOfSchedule(AS.scheduleById('sched-demo-0502')))
+    const _mineSeqs = _s502b.filter((x) => x.mine).map((x) => x.seq)
+    const _otherSeqs = _s502b.filter((x) => x.booked && !x.mine).map((x) => x.seq)
+    eq('🔴★ 示例那场上「我约的」和「别人约的」各至少一位（否则这条断言看不出任何东西）',
+      _mineSeqs.length > 0 && _otherSeqs.length > 0, true)
+    eq('🔴★ 一份妆位里 mine 的每一位必然也在 booked 里（金标是被占的子集，⛔ 不是并列）',
+      _mineSeqs.filter((n) => BS.bookedSeqsOfSchedule(AS.scheduleById('sched-demo-0502'))
+        .indexOf(n) < 0), [])
+
+    /* ④ 规矩 11：`created_by === 'user'` 这个字面量全项目**只许有一处** */
+    const _hitsUser = []
+    ;(function walk(d) {
+      fsz.readdirSync(d, { withFileTypes: true }).forEach((e) => {
+        const p = d + '/' + e.name
+        if (e.isDirectory()) walk(p)
+        else if (/\.js$/.test(e.name) &&
+                 /created_by\s*===?\s*'user'/.test(
+                   fsz.readFileSync(p, 'utf8')
+                     .replace(/\/\*[\s\S]*?\*\//g, '')
+                     .replace(/(^|[^:])\/\/[^\n]*/g, '$1'))) {
+          _hitsUser.push(e.name)
+        }
+      })
+    })(R('妆历小程序'))
+    eq('🔴★ 「什么算我的」全项目只有 bookingStore 一处实现（⛔ 各写一份就会「我的预约里没有它、妆位页却标成我的」）',
+      _hitsUser.join(','), 'bookingStore.js')
+    /* ⚠️ 上面那条要是把两个消费者整个删了也会绿 —— 补一条防"空断言"（规矩 35） */
+    eq('★ 那两个消费者确实还在过滤（⛔ 不是把过滤删了凑绿）',
+      /filter\(isMine\)/.test(jsOf('妆历小程序/utils/myArtists.js')) &&
+      /filter\(isMine\)/.test(jsOf('妆历小程序/pages/guest-bookings/guest-bookings.js')), true)
+
+    /* ⑤ C1 的结构：金标那一支只认 item.mine；「已被预订」降成 elif */
+    const _lw = landWxml10
+    eq('🔴★ 金色的「已预约」挂在 item.mine 那一支上（⛔ 不是 item.booked）',
+      /wx:if="\{\{item\.mine\}\}"[^>]*>已预约</.test(_lw), true)
+    eq('🔴★ 而且金标那支排在灰标前面（反过来写的话全场只会命中灰支，金标永远画不出来）',
+      _lw.indexOf('已预约') < _lw.indexOf('已被预订'), true)
+    eq('🔴★ 灰标那一支改成 elif（两个 wx:if 平铺 = 两颗粒子同时画出来叠在一起）',
+      /wx:elif="\{\{item\.booked\}\}"[^>]*>已被预订</.test(_lw), true)
+    eq('🔴★ 「已预约」这三个字在 C1 上只出现一次（⛔ 不许变成第四种写法，规矩 25）',
+      (_lw.match(/已预约/g) || []).length, 1)
+    eq('🔴★ 金色那一行也**不可点**（点进去只能重复约自己）—— 它那一支没有 pickSlot',
+      /wx:if="\{\{item\.mine\}\}"[^>]*class="btn xs gold">已预约</.test(_lw) &&
+      /bindtap="pickSlot"/.test(_lw), true)
+    eq('🔴★ 行的底色二选一：mine 优先，⛔ 不是两个类一起挂（金底叠灰底会调出一个脏色）',
+      /slot-row \{\{item\.mine \? 'mine' : \(item\.booked \? 'busy' : ''\)\}\}/.test(_lw), true)
+    eq('★ 而 .mine 那两条样式真的在 app.wxss 里（少一条 = 金的那个只有签是金的）',
+      /\.slot-row\.mine\{/.test(fsz.readFileSync(R('妆历小程序/app.wxss'), 'utf8')), true)
+
+    /* ⑥ 消费者确实把「我的」传下去了（⛔ 参数算出来了但没传 = 一片全灰） */
+    eq('🔴★ C1 把 mySeqsOfSchedule 一起传给了 markBooked',
+      /markBooked\(s\.slots \|\| \[\], bookedSeqsOfSchedule\(s\), mySeqsOfSchedule\(s\)\)/.test(
+        jsOf('妆历小程序/pages/landing/landing.js')), true)
+  }
+
   /* ════════════════════════════════════════════════════════════════════
      AC. 底部 tabBar：两个角色共用一条条子（第二十一处 + 第二轮）
      ════════════════════════════════════════════════════════════════════

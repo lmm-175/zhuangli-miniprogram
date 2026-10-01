@@ -32,7 +32,7 @@ const { TOAST } = require('../../utils/toast')
    ⚠️ 原先自测里有一条「landing 不许 require bookingStore」（两个世界故意解耦），
       第二十处把它【换了判据】而不是删掉：要保的性质是「C1 上永远有点得动的妆位」，
       当初用「冻结夹具」实现，现在用「默认那场至少 2 个空妆位」实现。 */
-const { bookedSeqsOfSchedule } = require('../../utils/bookingStore')
+const { bookedSeqsOfSchedule, mySeqsOfSchedule } = require('../../utils/bookingStore')
 const { buildRows, markBooked, toMin, awayFromToday, isTodayOrLater } =
   require('../../utils/schedule')
 
@@ -106,7 +106,12 @@ function chipOf(s) {
    ⚠️ 三段各自都按时间排（包括午休那一段）—— 一场档期只可能有一个午休，
       排序在这里是「万一以后有多个也不乱」的兜底，⛔ 不是靠它表达什么语义。 */
 function rowsOf(s) {
-  const marked = markBooked(s.slots || [], bookedSeqsOfSchedule(s))
+  /* 🔴 2026-10-01（第二十四处）：第三个参数是「**我**占的那几位」——
+     被占的行里再分两色：我约的写金色「已预约」，别人约的写灰色「已被预订」。
+     ⚠️ 两个参数**同源同一次过滤**（都来自 bookingStore），所以
+        「标成金色的那几位」永远是「被占的那几位」的子集，不可能出现
+        「一行既不是可约、也不是任何一种被占」的裸奔状态。 */
+  const marked = markBooked(s.slots || [], bookedSeqsOfSchedule(s), mySeqsOfSchedule(s))
   const free = []
   const lunch = []
   const busy = []
