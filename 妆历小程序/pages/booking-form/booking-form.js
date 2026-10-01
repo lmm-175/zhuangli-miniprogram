@@ -3,6 +3,15 @@ const {
   STYLE_GROUPS, EXTRA_SERVICES
 } = require('../../mock/data')
 const { getSchedules, getSchedule } = require('../../utils/scheduleStore')
+/* 🔴 2026-10-01（第二十二处）：顾客那一支找场次必须走 artistStore 的
+   `scheduleById`，⛔ 不是上面那个 `getSchedule`（它只看 storage）。
+   两个入口服务的是**两个不同的角色**，⛔ 别互换：
+     · 妆师端「代填」→ `getSchedule`（她自己的档期本 = storage），
+       她只能给【她自己】的场次代填；
+     · 顾客自填     → `scheduleById`（顾客端那两个数据源的并集），
+       因为顾客进来的那一页可能是【任意一位】妆娘的。
+   混用的后果就是这一处要修的那个 bug（见下面顾客那一支的注释）。 */
+const { scheduleById } = require('../../utils/artistStore')
 const { bookedSeqsOfSchedule, buildBooking, addBooking } = require('../../utils/bookingStore')
 const { TOAST } = require('../../utils/toast')
 
@@ -207,8 +216,20 @@ Page({
             只改一边的话，每一个选完妆位进来的顾客看到的都是下面那句
             「这个妆位已经不在了」—— 出声了，但说的是错话，比静默更糟。
          ⚠️ 下面 `slotMissing` 那两支兜底一个字没改，判据照旧：查不到就出声，
-            ⛔ 不许挑一个顶上（规矩 22）。 */
-      const s = getSchedule(options.schedule_id || '')
+            ⛔ 不许挑一个顶上（规矩 22）。
+
+         🔴 2026-10-01（第二十二处）**这里原来是 `getSchedule(...)`，是个真 bug**：
+            那个函数只看 storage（妆师端自己的档期本），而顾客这一页可能是
+            **任意一位**妆娘的 —— 另外两位的场次住在 `SCHEDULES_OTHER` 这个
+            只读夹具里、⛔ 从不落 storage。
+            ⇒ 顾客从「我约过的妆娘」点进她们任何一场，**每一个**妆位点进来
+              都显示「这个妆位已经不在了」。它**出声了**，但那句话是假的：
+              妆位好端端在那儿。查了两轮都往"事件绑定"上找，就是因为它不报错。
+            改法 = 走 `artistStore.scheduleById`（顾客端两个数据源的并集，
+            和 C1 上 `schedulesOfArtist` 出来的那一份同源）。⛔ 别改回 getSchedule。
+            ⚠️ 自测那边原先只喂 `sched-demo-0502`（storage 里那场），所以
+               **一路绿着放过了**；本轮补的那条是把三位妆娘各走一遍整条路。 */
+      const s = scheduleById(options.schedule_id || '')
       const seq = Number(options.seq || 0)
       const slot = s ? (s.slots || []).filter((x) => x.seq === seq)[0] : null
       if (slot) {

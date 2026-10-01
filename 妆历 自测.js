@@ -4258,10 +4258,23 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
       stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))), false)
   /* 规矩 27：同一份来源喂两个端 —— booking-form 也在用 STYLE_GROUPS，
      但那是【顾客端的目标妆感】，⛔ 不含妆娘的自填词。这里有断言钉死它
-     仍然只 require 预设词表、不去读妆娘的 storage。 */
+     仍然只 require 预设词表、不去读妆娘的 storage。
+
+     🔴 2026-10-01（第二十二处）：判据从「这个文件里不许出现 artistStore 这个词」
+        改成「不许读妆娘的**资料**」。为什么必须换（规矩 31：改机制，⛔ 不是删断言）：
+        第二十二处顾客那一支要按 schedule_id 找**任意一位**妆娘的档期
+        ⇒ 它现在**正当**地 require 了 artistStore 的 `scheduleById`。
+        旧判据是拿"引了哪个模块"当"读没读资料"的替身，替身在那一刻失效了。
+        ⚠️ 要保的性质一个字没变：妆娘自填的风格词⛔ 不上顾客这一屏
+           （用户 2026-09-30 定的「顾客搜不着就搜不着吧」）。
+        ⚠️ 而它**确实**要读档期 —— 那是另一个东西（档期 ≠ 资料），
+           下面 AB2 那 14 次走查就是它的看门人。 */
   eq('🔴★ booking-form（顾客端妆感 chips）不读妆娘资料（那些自填词不上顾客那一屏）',
-    /artistStore|getStyleState|style_custom/.test(
+    /getStyleState|style_custom|getArtist\(|getArtistById|ARTIST_PUBLIC|style_text/.test(
       stripJs(fs.readFileSync(R('妆历小程序/pages/booking-form/booking-form.js'), 'utf8'))), false)
+  eq('★ 非平凡：它确实读了档期（不然上一条是"这个文件什么都没干"式的空断言）',
+    /scheduleById/.test(stripJs(fs.readFileSync(
+      R('妆历小程序/pages/booking-form/booking-form.js'), 'utf8'))), true)
 
   /* ════════════════════════════════════════════════════════════════════
      X. 第十九处 · 头像（人像标识 + 自选底色）
@@ -4865,6 +4878,154 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     /schedulesOfArtist/.test(landJs10), true)
   eq('★ wxml 里的妆位按钮用的就是 (schedule_id, seq) 这两个 data-*',
     /data-sid="\{\{schedId\}\}"[\s\S]{0,120}data-seq="\{\{item\.seq\}\}"/.test(landWxml10), true)
+
+  /* ════════════════════════════════════════════════════════════════════
+     AB2. C1 → 填写页：**整条顾客路径**（第二十二处）
+
+     🔴 这一块是补一个**真 bug 的洞**。用户原话：
+        「点击选这个妆位，进入选择页面会出现这个妆位已经不在了」
+     真根因：`pages/booking-form` 顾客那一支拿 `scheduleStore.getSchedule()`
+     找场次 —— 那**只看 storage**，而顾客可能是**任意一位**妆娘的页面，
+     另外两位的场次住在只读夹具 `SCHEDULES_OTHER` 里、从不落 storage。
+     ⇒ 她们每一场、每一个妆位，点进去都是「这个妆位已经不在了」。
+
+     🔴 **为什么原来的自测一条都没红**：⑦ 段那边的用例全是
+        `{ schedule_id: 'sched-demo-0502' }` —— 那是 storage 里那场，
+        走的正好是唯一能通的那条路。**测试数据只覆盖了一个角色，
+        就等于没验过"任意一位妆娘"这件事**（第二十处把 C1 从"demo 一个人的
+        分享页"改成"任意一位的妆位页"，而断言没跟着跨角色）。
+
+     ⚠️ 判据刻意**不写死**场次名/时段：期望值就是 C1 那一行自己画出来的东西
+        （漫展名从下拉项的 label 上切、序号和时段从那一行上取）。
+        写死字面量的话，改示例数据时这条会红，而它红的原因跟它要保的性质无关
+        （"两页说的是不是同一个妆位"）—— 那是假红，久了就没人信这一条了。 */
+  const AB2_ARTISTS = ['demo', 'demo-mian', 'demo-ali']
+  const qOf = (url) => {
+    const q = {}
+    String(url).split('?')[1].split('&').forEach((kv) => {
+      const i = kv.indexOf('=')
+      q[kv.slice(0, i)] = kv.slice(i + 1)
+    })
+    return q
+  }
+  /* 把 C1 上某一个妆位的按钮**真按一次**，把那串查询串原样喂给填写页。
+     ⛔ 不走捷径（不自己拼 url、不直接调 onLoad 传对象）—— 那样就绕开了
+     pickSlot 里 URL 拼串那一环，而写错字段名的后果正是这一处 bug 的形状。 */
+  const walkOne = (land, seq) => {
+    nav10.length = 0
+    land.pickSlot(ev10({ sid: land.data.schedId, seq }))
+    const url = nav10[0]
+    const bf = loadPage10('pages/booking-form/booking-form.js')
+    bf.onLoad(qOf(url))
+    return { url, bf }
+  }
+  const AB2_BAD = []
+  let ab2Tried = 0
+  AB2_ARTISTS.forEach((aid) => {
+    const lp = loadPage10('pages/landing/landing.js')
+    lp.onLoad({ artist_id: aid })
+    lp.onShow()
+    lp.data.schedList.forEach((c) => {
+      lp.pickSched(ev10({ id: c.id }))
+      /* ⚠️ 场次名从**这一页自己的下拉项**上切，⛔ 不是从 scheduleById 拿 ——
+         拿被测函数算期望值 = 拿自己证明自己（AB 段那条老规矩）。 */
+      const nm = String(c.label).split(' · ')[0]
+      lp.data.rows
+        .filter((r) => r.type === 'slot' && !r.booked)
+        .forEach((r) => {
+          const { url, bf } = walkOne(lp, r.seq)
+          ab2Tried++
+          if (bf.data.slotMissing) {
+            AB2_BAD.push(aid + '/' + c.id + '/seq' + r.seq + ' 说「已经不在了」')
+          } else if (bf.data.slotText !== nm + ' · 第 ' + r.seq + ' 位 · ' + r.start + ' – ' + r.end) {
+            AB2_BAD.push(aid + '/' + c.id + '/seq' + r.seq + ' 文案对不上：' + bf.data.slotText)
+          }
+          if (!/\?schedule_id=[^&]+&seq=\d+$/.test(url)) AB2_BAD.push('查询串形状不对：' + url)
+        })
+    })
+  })
+  /* 14 = 示例数据的算术（改示例数据先读这里）：
+     demo  0502 空 4/5 → 2，0503 满 → 0；
+     mian  0701 空 2/3（seq1 被 bk-8 占）→ 2，0702 全空 → 4；
+     ali   0801 空 1/3（seq2 被占）→ 2，0802 全空 → 4。 */
+  eq('🔴★ 非平凡：三位妆娘 × 每一场 × 每一个可约妆位都真走了一遍（⛔ 不是空断言）',
+    ab2Tried, 14)
+  eq('🔴★ 每一个「选这个妆位」点进去，都真的落在那个妆位上（⛔ 一个都不许说「已经不在了」）',
+    AB2_BAD, [])
+
+  /* ── 取消掉的东西：C1 上一个都不出现（用户 2026-10-01 定的）────────────
+     ⚠️ 这一段会**改 storage 和只读夹具**，所以先留快照、跑完还原 ——
+        不还原的话，后面几段读到的档期就跟我动笔时不是同一份了
+        （⑥ 段 restoreBookings() 那条老规矩：就地改、再放回去）。 */
+  const hadSched = 'zhuangli_schedules' in store10
+  const schedSnap = store10['zhuangli_schedules']
+  const restoreSched = () => {
+    if (hadSched) store10['zhuangli_schedules'] = schedSnap
+    else delete store10['zhuangli_schedules']
+  }
+  const otherSnap = D10.SCHEDULES_OTHER.map((s) => s.status)
+  const restoreOther = () => {
+    D10.SCHEDULES_OTHER.forEach((s, i) => {
+      if (otherSnap[i] === undefined) delete s.status
+      else s.status = otherSnap[i]
+    })
+  }
+  const SS10 = require(R('妆历小程序/utils/scheduleStore.js'))
+
+  /* ① storage 里那一场（demo 自己取消的）：下拉里没有它、旧链接进来如实说"不在了" */
+  SS10.cancelSchedule('sched-demo-0502')
+  const landCancel = loadPage10('pages/landing/landing.js')
+  landCancel.onLoad({ artist_id: 'demo' })
+  landCancel.onShow()
+  eq('🔴★ 取消掉的场次从下拉里整个消失（不是灰掉、更不是写一句「已取消」）',
+    landCancel.data.schedList.filter((c) => c.id === 'sched-demo-0502').length, 0)
+  eq('★ 而且当场换到还开着的那一场（⛔ 不是留一张空表）',
+    landCancel.data.schedId, 'sched-demo-0503')
+  const cancelledForm = loadPage10('pages/booking-form/booking-form.js')
+  cancelledForm.onLoad({ schedule_id: 'sched-demo-0502', seq: 4 })
+  eq('🔴★ 旧链接进来 → 如实说「已经不在了」（这一句在这里是**对的**，别把它删了）',
+    cancelledForm.data.slotMissing, true)
+  restoreSched()
+
+  /* ② 只读夹具里那一场（另外两位妆娘）：同一件事，数据源不同，判据必须一样 */
+  D10.SCHEDULES_OTHER.filter((s) => s.schedule_id === 'sched-mian-0701')[0].status = 'cancelled'
+  eq('★ 非平凡：那一场确实被标成 cancelled 了（⛔ 不是标错了对象）',
+    AS.schedulesOfArtist('demo-mian').filter((s) => s.schedule_id === 'sched-mian-0701').length, 0)
+  const formOther = loadPage10('pages/booking-form/booking-form.js')
+  formOther.onLoad({ schedule_id: 'sched-mian-0701', seq: 2 })
+  eq('🔴★ 夹具里已取消的那一场，同样查不到（两个数据源，同一条判据）',
+    formOther.data.slotMissing, true)
+  restoreOther()
+  eq('★ 还原之后它又查得到了（上面那条不是靠"夹具被我改坏了"凑出来的）',
+    !!AS.scheduleById('sched-mian-0701'), true)
+
+  /* ── 妆师端「代填」⛔ 不许跟着一起放宽 ──────────────────────────────
+     🔴 并集是【给顾客的】。代填要是也能选到夹具里那些场次，就是再造一次
+        第十七处那个 bug（单子挂在一场她根本不存在的漫展上）。
+        判据 = 代填的场次下拉里只有她 storage 里那几场。 */
+  const fillForm = loadPage10('pages/booking-form/booking-form.js')
+  fillForm.onLoad({ mode: 'artist' })
+  eq('🔴★ 代填的场次下拉只认她自己 storage 里那几场（⛔ 不是那个并集）',
+    fillForm.data.schedOptions.filter((o) =>
+      AS.schedulesOfArtist('demo-mian').some((s) => s.schedule_id === o.value)).length, 0)
+  eq('★ 非平凡：她自己的场次确实在（否则上一条是空断言）',
+    fillForm.data.schedOptions.length > 0, true)
+
+  /* ── 源码级：顾客那一支用的就是 scheduleById ─────────────────────── */
+  /* ⚠️ 这一条和上面那 12 次走查是**一对**：走查证明行为对，
+     这一条把"为什么对"钉在文件上（谁把它改回 getSchedule 都会红）。 */
+  eq('🔴★ 顾客那一支找场次走 artistStore.scheduleById（⛔ 不是只看 storage 的 getSchedule）',
+    /const s = scheduleById\(options\.schedule_id/.test(bfJs), true)
+
+  /* ── 妆位的两种状态：可约 / 已被预订（用户 2026-10-01 点名的说法）──── */
+  /* 🔴 原来那颗灰棋子和它上面那行小字**都**写「已约」/「已被约」——
+     同一个意思在一行里出现两遍，而且顾客要的说法是「已被预订」。 */
+  eq('🔴★ 被预订那一行灰棋子写「已被预订」',
+    /class="btn xs dis">已被预订</.test(landWxml10), true)
+  eq('🔴★ 而且「已约」「已被约」这两个词在 C1 上一个都不剩（规矩 25）',
+    /已被约|>已约</.test(landWxml10), false)
+  eq('★ 小字「可约」只给可约的行（被占的行由那颗棋子一个人说完）',
+    /wx:if="\{\{!item\.booked\}\}"[^>]*>可约</.test(landWxml10), true)
 
   /* ════════════════════════════════════════════════════════════════════
      AC. 底部 tabBar：两个角色共用一条条子（第二十一处 + 第二轮）

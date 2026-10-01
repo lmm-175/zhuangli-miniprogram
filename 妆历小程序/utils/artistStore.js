@@ -612,6 +612,38 @@ function schedulesOfArtist(artistId) {
   return (SCHEDULES_OTHER || []).filter((s) => s && s.artist_id === id && s.status !== 'cancelled')
 }
 
+/* ══ 按 schedule_id 找一场档期（2026-10-01 第二十二处新增）══════════════
+   🔴 它为什么必须存在 —— 顾客端一个**真 bug** 的根因就在这里：
+
+     顾客在 C1 上点「选这个妆位」，带过去的是 `(schedule_id, seq)` 两个
+     字符串（妆位在下拉/表里长什么样，那一页知道；填写页只知道这两个值）。
+     填写页原先拿 `scheduleStore.getSchedule(id)` 去查 —— **那只看 storage**。
+     而 `schedulesOfArtist()` 出来的是【两个数据源的并集】：
+       · demo  → storage（活的，妆娘端改的）
+       · 其余两位 → `SCHEDULES_OTHER`（只读夹具，⛔ 从不落 storage）
+     ⇒ 另外两位妆娘的**每一个**妆位，点进去都显示「这个妆位已经不在了」。
+     现象是「出声了」，但那句话是假的 —— 比静默更糟（README 第 22 条那一类：
+     每个分支都出声了，可它说的是错的，于是没人会去查）。
+
+   ⚠️ 为什么放在这里、⛔ 不放在 scheduleStore：**「有几个数据源」这件事只有
+      这一层知道**。scheduleStore 是妆师端的档期本，它对 `SCHEDULES_OTHER`
+      一无所知（也不该知道）。把并集逻辑塞进去等于让妆师端的存储去认顾客端的夹具。
+   ⚠️ 顺序：先 storage、后夹具。两个源不可能同时有同一个 id（id 是主键，
+      三位各带前缀），先后只表达「谁的活数据优先」。
+   ⚠️ 两边都要滤 `status === 'cancelled'`：storage 那份由 getSchedules() 滤，
+      夹具这份在这儿滤（判据只有一条，数据源有两个 —— 和 schedulesOfArtist 同款）。
+   ⚠️ ⛔ **妆师端「代填」不许用它**：代填只认她自己 storage 里那几场
+      （`scheduleStore.getSchedule`）。拿夹具里的场次给她代填，等于再造一次
+      第十七处那个 bug（单子挂在一场她不存在的漫展上）。见 booking-form 的注释。 */
+function scheduleById(scheduleId) {
+  const id = String(scheduleId == null ? '' : scheduleId).trim()
+  if (!id) return null
+  const own = getSchedules().filter((s) => s && s.schedule_id === id)[0]
+  if (own) return own
+  return (SCHEDULES_OTHER || [])
+    .filter((s) => s && s.schedule_id === id && s.status !== 'cancelled')[0] || null
+}
+
 /* 目录里那一条 → storage 形状的记录。
    ⚠️ 目录写的是【那 7 个展示键】（含 style_text），没有 style_custom ——
       它是「顾客看得到的资料」，不是「她编辑页的状态」。
@@ -726,5 +758,5 @@ module.exports = {
   eachCustom, isValidGroup, normalizeCustom, customWords,
   toggleCustomTag, validateCustomWord, validateCustomTag, addCustomTag, removeCustomTag,
   validateNickname, validateCity, validateIntro, validateStyles,
-  getArtist, getArtistById, schedulesOfArtist, getStyleState, saveArtist, raw
+  getArtist, getArtistById, schedulesOfArtist, scheduleById, getStyleState, saveArtist, raw
 }

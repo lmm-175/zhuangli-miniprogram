@@ -103,10 +103,21 @@
             <text class="sub">休息 {{item.minutes}} 分钟</text>
           </view>
         </view>
+        <!-- 妆位的两种状态，2026-10-01（第二十二处）顾客定的：
+             · 可约   → 正常底色 + 「可约」+ 那个按钮
+             · 被预订 → 整行灰掉（`.busy`）+ 灰棋子写「**已被预订**」
+             🔴 原来那颗灰棋子和那行小字都写「已约」/「已被约」——
+                同一句话在一行里出现两遍，而且顾客要的说法是「已被预订」。
+                ⇒ 小字**只给可约的行**（它说的是「这一格能约」），
+                   被占的行由那颗棋子一个人说完。⛔ 别再把这行小字加回来。
+             ⚠️ 妆师端档期页的妆位小签写的是「已预订」（那边行里还有改/删键，
+                字少一格）；顾客这一页是**问句的答案**，用顾客自己的说法。
+                ⛔ 但 C1 上不许出现第三种写法 —— 「已约」「已被约」这两个词
+                   在这一页已经没有资格出现（规矩 25）。 -->
         <view wx:else class="slot-row {{item.booked ? 'busy' : ''}}">
           <view class="sq">{{item.seq}}</view>
-          <view class="tm">{{item.start}} – {{item.end}}<text class="sub">{{item.booked ? '已被约' : '可约'}}</text></view>
-          <view wx:if="{{item.booked}}" class="btn xs dis">已约</view>
+          <view class="tm">{{item.start}} – {{item.end}}<text wx:if="{{!item.booked}}" class="sub">可约</text></view>
+          <view wx:if="{{item.booked}}" class="btn xs dis">已被预订</view>
           <!-- 🔴 2026-10-01（第二十处第 ⑥ 步）：带过去的两个参数是
                `(schedule_id, seq)`，⛔ 不再是 `slot_id`（那是冻结夹具的东西）。
                ⚠️ `schedId` 就是这张表当前那一场 —— 两个 data 属性同源，
