@@ -1,6 +1,7 @@
 const { getSchedules, cancelSchedule } = require('../../utils/scheduleStore')
 const { scheduleRange } = require('../../utils/schedule')
 const { blockingBookings } = require('../../utils/bookingStore')
+const { syncTabBar } = require('../../utils/tabbar')
 
 Page({
   data: {
@@ -8,6 +9,9 @@ Page({
   },
 
   onShow() {
+    // 第一行：把底部那条点亮（本页是妆师端第 1 格）。见 utils/tabbar.js
+    syncTabBar(this)
+
     // 从 storage 读妆师自己建好的档期（M1 换成查 schedules 集合）
     const schedules = getSchedules().map((s) => ({
       id: s.schedule_id,

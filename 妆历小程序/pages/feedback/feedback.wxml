@@ -8,8 +8,8 @@
         而按钮看着就在那儿。这是「点了没反应」的第 5 种长相，
         这个项目已经在那个坑里待过四轮（README 第 20/21/22/26 条）。
         导航栏永远在最上面，键盘够不着它。
-        先例：guest-home.wxml 的「我的预约」、intro-edit.wxml 的「保存」
-        —— 都是导航栏右侧的四个字，形状完全一样。
+        先例：artist-list.wxml 右上角的「搜索」、intro-edit.wxml 的「保存」
+        —— 都是导航栏右侧的几个字，形状完全一样。
 
      ⚠️ 样式全在 app.wxss（`.note` / `.ta` / `.ta-ph` / `.cnt`），
         这一页没有自己的 .wxss —— 照 pages/intro-edit/ 和 pages/settings/ 的形状。

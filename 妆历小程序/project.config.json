@@ -52,8 +52,14 @@
           "scene": null
         },
         {
-          "name": "约妆端首页",
-          "pathName": "pages/guest-home/guest-home",
+          "name": "约妆端 · 我约过的妆娘（tab 1）",
+          "pathName": "pages/artist-list/artist-list",
+          "query": "",
+          "scene": null
+        },
+        {
+          "name": "约妆端 · 我的（tab 2）",
+          "pathName": "pages/guest-mine/guest-mine",
           "query": "",
           "scene": null
         },

@@ -6,7 +6,7 @@
         下面的 textarea 一聚焦，键盘从底部升起来，底部那条 `.footbar`
         正好被压住 —— 手指落下去点到的是键盘，可按钮看着就在那儿。
         这就是「点了没反应」的第 5 种长相，项目已经在那个坑里待过四轮。
-        导航栏在最上面，键盘够不着。先例：guest-home.wxml 也是这么放的。
+        导航栏在最上面，键盘够不着。先例：artist-list.wxml 也是这么放的。
      ⚠️ 样式全在 app.wxss（`.note` / `.ta` / `.ta-ph` / `.cnt`），
         这一页没有自己的 .wxss —— 照 pages/settings/ 的形状。
      ⚠️ `maxlength` 是【UI 层】拦截，让 store 的 validateIntro 当判据 ——

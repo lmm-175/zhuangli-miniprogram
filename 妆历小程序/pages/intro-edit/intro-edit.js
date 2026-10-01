@@ -17,7 +17,7 @@ const { TOAST } = require('../../utils/toast')
  *    手指落下去点到的其实是键盘，而按钮看着就在那儿。这是「点了没反应」的
  *    第 5 种长相，这个项目已经在那个坑里待过四轮（README 第 20/21/22/26 条）。
  *    导航栏永远在屏幕最上面，键盘够不着它。
- *    先例：pages/guest-home/guest-home.wxml 已经有「导航栏右侧放一个字键」。
+ *    先例：pages/artist-list/artist-list.wxml 已经有「导航栏右侧放一个字键」。
  *
  * ⚠️ `maxlength` 只是 **UI 层拦截**（超了它就不让再打），
  *    `validateIntro` 才是**判据**（规矩 11：一处实现）。两者都留着：

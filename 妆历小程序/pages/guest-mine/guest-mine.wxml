@@ -1,0 +1,23 @@
+<!-- 「我的」（约妆端）· 约妆端 tabBar 第 2 格。
+     ⚠️ 上面那一格「我约过的妆娘」在 pages/artist-list/，两块内容各有各的页
+        （用户原话：「不要放在同一个页面里面」）。
+     ⚠️ 根容器带 `tabbed`：自定义 tabBar 不会替页面扣底部高度，
+        少了这个类，最后一行会被压在条子底下（见 app.wxss 的 .app.tabbed）。
+     ⛔ 没有返回箭头（nav-bar 的 back 默认就是 false）—— 这是 tab 页，
+        页面上没有「上一页」这回事。 -->
+<view class="app tabbed">
+  <nav-bar title="我的"></nav-bar>
+
+  <view class="body tight">
+    <view class="grp">
+      <view class="cell" bindtap="goMyBookings" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">我的预约</text><text class="cr">›</text>
+      </view>
+      <view class="cell" bindtap="switchRole" hover-class="btn-hover" hover-stay-time="80">
+        <text class="cl">切换身份</text><text class="cr">约妆 / 妆师 ›</text>
+      </view>
+    </view>
+
+    <view class="hint">提交过的预约单都在「我的预约」里。</view>
+  </view>
+</view>

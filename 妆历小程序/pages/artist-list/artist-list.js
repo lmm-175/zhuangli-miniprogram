@@ -1,7 +1,14 @@
 /**
- * 我约过的妆娘（约妆端）。
+ * 我约过的妆娘（约妆端）· **约妆端 tabBar 第 1 格**（2026-10-01 第二十一处）。
  *
- * 落点：pages/guest-home 那张聚合卡（goArtistList）。
+ * 📌 第二十一处之前它是约妆首页那张聚合卡点进来的一个普通页，首页上还有
+ *    「我的」那一段。用户原话是「**不要放在同一个页面里面**」——
+ *    于是约妆端有了一条和妆师端一样的底部条（自定义 tabBar，理由见
+ *    custom-tab-bar/index.js），这一页升成第 1 格，第 2 格是
+ *    `pages/guest-mine/`，`pages/guest-home/` 整页退役。
+ *    （规矩 37：这是**搬家**，⛔ 不是复制一份 —— 首页那两段的话术和判据
+ *      一个字都没在这儿重写。）
+ *
  * 点一行进哪：`pages/landing/`（C1 分享落地页）—— 复用，⛔ 没有第二个妆娘主页。
  *
  * 🔴 这一页装的是【一份私人记录】，⛔ 不是「平台上有哪些妆娘」。
@@ -13,6 +20,7 @@
  */
 const { TITLE, EMPTY, EMPTY_SUB, listMyArtists, matchArtist } =
   require('../../utils/myArtists')
+const { syncTabBar } = require('../../utils/tabbar')
 
 Page({
   data: {
@@ -32,8 +40,12 @@ Page({
   /* ⚠️ 读真数据必须在 onShow，⛔ 不能写进 data 初值 ——
      页面模块只求值一次然后被缓存，写进初值的话第二次进来还是第一份：
      妆娘那边把单标成已确认了、顾客这边新填了一单，这一页都不跟着变，
-     而且完全不报错（guest-home 那条注释说的是同一件事）。 */
+     而且完全不报错。这一页尤其要命：它是 tab 页，顾客**每次切回来都走 onShow**
+     而⛔ 不走 onLoad —— 写进初值的话，切过去一次之后就永远是那一份了。 */
   onShow() {
+    // 第一行：把底部那条点亮（本页是约妆端第 1 格）。见 utils/tabbar.js
+    syncTabBar(this)
+
     // ⚠️ 全量存在 `this._all` 上，⛔ 不塞进 data ——
     //    塞进去会被 setData 序列化一遍，而页面根本不该渲染「筛之前那一份」。
     this._all = listMyArtists()

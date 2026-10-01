@@ -23,9 +23,13 @@ Page({
     wx.switchTab({ url: '/pages/schedule/schedule' })
   },
 
-  /* 我是约妆 → 约妆端首页（非 tab 页，redirectTo 换掉入口页避免返回栈堆积） */
+  /* 我是约妆 → 约妆端 tab 1「我约过的妆娘」。
+     🔴 2026-10-01（第二十一处）：约妆端现在也有底部 tabBar 了（第 1 格
+        「我约过的妆娘」、第 2 格「我的」），所以这里和上面那句妆师端一样走
+        **switchTab**。⛔ 别再写回 redirectTo —— 它在 tabBar 页上会直接失败，
+        而且是**静默**失败（人卡在角色选择页，屏幕上没有一个字）。 */
   chooseGuest() {
     app.setRole('guest')
-    wx.redirectTo({ url: '/pages/guest-home/guest-home' })
+    wx.switchTab({ url: '/pages/artist-list/artist-list' })
   }
 })

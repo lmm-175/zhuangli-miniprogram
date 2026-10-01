@@ -35,11 +35,17 @@ Page({
     this.setData({ list })
   },
 
+  /* 空态那颗「去找妆位」。
+     ⚠️ 先 navigateBack —— 这一页是从约妆端 tab 2「我的」点进来的，退回去就是
+        那条底部条所在的地方，这是最短的一条路。
+     🔴 2026-10-01（第二十一处）：兜底从「约妆首页」改成 **switchTab 到 tab 1**。
+        约妆首页（pages/guest-home）整页退役了，而 tab 1「我约过的妆娘」
+        正是「去哪儿找妆位」这件事的答案。⛔ 别写回 redirectTo：tab 页跳不过去。 */
   goHome() {
     wx.navigateBack({
       delta: 1,
       fail() {
-        wx.redirectTo({ url: '/pages/guest-home/guest-home' })
+        wx.switchTab({ url: '/pages/artist-list/artist-list' })
       }
     })
   }

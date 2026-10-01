@@ -71,11 +71,14 @@ Component({
         fail() {
           // 页面栈里只有这一页（典型场景：从分享卡片直接进来的 C1）。
           // 不能什么都不做 —— 「点了没反应」正是 M0 要消灭的东西。
-          // 按角色回落：约妆 → 约妆首页；妆师 / 未知 → 档期（tabBar 第 1 位）。
+          // 按角色回落：约妆 → 约妆端 tab 1「我约过的妆娘」；
+          //             妆师 / 未知 → 档期（妆师端 tab 1）。
+          // ⚠️ 两条都走 switchTab：那两页现在都是 tab 页，
+          //    redirectTo 跳 tabBar 页会直接失败（而且是静默失败）。
           let role = ''
           try { role = getApp().getRole() } catch (e) {}
           if (role === 'guest') {
-            wx.redirectTo({ url: '/pages/guest-home/guest-home' })
+            wx.switchTab({ url: '/pages/artist-list/artist-list' })
           } else {
             wx.switchTab({ url: '/pages/schedule/schedule' })
           }

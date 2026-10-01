@@ -27,7 +27,9 @@
         「社交-笔记」类目；而对顾客不可见的话，作品集对她本人又没有任何价值。
         ⛔ **不要加回来**，也⛔ 不要改挂到别的地方 —— 详见 README §4。
      🔴「我的资料」这一项**只留在这儿**（就是那张卡片），设置页里重复的一行已删。 -->
-<view class="app">
+<!-- ⚠️ 根容器带 `tabbed`：自定义 tabBar 不会替页面扣底部高度，
+     少了它最后一行会被压在条子底下（见 app.wxss 的 .app.tabbed）。 -->
+<view class="app tabbed">
   <nav-bar title="我的"></nav-bar>
 
   <view class="body tight">

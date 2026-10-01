@@ -1,0 +1,12 @@
+<!-- 底部导航条。格数和文案由 utils/tabbar.js 按角色给（妆师 3 格 / 约妆 2 格）。
+     ⚠️ 这里【只有文字、没有图标】—— 原来用原生 tabBar 时也没配 iconPath，
+        所以妆师端这三格的字号和间距必须和原来一致，⛔ 别顺手加图标
+        （提审截图 ① 上有这条底栏）。 -->
+<view class="tb">
+  <view wx:for="{{items}}" wx:key="path"
+        class="tb-i {{index === selected ? 'on' : ''}}"
+        data-path="{{item.path}}" bindtap="onTap"
+        hover-class="tb-hover" hover-stay-time="80">
+    <text class="tb-t">{{item.text}}</text>
+  </view>
+</view>

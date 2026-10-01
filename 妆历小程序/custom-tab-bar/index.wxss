@@ -1,0 +1,23 @@
+/* 底部导航条。
+   ⚠️ 高度用 px 不用 rpx：它顶替的是**原生 tabBar**，而原生那条在什么宽度的
+      屏上都是 50px（物理量，不跟屏宽缩放）。写成 rpx 的话，窄屏上这条会比
+      原来矮一截、宽屏上高一截，跟着变化的还有下面页面被盖住多少。
+      值只有一处：`page` 上的 `--tabh`（app.wxss）。⛔ 别在这儿再写一个 50px。
+   ⚠️ `var(--tabh,50px)` 的兜底值就是 50px —— 两边永远相等，只是万一变量
+      没继承进来（组件样式隔离）也画得出正确高度。 */
+.tb{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  display:flex;
+  height:var(--tabh,50px);
+  /* iPhone 那条小黑条：原生 tabBar 自带这段，自己画就得自己补。
+     不支持 env() 的环境（老 Android WebView）这一句整条失效，
+     高度退回 --tabh，正好也是那些机器该有的样子（它们没有安全区）。 */
+  padding-bottom:env(safe-area-inset-bottom);
+  background:#fff;
+  border-top:1px solid rgba(0,0,0,.33);
+}
+.tb-i{flex:1;display:flex;align-items:center;justify-content:center}
+/* 10px —— 原生 tabBar 的字号。20rpx 在 375pt 屏上正好是 10px。 */
+.tb-t{font-size:20rpx;line-height:1.2;color:#8F959E}
+.tb-i.on .tb-t{color:#C0556E}
+.tb-hover{background:#F7F8F9}

@@ -20,6 +20,13 @@ page{
   --danger:#D54941; --danger-l:#FDECEC; --warn:#E37318; --warn-l:#FFF4E8;
   --ok:#2BA471; --ok-l:#E8F8F2; --info:#4B7BE5; --info-l:#EDF2FD;
   --r:22rpx; --r-lg:30rpx;
+  /* 🔴 底部导航条的高度（2026-10-01 第二十一处）。**只有这一处定义** ——
+     自定义 tabBar 自己的高度（custom-tab-bar/index.wxss）和 tab 页要留的
+     底部空白（下面的 .app.tabbed）都读它。
+     ⚠️ 单位是 px 不是 rpx：它顶替的是原生 tabBar，而原生那条在什么宽度的屏上
+        都是 50px。写成 rpx 的话窄屏这条会比原生矮一截，而页面留白又按 rpx 算，
+        两边一起漂。 */
+  --tabh:50px;
 
   background:var(--bg);
   color:var(--t1);
@@ -34,10 +41,23 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 
 /* ── 页面骨架 ─────────────────────────────────────────────
    .app 是每页的根容器：导航栏（flex:none）+ .body（flex:1）。
-   navigationStyle:custom 时 100vh = 可见区（不含原生 tabBar），
-   状态栏高度由 <nav-bar> 自己补，页面不用管。
+   navigationStyle:custom 时 100vh = 可见区，状态栏高度由 <nav-bar> 自己补。
    ──────────────────────────────────────────────────────── */
 .app{display:flex;flex-direction:column;min-height:100vh;background:var(--bg)}
+
+/* 🔴 tab 页专用的底部留白（2026-10-01 第二十一处）—— **必须有，⛔ 不是保险**。
+   背景：小程序全局只有一个 tabBar，妆师端 3 格、约妆端 2 格，只能改成
+   自定义 tabBar（"custom": true）。而官方的自定义 tabBar **不会**替页面扣掉
+   底部高度 —— 用原生的时候 100vh 已经不含 tabBar，换成自绘之后 100vh
+   一直伸到屏幕底，页面最后一行就被压在条子底下，且**屏幕上一个字都不报**。
+   ⇒ 5 个 tab 页的根容器都写成 `class="app tabbed"`。
+   ⚠️ 两行 padding-bottom 是**故意的**：下面那句用了 env()，老 Android WebView
+      （没有安全区概念）会整句失效，于是上面的 50px 兜住 —— 那正是那些机器
+      该有的样子。⛔ 别把第一行当重复删掉。 */
+.app.tabbed{
+  padding-bottom:var(--tabh);
+  padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom));
+}
 .body{flex:1;display:flex;flex-direction:column;gap:20rpx;padding:22rpx}
 .body.tight{gap:13rpx}
 .body.nopad{padding:0}
@@ -184,7 +204,7 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
    wxml 那边只是个空的 `<view class="ava c-rose"></view>` ——
    ⛔ 不加任何标签、⛔ 不用 emoji、⛔ 不引图片资源（零 UGC、零审核风险）。
    ⚠️ 为什么是 ::before/::after 而不是两个子节点：四个消费者
-      （landing / guest-home / mine / my-profile）的 wxml 一行都不用为
+      （landing / mine / my-profile / artist-list）的 wxml 一行都不用为
       「画一张脸」而改结构。本文件里 `.sw::after`、`.btn-share::after` 是现成先例。
    ⚠️ 尺寸全部用【百分比】：`.ava`(97rpx) 和 `.ava.sm`(88rpx) 共用同一套比例，
       改一处尺寸不用改第二处像素。

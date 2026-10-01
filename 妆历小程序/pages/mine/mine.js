@@ -1,5 +1,6 @@
 const { getArtist, saveArtist, AVATAR_COLORS } = require('../../utils/artistStore')
 const { TOAST } = require('../../utils/toast')
+const { syncTabBar } = require('../../utils/tabbar')
 
 /**
  * 壳 3 · 我的（妆师端）
@@ -37,6 +38,8 @@ Page({
      ⚠️ 也顺手收起调色板：她从资料页退回来时，一个「开着但没在挑色」的面板
         是上一个动作的残留。 */
   onShow: function () {
+    // 第一行：把底部那条点亮（本页是妆师端第 3 格）。见 utils/tabbar.js
+    syncTabBar(this)
     this.setData({ artist: getArtist(), colorsOpen: false })
   },
 

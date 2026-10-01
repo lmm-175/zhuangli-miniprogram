@@ -1,6 +1,7 @@
-<!-- 我约过的妆娘（约妆端）。
-     落点：pages/guest-home 那张聚合卡（goArtistList）。
+<!-- 我约过的妆娘（约妆端）· **约妆端 tabBar 第 1 格**（2026-10-01 第二十一处）。
      点一行 → pages/landing/（C1 分享落地页），⛔ 没有第二个妆娘主页。
+     ⚠️ 它是 tab 页 —— 所以 nav-bar ⛔ 没有返回箭头（页面上没有「上一页」这回事），
+        根容器带 `tabbed`（自定义 tabBar 不会替页面扣底部高度）。
 
      🔴 这一页是【一份私人记录】，⛔ 不是「平台上有哪些妆娘」：
         每一行都必须来自「我自己提交过的那张预约单」（utils/myArtists.js）。
@@ -8,11 +9,12 @@
         公开妆娘列表就是红线 1（README §3.7）。
         ⛔ 谁要把数据源改成「读妆娘目录」，先去看那一节。
      ⚠️ 标题和两句空态文案都来自 utils/myArtists.js，⛔ 不许在这一页再写一遍：
-        它们和约妆首页那张卡上说的是同一句话（规矩 11 / 25）。 -->
-<view class="app">
-  <nav-bar title="{{title}}" back="{{true}}">
+        底栏第一格那个字（utils/tabbar.js）和 app.json 的 tabBar.list 都写着同一句
+        「我约过的妆娘」，三处必须逐字一样（规矩 11 / 25，自测里有一条并起来比）。 -->
+<view class="app tabbed">
+  <nav-bar title="{{title}}">
     <!-- 「搜索」放右上角：导航栏整条已经让开了微信胶囊（.nv 上的 padding-right），
-         顾客端的 landing / guest-home 也都在这个位置放动作。
+         顾客端的 landing 也在同一个位置放动作。
          ⚠️ 文案要在两个状态之间说实话：开着的时候点它是【收起并清空】，
             所以那一下它写「收起」，⛔ 不写「搜索」。 -->
     <view slot="right" class="nv-act" bindtap="toggleSearch" hover-class="nv-hover" hover-stay-time="80">{{open ? '收起' : '搜索'}}</view>
@@ -35,8 +37,8 @@
     <block wx:if="{{rows.length}}">
       <view class="grp">
         <!-- ⚠️ `wx:for-item="artist"` 是为了让头像那行写成
-             `c-{{artist.avatar_color}}`，和 landing / mine / my-profile /
-             guest-home 那四处**逐字一样**（理由写在 utils/myArtists.js 的
+             `c-{{artist.avatar_color}}`，和 landing / mine / my-profile
+             那三处**逐字一样**（理由写在 utils/myArtists.js 的
              rowOf 里：自测按这个写法认「有没有带颜色令牌」）。
              ⛔ 别把它改回默认的 `item`。 -->
         <view wx:for="{{rows}}" wx:for-item="artist" wx:key="id" class="al-row"

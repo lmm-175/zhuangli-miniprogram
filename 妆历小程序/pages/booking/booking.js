@@ -8,6 +8,7 @@ const { getArtist } = require('../../utils/artistStore')
    顾客端妆位页也要「只列今天及以后」+「按离今天多近排」，
    同一件事必须在同一处算（规矩 11）。⛔ 别在这儿再写一份。 */
 const { awayFromToday } = require('../../utils/schedule')
+const { syncTabBar } = require('../../utils/tabbar')
 
 /* 妆娘端预约单列表：四个状态 Tab（方案草案 §4.1 · 预约单列表）。
    status → tab 的映射：
@@ -194,6 +195,9 @@ Page({
   },
 
   onShow() {
+    // 第一行：把底部那条点亮（本页是妆师端第 2 格）。见 utils/tabbar.js
+    syncTabBar(this)
+
     // 回到这一页一律【退出勾选态】：勾选态是「当时那一屏」的状态，
     // 离开过就可能过期（别的页面把某单状态改了），留着它迟早误伤。
     // 两个下拉面板也一并收起来 —— 它们是「刚才那一下」的临时态，不该跨页活着。

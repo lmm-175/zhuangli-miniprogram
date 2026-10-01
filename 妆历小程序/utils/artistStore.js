@@ -14,8 +14,9 @@
  *
  * ② style_text 是【派生字段】—— 只在这里算，⛔ 从不落 storage。
  *    style_text 派生自 style_tags ∪ style_custom（预设词 + 她自填的词），
- *    于是 landing / guest-home / mine / my-profile 四个 wxml 的
- *    `{{artist.style_text}}` 一个字都不用改，接妆风格一改它们全都跟着变。
+ *    于是 landing / mine / my-profile（以及经 myArtists 的 artist-list）
+ *    那几个 wxml 的 `{{artist.style_text}}` 一个字都不用改，
+ *    接妆风格一改它们全都跟着变。
  *    只有一份真相：style_tags（闭合，只装预设词）+ style_custom（只装自填词）。
  *    ⚠️ 反面同样要守住：⛔ 别把派生值写回 storage —— 那就成了第二份真相，
  *       迟早跟 style_tags 对不上，而且是【静默】对不上。
@@ -93,7 +94,7 @@ const AVATAR_COLOR_DEFAULT = 'rose'
       「接妆风格除了我列出的那些选项，妆面质感，场合，浓度 题材 其他
         妆娘可以自填选项，你只给了选项，用不着顾客搜，顾客搜不着就搜不着吧」
       🔴 而旧注释给的理由「顾客端要靠它筛人」——那句话**在代码里从来不存在**：
-         4 个消费者（landing / guest-home / mine / my-profile）只显示 style_text，
+         4 个消费者（landing / mine / my-profile / artist-list）只显示 style_text，
          没有任何一处按风格词筛人。它是一条没落地的计划，⛔ 别拿它当反方论据。
       ⇒ 现在 ALL_TAGS 的含义是【预设词表】：
         预设通道只认它，自填词一律走 style_custom，两个通道【互不相交】。 */
