@@ -15,7 +15,10 @@ const { syncTabBar } = require('../../utils/tabbar')
  *    · 头像底色由妆娘自己挑，令牌存在 `zhuangli_artist.avatar_color`。
  *    · 「关于妆历」删了（设置页里有同一条），新增「问题反馈」。
  */
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     /* ⚠️ 初值是个能渲染的空壳，真数据在 onShow 里灌（理由见 onShow）。
        ⚠️ 这里的 `avatar_color: 'rose'` 只是【首帧的兜底】——

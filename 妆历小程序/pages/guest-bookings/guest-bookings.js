@@ -18,7 +18,10 @@ const { syncTabBar } = require('../../utils/tabbar')
    ⇒ 那份表上提到 utils/bookingStore.js（statusText）。
    ⛔ 别在这儿再抄回来：两页各写一份的下场是同一张单在两处叫两个名字。 */
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     list: []
   },

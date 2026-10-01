@@ -13,7 +13,10 @@ function today() {
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
 }
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     templates: [],
     today: '',           // 「应用」时打开日期选择器的默认值 —— 默认就是今天

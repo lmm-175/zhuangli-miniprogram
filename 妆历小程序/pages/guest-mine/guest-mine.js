@@ -26,7 +26,10 @@
  */
 const { syncTabBar } = require('../../utils/tabbar')
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   onShow() {
     // 第一行就把底部那条点亮（本页是约妆端第 3 格）—— 见 utils/tabbar.js
     syncTabBar(this)

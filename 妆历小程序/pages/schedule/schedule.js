@@ -3,7 +3,10 @@ const { scheduleRange } = require('../../utils/schedule')
 const { blockingBookings } = require('../../utils/bookingStore')
 const { syncTabBar } = require('../../utils/tabbar')
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     schedules: []
   },

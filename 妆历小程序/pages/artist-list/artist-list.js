@@ -22,7 +22,10 @@ const { TITLE, EMPTY, EMPTY_SUB, listMyArtists, matchArtist } =
   require('../../utils/myArtists')
 const { syncTabBar } = require('../../utils/tabbar')
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     title: TITLE,
     empty: EMPTY,

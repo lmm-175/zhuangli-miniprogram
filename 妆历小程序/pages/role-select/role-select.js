@@ -1,6 +1,9 @@
 const app = getApp()
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     lastRole: '',
     lastLabel: ''

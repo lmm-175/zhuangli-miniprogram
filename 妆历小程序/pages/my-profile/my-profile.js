@@ -33,7 +33,10 @@ const { TOAST } = require('../../utils/toast')
  *    紧跟的触摸序列要保护，而这一页……⚠️ 其实**真的可能有键盘开着**
  *    （弹框本身就是输入框），正是规矩 20 划的红线区。
  */
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     // ⚠️ 初值先给个能渲染的空壳，真数据在 onShow 里灌。
     //    不在这儿调 getArtist()：模块加载期碰 storage 会让自测的桩

@@ -5586,6 +5586,141 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   ⑪ 转发卡片（规矩 41）
+   ──────────────────────────────────────────────────────────────────────
+   🔴 这一段护着的是这个项目里最容易「一页一页漏掉」的一种性质。
+
+   微信的规矩是：**只有定义了 onShareAppMessage，右上角菜单才显示「转发」**。
+   所以「小程序能不能分享」不是一个开关，是 **18 个页面各自的一件事** ——
+   漏一页的症状是那一页点「···」里根本没有「转发」：
+   **不报错、不白屏、没有任何别的信号**。
+   （2026-10-01 之前的真实状态：18 页里只有 1 页有。）
+   ══════════════════════════════════════════════════════════════════════ */
+console.log('\n════ ⑪ 转发卡片（每页都要有 onShareAppMessage）════')
+{
+  const fs = require('fs')
+  const appJson = JSON.parse(fs.readFileSync(R('妆历小程序/app.json'), 'utf8'))
+
+  /* ⚠️ 扫之前一律摘注释（规矩 35）。⛔ 不能对 `//` 一律切 ——
+     源码里有 `https://…` 这种串，一刀切会把整行后半段吃掉，
+     于是「注释里写着的反例」反而算通过（假阴性）。
+     `(^|[^:])//` 这个写法够用：这一套代码里不存在
+     `'x' + // 注释` 那种把 `//` 顶在行中间的写法。
+     ⚠️ 必须有 `m` —— 少了 `^` 只认整个字符串的开头，注释摘不干净。 */
+  const stripJs = (s) => String(s)
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/gm, '$1')
+  /* 判据：这一页接上了**共用**转发卡片。
+     ⚠️ 光出现 onShareAppMessage 不算数 —— 自己 return 一个 path 也能让它
+        出现在菜单里，但那就是第二处真相（落点会各写各的）。 */
+  const isHooked = (src) => /onShareAppMessage[^\n]*shareCard/.test(stripJs(src))
+
+  const walkJs = (d, out) => {
+    fs.readdirSync(R('妆历小程序/' + d)).forEach((n) => {
+      if (n === 'node_modules' || n.charAt(0) === '.') return
+      const rel = d ? d + '/' + n : n
+      if (fs.statSync(R('妆历小程序/' + rel)).isDirectory()) walkJs(rel, out)
+      else if (/\.js$/.test(n)) out.push(rel)
+    })
+    return out
+  }
+  const projJs = walkJs('', [])
+  const readSrc = (rel) => fs.readFileSync(R('妆历小程序/' + rel), 'utf8')
+
+  // ── A. 卡片本身 ──────────────────────────────────────────────────
+  const prevWx = global.wx
+  const store = {}
+  global.wx = {
+    getStorageSync: (k) => store[k],
+    setStorageSync: (k, v) => { store[k] = v }
+  }
+  const AS = require(R('妆历小程序/utils/artistStore.js'))
+  const SH = require(R('妆历小程序/utils/share.js'))
+
+  const self = AS.getArtist()
+  eq('★ 无参 → 落到妆娘端那一位的妆位页',
+    SH.shareCard().path, SH.LANDING_PATH + '?artist_id=' + self.artist_id)
+  eq('★ 无参 → 标题就是那一位：昵称 + 「的妆位」',
+    SH.shareCard().title, self.nickname + '的妆位')
+  /* 🔴 这一条抓的是「所有页面都分享到同一个人」。
+     对妆师端那一位无所谓（本来就只有她），对 C1 是致命的：
+     小满的妆位页转发出去变成别人的妆位页 = 顾客看到的是另一位的档期。 */
+  eq('🔴★ 传一位具体的妆娘 → 落到她（⛔ 不是永远落到妆娘端那一位）',
+    SH.shareCard('demo-mian').path, SH.LANDING_PATH + '?artist_id=demo-mian')
+  eq('🔴★ 标题也跟着换成她',
+    SH.shareCard('demo-mian').title, AS.getArtistById('demo-mian').nickname + '的妆位')
+  /* ⚠️ 认不出的 id 必须落到【一个真的存在的妆娘】上（getArtistById 兜底 demo）。
+     ⛔ 不许把入参原样拼进 path：那样卡片点开是 artist_id=查无此人，
+     C1 渲染出兜底那位的资料、卡片标题写的也是兜底那位 ——
+     看着全对，其实路径是脏的，M1 接云端那天才炸。 */
+  eq('🔴★ 认不出的 id → 落到兜底那位，⛔ 不是把那个 id 原样拼进 path',
+    SH.shareCard('查无此人').path, SH.LANDING_PATH + '?artist_id=' + self.artist_id)
+  /* 🔴🔴 这一段最值钱的一条。微信调用 onShareAppMessage 时第一个参数是
+     `{from:'menu', target:undefined}`；页面上的写法是 `shareCard(this.artistId)`。
+     哪天有人「顺手」把它改成 `shareCard(options)`，拼出来就是一个
+     **不会报错的坏路径**：`…?artist_id=[object Object]` ——
+     卡片照发、点开落到兜底那位，谁也发现不了。 */
+  eq('🔴🔴 被当成微信的 options 传进来也不许拼出 [object Object]',
+    SH.shareCard({ from: 'menu', target: undefined }).path.indexOf('[object'), -1)
+  eq('★ 同上：数组 / 数字也一样当没传（只认字符串）',
+    SH.shareCard([1, 2]).path + '|' + SH.shareCard(123).path,
+    (SH.LANDING_PATH + '?artist_id=' + self.artist_id) + '|' + (SH.LANDING_PATH + '?artist_id=' + self.artist_id))
+  global.wx = prevWx
+
+  // ── B. 落点那一页真的注册过 ───────────────────────────────────────
+  eq('★ 落点那一页在 app.json 里注册过（⛔ 不然卡片点开是白屏）',
+    appJson.pages.indexOf(SH.LANDING_PATH.replace(/^\//, '')) >= 0, true)
+
+  // ── C. 每一页都接上了 ─────────────────────────────────────────────
+  eq('🔴★ 每一页都接上了共用转发卡片（漏一页 = 那页点「···」里没有「转发」）',
+    appJson.pages.filter((p) => !isHooked(readSrc(p + '.js'))), [])
+
+  /* C1 是唯一一页知道自己「在讲谁」的（`this.artistId` 来自查询串），
+     所以它把那个人传进去。⚠️ 这一条必须【单独】钉：
+     只钉 C 的话，把 landing 改成 shareCard() 也能过 ——
+     而那一页恰恰是最不能错的一页（顾客拿到的是别人的档期）。 */
+  eq('🔴★ C1 上分享的是【这一位】妆娘（它知道自己讲的是谁）',
+    /onShareAppMessage[^\n]*shareCard\(this\.artistId\)/
+      .test(stripJs(readSrc('pages/landing/landing.js'))), true)
+
+  // ── D. 分享落点只有一处拼 ─────────────────────────────────────────
+  /* 🔴 判据必须钉在 **`path:`** 上，⛔ 不能只认那个 URL 字面量 ——
+     这一条第一版就是这么写坏的：`pages/artist-list/artist-list.js` 里
+     `wx.navigateTo({ url: '/pages/landing/landing?artist_id=' + id })`
+     是【点一行进 C1】的正常跳转，被当成了违规（假阳性）。
+     分享卡片用的是 `path:`，跳转用的是 `url:` —— 差一个词。 */
+  const sharePathReg = /path:\s*['"][^'"]*\/pages\/landing\/landing\?artist_id=/
+  eq('🔴★ 分享落点只有一处（⛔ 页面不许在 onShareAppMessage 里自己 return 一个 path）',
+    projJs.filter((f) => sharePathReg.test(stripJs(readSrc(f)))), [])
+  eq('★ 扫描器自检：页面自己写分享 path → 认得出',
+    sharePathReg.test("onShareAppMessage() { return { path: '/pages/landing/landing?artist_id=demo' } }"), true)
+  /* 🔴 这条就是上面那个假阳性的回归断言：`url:` 是跳转，不是分享。 */
+  eq('🔴★ 扫描器自检：正常跳转（url: 不是 path:）⛔ 不许算违规',
+    sharePathReg.test("wx.navigateTo({ url: '/pages/landing/landing?artist_id=' + id })"), false)
+
+  /* ── E. 扫描器自检（规矩 35）───────────────────────────────────────
+     ⚠️ C 那条在「全部页面都接上之后」是**恒真**的 ——
+        扫描器自己写坏了（比如判据写成「非空」）它照样绿。
+        所以喂四段合成源码，四种情况各验一次。 */
+  eq('★ 扫描器自检：整页没写 → 认得出',
+    isHooked('Page({ data: {} })'), false)
+  eq('★ 扫描器自检：写了 onShareAppMessage 但自己 return → 也要认得出（那是第二处真相）',
+    isHooked("Page({ onShareAppMessage() { return { path: '/pages/landing/landing?artist_id=demo' } } })"), false)
+  eq('★ 扫描器自检：正常写法 → 通过',
+    isHooked('Page({ onShareAppMessage() { return shareCard(this.artistId) }, })'), true)
+  /* 🔴 注释里的反例不算数：把那一行注释掉之后必须【认不出来】——
+     否则「谁哪天顺手把它注释掉」这种最隐蔽的回归会被扫描器放过。 */
+  eq('🔴★ 扫描器自检：整行被行注释掉 → 必须认不出来（摘注释是真的在起作用）',
+    isHooked('Page({\n  // onShareAppMessage() { return shareCard(this.artistId) },\n  data: {}\n})'), false)
+  eq('★ 扫描器自检：块注释里的反例同样不算',
+    isHooked('/* onShareAppMessage() { return shareCard(1) } */\nPage({})'), false)
+  /* ⚠️ 摘注释不能顺手把 URL 里的 `//` 也切了 —— 那就是假阴性
+     （README 里 per 那条：`s/…/…/` 遇 URL 里的 `/` 静默不生效却报 0 红）。 */
+  eq('🔴★ 而 URL 里的 `//` 不该把整行后半段吃掉（那就是假阴性）',
+    stripJs("const u = 'https://example.com/x'; const k = shareCard;").indexOf('shareCard') >= 0, true)
+}
+
 restoreBookings()
 
 console.log('\n' + (fail ? 'FAILED ' + fail + ' / ' : 'ALL PASS ') + (pass + fail) + ' assertions\n')

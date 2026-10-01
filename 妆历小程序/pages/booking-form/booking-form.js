@@ -112,7 +112,10 @@ function emptyReasonOf(s) {
   return '这一场的妆位都约满了'
 }
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     slotText: '',
     mode: 'user',              // 'user' 顾客自填 | 'artist' 妆师代填

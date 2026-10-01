@@ -8,7 +8,10 @@ function today() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
 }
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     title: '新建档期',
     isTemplate: false,          // false=新建档期 | true=新建模板
@@ -212,13 +215,5 @@ Page({
       delta: 1,
       fail() { wx.switchTab({ url: '/pages/schedule/schedule' }) }
     })
-  },
-
-  /* 分享只走微信原生（右上角菜单）。返回转发内容。 */
-  onShareAppMessage() {
-    return {
-      title: '示例的妆位 · ' + (this.data.form.name || '示例漫展'),
-      path: '/pages/landing/landing?artist_id=demo'
-    }
   }
 })

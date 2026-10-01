@@ -29,7 +29,10 @@ const { TOAST } = require('../../utils/toast')
  *    正是那个函数最容易被顺手加上的地方 —— 加它就会打断当前触摸序列，
  *    紧跟的保存/返回在部分基础库上被整个吃掉，而且不报错。
  */
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     intro: '',
     len: 0,

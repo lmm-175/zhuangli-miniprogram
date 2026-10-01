@@ -29,7 +29,10 @@ const { bookedSeqsOfSchedule } = require('../../utils/bookingStore')
    ⚠️ 只在档期没记时长时才落到兜底值，别拿兜底值去覆盖已有的设置。 */
 const INSERT_FALLBACK_MIN = 30
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     s: null,
     rows: [],            // 混合行：妆位 + 午休（见 buildRows）

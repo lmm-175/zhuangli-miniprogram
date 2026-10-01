@@ -157,7 +157,10 @@ function inTab(b, key) {
   return b.status === key
 }
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     tabs: TABS,
     active: 0,

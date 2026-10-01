@@ -124,7 +124,10 @@ function rowsOf(s) {
   return free.sort(byTime).concat(lunch.sort(byTime), busy.sort(byTime))
 }
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     /* ⛔ artist 里没有 wechat_id，也不会有 —— 见 utils/contact.js。
        ⚠️ 2026-09-30（第十七处）：数据源从 `mock/data.js` 的 ARTIST_PUBLIC
@@ -304,8 +307,12 @@ Page({
     wx.switchTab({ url: '/pages/guest-bookings/guest-bookings' })
   }
 
-  /* ⛔ 本页不实现 onShareTimeline —— 见 pages/schedule-edit 里的说明。
-     顾客把落地页转到朋友圈，别人点开是「小程序单页模式」：
-     路由 API 全禁用 + 无登录态，【选这个妆位】点不动。
-     真要朋友圈，得单独做一个「单页模式展示版」落地页。M0 不做。 */
+  /* ⛔ 本页不实现 onShareTimeline —— 理由见 utils/share.js。
+     📌 这里原先写的是「见 pages/schedule-edit 里的说明」，而那段说明
+        在那一页里根本不存在（断链，2026-10-01 查出来的）。
+
+     🔴 转发卡片（上面第一行的 onShareAppMessage）走的是全项目共用那一个函数，
+        ⛔ 别在这一页另写一份 —— 这一页唯一特殊的地方是它**知道自己在讲谁**
+        （`this.artistId`，onLoad 里从查询串解出来），所以它把那个人传进去。
+        其余 17 页没有 artistId，落点由 shareCard 兜底到妆娘端那一位。 */
 })

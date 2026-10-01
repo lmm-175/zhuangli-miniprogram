@@ -35,7 +35,10 @@ const { TOAST } = require('../../utils/toast')
  *    结论仍然是「不调」：没有一处分支需要它。保存键确实可能被键盘盖住，
  *    但那个洞是用「添加成功后收起输入框」填的（见 onAdd），不是用它填的。
  */
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     // toStyleView 的产物：勾选态 + 每一组（含她自己加的词）
     groups: [],

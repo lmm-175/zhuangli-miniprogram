@@ -28,7 +28,10 @@ const ALLOW = {
   rejectCancel: 'cancel_requested'   // 不同意 → 按回 confirmed，妆位继续占着
 }
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     b: null,
     statusText: '',

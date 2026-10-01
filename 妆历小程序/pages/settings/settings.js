@@ -26,7 +26,10 @@ function isArtistRole() {
   return role === 'artist'
 }
 
+const { shareCard } = require('../../utils/share')
 Page({
+  onShareAppMessage() { return shareCard(this.artistId) },
+
   data: {
     // 初值跟假数据里的 show_wechat 对齐，切换是这个页面唯一的真功能
     showWechat: myShowWechat(),
