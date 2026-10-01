@@ -101,20 +101,13 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 .btn.gold{background:var(--gold-l);color:var(--gold);border:1px solid var(--gold-b)}
 .btn-hover{opacity:.82}
 
-/* ── <button> 原生组件重置 ────────────────────────────────
-   ⚠️ open-type="share" 只能挂在 <button> 上，而 <button> 自带
-      border / background / ::after 灰边，会跟 .btn 打架。
-      下面这几行是 §3.1 说的「必写的十几行」。
-   ──────────────────────────────────────────────────────── */
-.btn-share{
-  flex:1;height:92rpx;padding:0;margin:0;line-height:normal;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--brand);color:#fff;
-  border:none;border-radius:20rpx;
-  font-size:32rpx;font-weight:600;font-family:inherit;text-align:center;
-}
-.btn-share::after{border:none}
-.btn-share-hover{opacity:.82}
+/* 🔴 2026-10-02（第二十六处）：这里原有一组 `.btn-share` / `.btn-share::after`
+   / `.btn-share-hover`（界面稿 §3.1 要求给 `<button open-type="share">`
+   的「必写的十几行」原生组件重置样式）。**整组删了** —— 用户 2026-10-02
+   说「页面内的删掉，不要那个」，转发只走微信右上角「···」菜单。
+   ⚠️ 这组样式写进来到删掉**一次都没被用过**：全项目 wxml 里
+      `grep '<button'` = 0 处。属于「样式先写好、按钮始终没做」的半成品，
+      已沉淀成规矩 42，并加了断言钉死它不许回来。 */
 
 /* ── 空态 ────────────────────────────────────────────── */
 .empty{text-align:center;padding:75rpx 35rpx;color:var(--t3);font-size:29rpx;line-height:1.9}
@@ -225,7 +218,10 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
    ⛔ 不加任何标签、⛔ 不用 emoji、⛔ 不引图片资源（零 UGC、零审核风险）。
    ⚠️ 为什么是 ::before/::after 而不是两个子节点：四个消费者
       （landing / mine / my-profile / artist-list）的 wxml 一行都不用为
-      「画一张脸」而改结构。本文件里 `.sw::after`、`.btn-share::after` 是现成先例。
+      「画一张脸」而改结构。本文件里 `.sw::after`（小开关的滑块）是现成先例。
+   ⚠️ 这里原先还举了第二个例子 `.btn-share::after` —— 第二十六处把那组
+      样式整组删了（那个分享按钮从没做过），所以这个例子也一并去掉了，
+      ⛔ 别再写回来。
    ⚠️ 尺寸全部用【百分比】：`.ava`(97rpx) 和 `.ava.sm`(88rpx) 共用同一套比例，
       改一处尺寸不用改第二处像素。
    ⚠️ `overflow:hidden` 不能省 —— 肩膀是故意画到圆外面的，靠它裁成圆弧。

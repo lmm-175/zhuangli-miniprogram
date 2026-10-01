@@ -42,14 +42,13 @@ Page({
     //    page 模块【不会重新执行】，隔一夜再进来会拿昨天的日期当「今天」。
     this.setData({ isTemplate, title: isTemplate ? '新建模板' : '新建档期', 'form.date': today() })
 
-    // 用微信原生转发（右上角「···」菜单），并开启 shareTicket 以获取群转发信息。
-    // 这里不设任何自定义分享按钮 —— 分享只走微信小程序自带的。
-    if (wx.showShareMenu) {
-      wx.showShareMenu({
-        withShareTicket: true,
-        menus: ['shareAppMessage']
-      })
-    }
+    /* 🔴 2026-10-02（第二十六处）：这里原来有一句
+       `wx.showShareMenu({ withShareTicket: true, menus: ['shareAppMessage'] })`，
+       **整块删了** —— 它不是「开启转发」的开关（转发按钮出不出现只看
+       本页有没有定义 `onShareAppMessage`，本页现在走 utils/share.js 的
+       shareCard，见规矩 41），它开的那个 `withShareTicket` 也只是把群标识
+       塞给 app.js 去 `console.log`（那段也一起删了）。留着它等于让
+       《隐私保护指引》多申报一条实际没人用的数据。 */
 
     this.refreshPreview()
   },

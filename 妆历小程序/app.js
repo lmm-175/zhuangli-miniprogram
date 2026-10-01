@@ -1,5 +1,4 @@
 const ROLE_KEY = 'zhuangli_role'   // 'artist'（妆师）| 'guest'（约妆）
-const SHARE_KEY = 'zhuangli_share_ticket'
 
 const { initCloud } = require('./utils/cloud')
 
@@ -28,28 +27,18 @@ App({
     initCloud()
   },
 
-  /**
-   * 群转发信息（shareTicket）：
-   * 页面开启 wx.showShareMenu({ withShareTicket: true }) 后，
-   * 转发卡片在群聊被他人打开时，此处 options.shareTicket 会带值。
-   * M0 只把 shareTicket 留存，并调 wx.getShareInfo 示意拿到转发信息
-   * （返回 encryptedData / iv，解密需登录态 openid，M1 在服务端做）。
-   */
-  onShow(options) {
-    if (!options || !options.shareTicket) return
-    wx.setStorageSync(SHARE_KEY, options.shareTicket)
-    if (wx.getShareInfo) {
-      wx.getShareInfo({
-        shareTicket: options.shareTicket,
-        success: (res) => {
-          // res.encryptedData / res.iv —— M1 拿 openid 后服务端解密获取群信息。
-          // M0 纯前端只确认链路能通，不落库原始密文。
-          console.log('getShareInfo ok', res.errMsg)
-        },
-        fail: () => {}
-      })
-    }
-  },
+  /* 🔴 2026-10-02（第二十六处）：这里原来有一个 `onShow(options)`，干的事是
+     把 `options.shareTicket` 存进 storage、再调一次 `wx.getShareInfo`。
+     **整块删了**，两个理由：
+       ① 它**什么也没做** —— `wx.getShareInfo` 从基础库 2.17.3 起就
+          **停止维护**（官方替代 `wx.getGroupEnterInfo`），而且就算成功，
+          这里也只有一句 `console.log`，没有任何功能依赖它；
+       ② 它**谎报了一件事** —— 那段代码让《隐私保护指引》里必须申报
+          「缓存群标识（shareTicket）」，而实际缓存下来没有任何用途。
+          用户 2026-10-02 当场说「清」，指引里那条也跟着删了。
+     ⚠️ 它和「小程序能不能转发」**毫无关系** —— 转发按钮出不出现只看
+        页面有没有定义 `onShareAppMessage`（见 utils/share.js / 规矩 41）。
+         当年把它误当成「接入转发代码」写进来，是一处**因果错认**。 */
 
   globalData: {
     // 本次会话当前身份；持久化走 storage（ROLE_KEY）。

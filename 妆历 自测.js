@@ -5721,6 +5721,85 @@ console.log('\n════ ⑪ 转发卡片（每页都要有 onShareAppMessage
     stripJs("const u = 'https://example.com/x'; const k = shareCard;").indexOf('shareCard') >= 0, true)
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   ⑫ 遗留死代码已清（第二十六处 · 规矩 42）
+   ──────────────────────────────────────────────────────────────────────
+   用户 2026-10-02 一句「清」，删掉的是三块**同源**的东西：一块是当年照着
+   「接入转发代码」抄进来的 `shareTicket` 链路（`app.js` + `schedule-edit.js`），
+   一块是为那个**从没造出来**的 `<button open-type="share">` 先写好的
+   `.btn-share` 样式。
+   它们最坏的地方不是占地方 —— 是那块死代码**逼着《隐私保护指引》申报
+   一条实际不存在的收集行为**（「缓存群标识」）。所以这一段钉两个方向：
+     ① 代码里不许再出现（⛔ 一旦谁加回来，指引又得跟着说谎）；
+     ② 指引里那条要**明写着「已撤销」**，⛔ 不是悄悄删 —— 不然下次有人
+        照旧版文档又补回去（这一条本项目在「作品图片 / 手机号」上已有先例）。
+   ⚠️ 扫 .wxss / .md 之前先摘各自的注释（规矩 35 的同一个坑），
+      否则上面那些解释用的注释会被当成违规（假阳性）。
+   ══════════════════════════════════════════════════════════════════════ */
+console.log('\n════ ⑫ 遗留死代码已清（shareTicket / .btn-share）════')
+{
+  const fs = require('fs')
+  const stripJs = (s) => String(s)
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/gm, '$1')
+  const stripCss = (s) => String(s).replace(/\/\*[\s\S]*?\*\//g, '')
+
+  const read = (rel) => fs.readFileSync(R('妆历小程序/' + rel), 'utf8')
+  const appJs = stripJs(read('app.js'))
+  const setJs = stripJs(read('pages/schedule-edit/schedule-edit.js'))
+
+  eq('🔴★ app.js 不再缓存 shareTicket（那是一条没人用的收集）',
+    /shareTicket|SHARE_KEY|getShareInfo/.test(appJs), false)
+  eq('🔴★ app.js 不再有 onShow（存 shareTicket 是它唯一在做的事）',
+    /\bonShow\b/.test(appJs), false)
+  eq('🔴★ schedule-edit.js 不再调 wx.showShareMenu',
+    /showShareMenu/.test(setJs), false)
+  eq('🔴★ app.wxss 里那组 .btn-share 已删净（摘注释后）',
+    /\.btn-share/.test(stripCss(read('app.wxss'))), false)
+
+  const walk = (d, out) => {
+    fs.readdirSync(R('妆历小程序/' + d)).forEach((n) => {
+      if (n === 'node_modules' || n.charAt(0) === '.') return
+      const rel = d ? d + '/' + n : n
+      if (fs.statSync(R('妆历小程序/' + rel)).isDirectory()) walk(rel, out)
+      else out.push(rel)
+    })
+    return out
+  }
+  const allFiles = walk('', [])
+  /* ⚠️ 只扫【源码】四种后缀，⛔ 不扫 .md —— README / 指引里本来就
+     在**用文字讲这件事**（「⛔ 没有任何 `open-type="share"` 按钮」），
+     那是说明，不是代码。第一版没排除 .md 就误报了 README（假阳性）。 */
+  const SRC = /\.(js|json|wxml|wxss)$/
+  const srcFiles = allFiles.filter((f) => SRC.test(f))
+  const stripFor = (f, src) => {
+    if (/\.wxss$/.test(f)) return stripCss(src)
+    if (/\.wxml$/.test(f)) return String(src).replace(/<!--[\s\S]*?-->/g, '')
+    return stripJs(src)     // .js / .json
+  }
+  eq('★ 全项目源码里没有一处 open-type="share"（分享只走右上角菜单）',
+    srcFiles.filter((f) => /open-type\s*=\s*["']share["']/.test(stripFor(f, read(f)))), [])
+  eq('★ 全项目 wxml 里一个 <button> 都没有（那个需求确定不做）',
+    allFiles.filter((f) => /\.wxml$/.test(f) && /<button/.test(read(f))), [])
+  /* 🔴 上面那条的第一版把 README.md 报了出来 —— 那是**用文字在讲这件事**，
+     不是代码。这条把那个假阳性钉住（同一个教训见规矩 41 的 `url:` 那条）。 */
+  eq('🔴★ 扫描器自检：.md 不算源码（否则「文档里提到它」会被当成「代码里有它」）',
+    [SRC.test('README.md'), SRC.test('妆历 隐私保护指引（提审用）.md')], [false, false])
+
+  /* ── 指引那边的两条，扫的是【根目录】那份 .md ───────────────────── */
+  const priv = fs.readFileSync(R('妆历 隐私保护指引（提审用）.md'), 'utf8')
+  eq('🔴★ 隐私指引里不再申报「缓存群标识（shareTicket）」',
+    /（shareTicket）|群标识，避免重复填写/.test(priv), false)
+  eq('🔴★ 而且那条要明写着「整条撤销」，⛔ 不是悄悄删掉',
+    priv.indexOf('整条撤销') >= 0, true)
+
+  /* ── 扫描器自检（规矩 35）：摘 CSS 注释这一手本身要能被验 ────────── */
+  eq('★ 扫描器自检：CSS 块注释里的 .btn-share 不算数（反例不算违规）',
+    /\.btn-share/.test(stripCss('/* .btn-share{flex:1} */\n.btn{color:blue}')), false)
+  eq('🔴★ 扫描器自检：真写了 .btn-share 必须认得出（否则上面那条是恒真）',
+    /\.btn-share/.test(stripCss('.btn-share{flex:1}')), true)
+}
+
 restoreBookings()
 
 console.log('\n' + (fail ? 'FAILED ' + fail + ' / ' : 'ALL PASS ') + (pass + fail) + ' assertions\n')
