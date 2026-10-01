@@ -2275,8 +2275,28 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
         这条钉的仍然是「真入口过来的那个妆位，填写页认得出来」，
         变的只是妆位身份怎么表达（`slot_id` 是那份已退役的冻结夹具才有的东西）。
      ⚠️ 用 sched-demo-0502 的第 2 位：它就是老夹具里 `demo-s2` 的对应物
-        （同一个漫展、同一个时段），换上去期望的文案一个字都不用改。 */
-  const USER_OPEN = { schedule_id: 'sched-demo-0502', seq: 2 }
+        （同一个漫展、同一个时段），换上去期望的文案一个字都不用改。
+
+     🔴🔴 2026-10-01（第二十三处）：**那个写死的「第 2 位」是个坏测试数据，
+        这一轮把它换掉了。** 第 2 位正是 `bk-2`（已确认）占着的 ——
+        也就是说这几条一直在拿一个**已经被预订的妆位**走「提交成功」那条路。
+        在顾客提交不建单、也没有并发重查的年代它照绿不误；
+        第二十三处把这两样都补上之后，它当场被拦住、整段崩在
+        「定时器没排上」上。⇒ 它**从来没验过「顾客真能约上一个空位」**。
+        ⚠️ 所以现在不再写死序号，而是**当场算一个空位**：
+           写死的话，示例数据一动、或前面哪一段多占了一个位，
+           这一段就会以「定时器没排上」的样子崩掉 —— 而崩的原因
+           跟它要保的性质（提交成功要能走通）毫无关系。
+        ⚠️ 前面那条 `eq` 就是给这个计算**兜底**的：真一个空位都没有时，
+           它先红，而不是等到 `.seq` 上抛一个看不出所以然的 TypeError。 */
+  const _s502 = getSchedules().filter((s) => s.schedule_id === 'sched-demo-0502')[0]
+  const _free502 = (((_s502 || {}).slots) || [])
+    .filter((x) => !x.is_break && BS.bookedSeqsOfSchedule(_s502).indexOf(x.seq) < 0)
+  eq('🔴★ 测试自己先站稳：sched-demo-0502 上必须真空着一个妆位',
+    _free502.length > 0, true)
+  const USER_OPEN = { schedule_id: 'sched-demo-0502', seq: _free502[0].seq }
+  const USER_TEXT = '示例漫展 · 第 ' + _free502[0].seq + ' 位 · ' +
+    _free502[0].start + ' – ' + _free502[0].end
 
   reopen(USER_OPEN)
   eq('★ 顾客自填：CN 预填好（审核员一键可提交）', pg.data.form.cn, '千夏')
@@ -2286,7 +2306,7 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
   type('cn', '洛霞')
   eq('输入框写的是同一个字段', pg.data.form.cn, '洛霞')
   eq('★ 顾客自填：妆位是 C1 上定好的那一个，卡片上直接写出来',
-    pg.data.slotText, '示例漫展 · 第 2 位 · 10:30 – 11:50')
+    pg.data.slotText, USER_TEXT)
   eq('★ 而且没有「妆位没找到」这个标记', pg.data.slotMissing, false)
 
   // 顾客自填：查询串带了个不存在的妆位 → 拦住，⛔ 不是随便挑一个顶上
@@ -2359,6 +2379,45 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
     navs[0], '/pages/guest-bookings/guest-bookings')
   eq('🔴★ 而且没有再顺手 redirectTo 一次（那条路在 tab 页上是静默失败）',
     redirs.length, 0)
+
+  /* ══ 🔴🔴 2026-10-01（第二十三处）：顾客提交**真建了一张单** ══════════
+     用户原话：「约完了这个妆位还可以再约，也没有变灰」。
+     根因 = `addBooking` 整块被包在 `mode === 'artist'` 里，顾客那一边
+     提交只弹了一句 toast。C1 那一行的被占判据 `bookedSeqsOfSchedule()`
+     读的就是这个数组 —— 没有单，那个位永远「可约」，能被反复约走。
+     ⚠️ 两问**缺一不可**：①位子真占上了 ②同一个位子再约一次**约不走**。
+        只写 ① 的话，「建了单但不查重」照样绿。 */
+  const _afterSubmit = BS.getBookings().length
+  const _gNew = BS.getBookings()[_afterSubmit - 1]
+  eq('🔴★ 顾客提交 → 真建了一张单（原先一条记录都没有）',
+    _afterSubmit, snap7.length + 1)
+  eq('🔴★ 而且是「我的单」：created_by 必须是 user（改一个字，他刚提交的单' +
+     '当场从自己列表里消失）', _gNew.created_by, 'user')
+  eq('🔴★ 那个妆位当场被占上（C1 那一行的灰底 +「已被预订」读的就是它）',
+    BS.bookedSeqsOfSchedule(_s502).indexOf(USER_OPEN.seq) >= 0, true)
+
+  const _beforeAgain = BS.getBookings().length
+  toasts.length = 0
+  pg.onSubmit()
+  eq('🔴★ 同一个妆位再约一次 → 拦住（用户原话「约完了还可以再约」）',
+    /刚被约走了/.test(toasts[0]), true)
+  eq('🔴★ 而且【没有再建第二张单】', BS.getBookings().length, _beforeAgain)
+  eq('★ 卡片上也跟着改成「已经被预订了」',
+    pg.data.slotText, '这个妆位已经被预订了')
+
+  /* 🔴 规矩 39：这个入口的参数里带了「是哪一位」⇒ 测试至少要喂两位。
+     单挂错人**一个字都不报** —— 阿黎那页下的单记到 demo 名下，
+     顾客端「我约过的妆娘」会凭空多出一个他没约过的人。 */
+  const _mt = ((((require(R('妆历小程序/utils/artistStore.js'))
+    .scheduleById('sched-mian-0701') || {}).slots) || []))
+    .filter((x) => !x.is_break && x.seq !== 1)[0]
+  reopen({ schedule_id: 'sched-mian-0701', seq: _mt.seq, artist_id: 'demo-mian' })
+  pg.onSubmit()
+  eq('🔴★ 在别人（demo-mian）的页面上约 → 单子挂她名下，⛔ 不是兜底成 demo',
+    BS.getBookings()[BS.getBookings().length - 1].artist_id, 'demo-mian')
+  /* ⚠️ 这一单也排了个 1.8 秒后跳「我的预约」的定时器 —— 不放掉的话，
+     它会留在 timers 里，害 ⑤ 段那条「代填完退回妆师端」多数出一个。 */
+  flush()
 
   /* ══════════════════════════════════════════════════════════════════
      ⑤ 妆师端「代填」（2026-09-30 第十七处大改）
@@ -4851,8 +4910,12 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   /* 🔴 这一条和填写页那边是**一对**（⑦ 段的 USER_OPEN）。查询串的字段名
      写错一个字，后果不是报错 —— 是每一位顾客都被告诉
      「这个妆位已经不在了」（出声了，但那句话是假的）。 */
-  eq('🔴★ 点「选这个妆位」→ 查询串是 ?schedule_id=&seq=（⛔ 不是 slot_id）',
-    nav10.join(','), '/pages/booking-form/booking-form?schedule_id=sched-demo-0503&seq=3')
+  /* 🔴 2026-10-01（第二十三处）：查询串里多了 `&artist_id=` ——
+     填写页提交时要拿它建单（少了它，填单页会兜底成 'demo'，
+     在别人页面上下单、单子记到 demo 名下）。⛔ 三个字段缺一不可。 */
+  eq('🔴★ 点「选这个妆位」→ 查询串是 ?schedule_id=&seq=&artist_id=（⛔ 不是 slot_id）',
+    nav10.join(','),
+    '/pages/booking-form/booking-form?schedule_id=sched-demo-0503&seq=3&artist_id=demo')
   eq('★ 而且 landDemo 上⛔ 没有再挂一个 slot_id 的写法',
     /slot_id/.test(stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))), false)
 
@@ -4940,7 +5003,15 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
           } else if (bf.data.slotText !== nm + ' · 第 ' + r.seq + ' 位 · ' + r.start + ' – ' + r.end) {
             AB2_BAD.push(aid + '/' + c.id + '/seq' + r.seq + ' 文案对不上：' + bf.data.slotText)
           }
-          if (!/\?schedule_id=[^&]+&seq=\d+$/.test(url)) AB2_BAD.push('查询串形状不对：' + url)
+          /* 🔴 2026-10-01（第二十三处）：查询串里必须带 `artist_id`，
+             而且**必须就是这一页那一位** —— 光看「有没有这个字段」不够：
+             pickSlot 里写成别的常量（或漏传）时，顾客在阿黎那页下的单
+             会挂到 demo 名下，而这个错**在这条路上一个字都不报**。 */
+          if (!/\?schedule_id=[^&]+&seq=\d+&artist_id=[^&]+$/.test(url)) {
+            AB2_BAD.push('查询串形状不对：' + url)
+          } else if (url.split('artist_id=')[1] !== aid) {
+            AB2_BAD.push('带错人了（这一页是 ' + aid + '）：' + url)
+          }
         })
     })
   })

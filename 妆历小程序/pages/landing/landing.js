@@ -277,8 +277,14 @@ Page({
    */
   pickSlot(e) {
     const d = e.currentTarget.dataset
+    /* 🔴 2026-10-01（第二十三处）：把 `artist_id` 一起带过去 —— 填写页提交时
+       要拿它建单。⛔ 不能省：不带的话 `buildBooking` 兜底成 'demo'，
+       于是**在别人页面上下单、单子记到 demo 名下** —— 顾客端「我约过的妆娘」
+       凭空多出一个他没约过的人，妆师端那一场的「N 人已预约」也不加。
+       ⚠️ 和 `booking-form.js` 的 onLoad 是【同一步】改的。 */
     wx.navigateTo({
-      url: '/pages/booking-form/booking-form?schedule_id=' + d.sid + '&seq=' + d.seq
+      url: '/pages/booking-form/booking-form?schedule_id=' + d.sid +
+           '&seq=' + d.seq + '&artist_id=' + this.artistId
     })
   },
 

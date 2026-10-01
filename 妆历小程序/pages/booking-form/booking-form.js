@@ -231,6 +231,13 @@ Page({
                **一路绿着放过了**；本轮补的那条是把三位妆娘各走一遍整条路。 */
       const s = scheduleById(options.schedule_id || '')
       const seq = Number(options.seq || 0)
+      /* 🔴 2026-10-01（第二十三处）：把「这一单挂在哪」记在**实例**上 ——
+         提交时要用它建单。⛔ 不进 data：这几样界面一个都不画。
+         ⚠️ `artist_id` 由 C1 的 pickSlot 带过来。缺省 'demo' 只为兼容
+            老分享卡片；⛔ 别把它当成常态（见 landing.js pickSlot 的注释）。 */
+      this.artistId = options.artist_id || 'demo'
+      this.schedId = options.schedule_id || ''
+      this.seq = seq
       const slot = s ? (s.slots || []).filter((x) => x.seq === seq)[0] : null
       if (slot) {
         patch.slotText = s.name + ' · 第 ' + slot.seq + ' 位 · ' + slotTimeOf(slot)
@@ -316,6 +323,10 @@ Page({
    */
   onSubmit() {
     const f = this.data.form
+    /* 顾客那一支在这里查出「这一场 + 这一个妆位」，下面建单时用它。
+       ⚠️ 声明在外面是因为建单那段在两次校验之后 —— 中间不想再查一遍。 */
+    let gS = null
+    let gSlot = null
 
     /* ══ 妆师端「代填」：妆位相关的两道闸，排在【最前面】══════════════════
        🔴 为什么排最前：她点「提交」时如果妆位还没选，那是最该先说的事 ——
@@ -371,6 +382,27 @@ Page({
             那正是这一轮修掉的那个 bug。 */
       wx.showToast({ title: '这个妆位已经不在了，请从分享页重新选', icon: 'none', duration: 1800 })
       return
+    } else {
+      /* 🔴 2026-10-01（第二十三处）：顾客这一支也要**并发重查**（规矩 14：
+         挑选时和提交时必须同一个判据）。
+         ⚠️ 这一支原先**一条都没有** —— 妆师端那两道闸一直在，顾客这边是空的。
+            少了它，「同一位被另一个客人（或同一个人点两次）约走」是必然的。
+         ⚠️ 顺序照妆师端：**先看这一场还在不在，再看妆位有没有人** ——
+            这两句说的是两件事，先说哪句决定他被要求先做什么。 */
+      const sc = scheduleById(this.schedId)
+      const sl = sc ? (sc.slots || []).filter((x) => x.seq === this.seq)[0] : null
+      if (!sc || !sl) {
+        this.setData({ slotMissing: true, slotText: '这个妆位已经不在了' })
+        wx.showToast({ title: '这个妆位已经不在了，请从分享页重新选', icon: 'none', duration: 1800 })
+        return
+      }
+      if (bookedSeqsOfSchedule(sc).indexOf(this.seq) >= 0) {
+        this.setData({ slotMissing: true, slotText: '这个妆位已经被预订了' })
+        wx.showToast({ title: TOAST.SLOT_TAKEN, icon: 'none', duration: 1800 })
+        return
+      }
+      gS = sc
+      gSlot = sl
     }
 
     /* ⚠️ CN 单独报一次，不并进下面那句「请填写角色名和微信号」（2026-09-29 加）：
@@ -409,10 +441,31 @@ Page({
           而它走 getBookings() 这个唯一的读入口。⛔ 不许在这儿另算一遍张数。
        ⚠️ 妆位身份 = (schedule_id, seq)，**没有 slot_id**（那是顾客端
           C1 夹具才有的东西）。buildBooking 里会把 slot_id 留成空串。 */
+    /* 两个角色**共用**的那几项（妆感 / 角色 / 联系方式 / 未成年），一模一样。
+       ⚠️ 抽出来不是为整洁：两处各抄一份的话，以后加一个字段只改了一边，
+          就会出现「顾客点的妆感在详情页是空的」—— 而那种空白跟「他没选」
+          长得一模一样，没人会当成 bug 来报。 */
+    const common = {
+      role: f.role,
+      cn: f.cn,
+      eye: onNames(this.data.eyeTypes),
+      skin: onNames(this.data.skinTypes),
+      gender: (this.data.genders.filter((g) => g.on)[0] || {}).name || '',
+      is_minor: this.data.isMinor,
+      guardian_consent: this.data.guardian,
+      styles: this.data.styleGroups.reduce((acc, g) => acc.concat(onNames(g.items)), []),
+      extra: this.data.extras.filter((x) => x.on)
+        .map((x) => ({ name: x.name, price: x.price, need_self_supply: x.need_self_supply })),
+      note: f.note,
+      wechat: f.wechat,
+      phone: f.phone
+    }
+
     if (this.data.mode === 'artist') {
       const s = getSchedule(this.data.pickedSched)
       const slot = (s.slots || []).filter((x) => x.seq === this.data.pickedSeq)[0]
       addBooking(buildBooking({
+        ...common,
         artist_id: 'demo',
         schedule_id: s.schedule_id,
         event: s.name,
@@ -420,20 +473,33 @@ Page({
         slot_time: slotTimeOf(slot),
         seq: slot.seq,
         created_by: 'artist',
-        role: f.role,
-        cn: f.cn,
-        eye: onNames(this.data.eyeTypes),
-        skin: onNames(this.data.skinTypes),
-        gender: (this.data.genders.filter((g) => g.on)[0] || {}).name || '',
-        is_minor: this.data.isMinor,
-        guardian_consent: this.data.guardian,
-        styles: this.data.styleGroups.reduce((acc, g) => acc.concat(onNames(g.items)), []),
-        extra: this.data.extras.filter((x) => x.on)
-          .map((x) => ({ name: x.name, price: x.price, need_self_supply: x.need_self_supply })),
-        note: f.note,
-        wechat: f.wechat,
-        phone: f.phone,
         status: 'confirmed',
+        deposit_paid: false
+      }))
+    } else {
+      /* 🔴 2026-10-01（第二十三处）：**顾客自填也要真建一张单。**
+         原先这一整块被包在 `mode === 'artist'` 里 —— 顾客那一边提交只弹了
+         一句 toast，一条记录都没有。后果就是用户报的那句原话：
+         「约完了这个妆位还可以再约，也没有变灰」。
+         ⚠️ 为什么建了单就会变灰：C1 那一行的被占判据是
+            `bookedSeqsOfSchedule()`，它读的就是这个数组 —— 没有单，
+            那个位就永远是「可约」。
+         ⚠️ `created_by: 'user'` + `status: 'pending'` 一个字都不能改：
+            顾客端「我的预约」和「我约过的妆娘」两层都按 `created_by` 认人
+            （改一个字，他刚提交的这张单当场从自己的列表里消失）。
+            M1 上云之后 `status` 就是审核员唯一能看见的处理状态。
+         ⚠️ `artist_id` 用 C1 带过来的**那一位**，⛔ 不许兜底成 'demo'
+            （在别人页面上下单、单子记到 demo 名下，见 onLoad 那段注释）。 */
+      addBooking(buildBooking({
+        ...common,
+        artist_id: this.artistId,
+        schedule_id: gS.schedule_id,
+        event: gS.name,
+        date: gS.date,
+        slot_time: slotTimeOf(gSlot),
+        seq: gSlot.seq,
+        created_by: 'user',
+        status: 'pending',
         deposit_paid: false
       }))
     }
