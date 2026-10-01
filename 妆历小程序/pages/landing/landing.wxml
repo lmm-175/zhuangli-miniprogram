@@ -1,5 +1,6 @@
 <!-- C1 分享落地页（妆位页）· 提审截图 ② · 无需登录
      落点：分享卡片的 path /pages/landing/landing?artist_id=demo
+           （也由「我约过的妆娘」列表页每一行点进来，各带各的 artist_id）
 
      本质是「这个化妆师的个人页」，不是作品广场 ——
      ⛔ 没有点赞、评论、收藏、浏览数、转发数，没有「更多作品」入口（红线 1）
@@ -39,30 +40,94 @@
       </view>
     </view>
 
-    <!-- ② 妆面样片（M0 是占位块）
-         ⚠️ 只用「占位图」三个字，不带编号 —— 任何计数都构成
-            「可枚举的公开内容区」。 -->
-    <view class="sec-ttl">妆面样片</view>
-    <view class="card tight">
-      <view class="work-grid">
-        <view class="work">占位图</view>
-        <view class="work">占位图</view>
-        <view class="work">占位图</view>
+    <!-- ② 🔴 2026-10-01（第二十处）：这里原本是「妆面样片」三个占位块，
+         **整块删掉**（用户决定 D8），连带 app.wxss 的 `.work-grid` / `.work`。
+         ⚠️ 为什么是删而不是接真图：个人主体没有「社交-笔记 / 社区」类目，
+            用户上传的图片给别人看正落在驳回原话那条线上（第十五处已为同一件事
+            删掉整个「我的作品」板块）。⇒ 这一页不再有任何图片位，
+            **将来谁想把它加回来，先去看 README 第十五处和规矩 36。**
+         📌 简介留在【妆位表下面】不动（D8），⛔ 不搬到样片原来的位置 ——
+            这一页的头等大事是「选这个妆位」，200 字摆上去会把它挤到首屏外。 -->
+
+    <!-- ③ 场次筛选（2026-10-01 第二十处新增）· 妆位表的正上方
+         ⚠️ 为什么放在妆位表【正上方】而不是整页最顶上：它筛的是下面那张表，
+            贴在表上头才看得出它管的是哪一块（妆师端那条条子在页面最顶上，
+            是因为那边它管的还有搜索，是整页的控件）。
+         ⚠️ 整条（文字 + 右边那个 ▾）都能点开面板 —— 妆师端那条只有左边那点
+            文字可点，右边大片空白看着像按钮、点下去没反应（Request O 的形状）。
+         ⚠️ `.sched-bar.sb-card` 那个变体见 app.wxss：这一页的 body 有内边距，
+            条子得当一张卡看，⛔ 不是照抄妆师端那条通栏的。 -->
+    <view wx:if="{{schedList.length > 1}}" class="sched-wrap">
+      <view class="sched-bar sb-card">
+        <view class="sb-pick" bindtap="toggleSched" hover-class="btn-hover" hover-stay-time="80">
+          <text class="sb-lb">{{schedLabel}}</text>
+        </view>
+        <view class="sb-arw" bindtap="toggleSched" hover-class="btn-hover" hover-stay-time="80">
+          <view class="sb-ar {{schedOpen ? 'up' : ''}}"></view>
+        </view>
+      </view>
+
+      <!-- 点面板以外的地方收起它。⚠️ 铺满整屏的透明层，z-index 要比面板低一档；
+           条子自己带 z-index:21 压住它，所以开着的时候条子仍然点得动。 -->
+      <view wx:if="{{schedOpen}}" class="pn-mask" bindtap="closePanel"></view>
+
+      <!-- 场次清单。⚠️ 绝对定位【浮】在妆位表上面，⛔ 不占流 ——
+           占流的话展开/收起会把下面整块内容顶下去又拉回来，而顾客正盯着它选。 -->
+      <view wx:if="{{schedOpen}}" class="drop-panel">
+        <view class="sp-list">
+          <view wx:for="{{schedList}}" wx:key="id"
+                class="sp-item {{schedId === item.id ? 'on' : ''}}"
+                data-id="{{item.id}}" bindtap="pickSched" hover-class="btn-hover" hover-stay-time="80">
+            <text class="sp-nm">{{item.label}}</text>
+            <text class="sp-sub">{{item.sub}}</text>
+          </view>
+        </view>
       </view>
     </view>
 
-    <!-- ③ 可约妆位表 -->
-    <view class="sec-ttl">可约妆位 · {{schedule.name}}</view>
-    <view class="grp">
-      <view wx:for="{{slots}}" wx:key="slot_id" class="slot-row {{item.busy ? 'busy' : ''}}">
-        <view class="sq">{{item.seq}}</view>
-        <view class="tm">{{item.time}}<text class="sub">{{item.busy ? '已被约' : '可约'}}</text></view>
-        <view wx:if="{{item.busy}}" class="btn xs dis">已约</view>
-        <view wx:else class="btn pri xs" data-id="{{item.slot_id}}" bindtap="pickSlot" hover-class="btn-hover" hover-stay-time="80">选这个妆位</view>
-      </view>
+    <!-- ④ 可约妆位表
+         📌 2026-10-01（第二十处）：行不再来自写死的夹具，而是这一场档期的真妆位
+            + 真预约单。顺序 = 可约的按时间在前、被占的灰着沉底、午休按自己的
+            时间待在可约那一段里（判据在 landing.js 的 rowsOf()）。
+         ⚠️ 行是【混合】的（妆位 / 午休两种 type），所以 wx:for 的 key 用
+            buildRows 给的 `key`（'s3' / 'L'），⛔ 不用 seq（午休行的 seq 是空串）。 -->
+    <view class="sec-ttl">{{secTitle}}</view>
+    <view wx:if="{{rows.length}}" class="grp">
+      <block wx:for="{{rows}}" wx:key="key">
+        <!-- 午休：独立一行，浅蓝，比妆位显眼。⚠️ 它没有按钮、也不灰 ——
+             它不是「可约」也不是「被占」，是这段时间不接单。 -->
+        <view wx:if="{{item.type === 'lunch'}}" class="slot-row lunch-row">
+          <view class="sq">休</view>
+          <view class="tm">
+            <view class="lt">午休 {{item.start}} – {{item.end}}</view>
+            <text class="sub">休息 {{item.minutes}} 分钟</text>
+          </view>
+        </view>
+        <view wx:else class="slot-row {{item.booked ? 'busy' : ''}}">
+          <view class="sq">{{item.seq}}</view>
+          <view class="tm">{{item.start}} – {{item.end}}<text class="sub">{{item.booked ? '已被约' : '可约'}}</text></view>
+          <view wx:if="{{item.booked}}" class="btn xs dis">已约</view>
+          <!-- 🔴 2026-10-01（第二十处第 ⑥ 步）：带过去的两个参数是
+               `(schedule_id, seq)`，⛔ 不再是 `slot_id`（那是冻结夹具的东西）。
+               ⚠️ `schedId` 就是这张表当前那一场 —— 两个 data 属性同源，
+                  免得出现「妆位是 A 场的、场次名是 B 场的」。
+               ⚠️ `booking-form` 那边是【同一步】改的，见 landing.js 的 pickSlot。 -->
+          <view wx:else class="btn pri xs" data-sid="{{schedId}}" data-seq="{{item.seq}}" bindtap="pickSlot" hover-class="btn-hover" hover-stay-time="80">选这个妆位</view>
+        </view>
+      </block>
     </view>
 
-    <!-- ④ 预期说明条 · 常驻 · 不可点
+    <!-- 空态：一场可约的都没有。
+         ⚠️ 只说这一件事，⛔ 不写「去看看别的妆娘」之类的引导 ——
+            这一页是「某某的妆位」，顾客是奔着她来的，
+            劝他去看别人既答非所问，又是在这一页上开一个「发现」的口子（README §3.7）。 -->
+    <view wx:else class="empty">
+      <text class="ic">📅</text>
+      <view class="et">这位妆娘还没有可约的妆位</view>
+      <view style="font-size:26rpx">等她把档期发出来，这里就能选了</view>
+    </view>
+
+    <!-- ⑤ 预期说明条 · 常驻 · 不可点
          📌 这是产品必需的，不是装饰：化妆师拒绝顾客时没有任何通道能通知他，
             必须在落地页就把预期说清楚。它同时替掉了那条发不出去的订阅消息。
          ⚠️ 它必须【紧挨着妆位表】—— 所以下面那段简介是加在它**后面**的，
@@ -72,7 +137,7 @@
       <text>提交后化妆师会主动联系你。<text style="font-weight:600">如果你填完很久没人联系，可以直接加化妆师的微信。</text></text>
     </view>
 
-    <!-- ⑤ 简介（2026-09-30 第十七处新增）· 妆娘自己写的一段字
+    <!-- ⑥ 简介（2026-09-30 第十七处新增）· 妆娘自己写的一段字
          🔴 为什么排在【妆位表下面】而不是上面：这一页的头等大事是
             「选这个妆位」（界面稿 §9.4 的 #9/#10），200 字摆上去会把它
             挤到首屏外。简介是「想多了解她的人往下看」的东西，本来就该在后面。

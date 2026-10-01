@@ -1,5 +1,4 @@
 const {
-  SCHEDULE, SLOTS,
   EYE_TYPES, SKIN_TYPES, GENDERS,
   STYLE_GROUPS, EXTRA_SERVICES
 } = require('../../mock/data')
@@ -199,9 +198,21 @@ Page({
       patch.schedLabels = sOpts.map((x) => x.label)
       patch.noSchedule = !sOpts.length
     } else {
-      const slot = SLOTS.filter((s) => s.slot_id === (options.slot_id || ''))[0]
+      /* 🔴 2026-10-01（第二十处第 ⑥ 步）：顾客自填这一支，妆位身份从
+         `?slot_id=` 换成 `?schedule_id=&seq=`。
+         妆位的身份**一直是** `(schedule_id, seq)` —— `slot_id` 只是
+         mock 里那个冻结夹具（`SLOTS`）的字段，夹具退役之后
+         `buildBooking()` 里的 `slot_id` 也一直是空串。
+         ⚠️ 和 `pages/landing/landing.js` 的 `pickSlot` 是【同一步】改的：
+            只改一边的话，每一个选完妆位进来的顾客看到的都是下面那句
+            「这个妆位已经不在了」—— 出声了，但说的是错话，比静默更糟。
+         ⚠️ 下面 `slotMissing` 那两支兜底一个字没改，判据照旧：查不到就出声，
+            ⛔ 不许挑一个顶上（规矩 22）。 */
+      const s = getSchedule(options.schedule_id || '')
+      const seq = Number(options.seq || 0)
+      const slot = s ? (s.slots || []).filter((x) => x.seq === seq)[0] : null
       if (slot) {
-        patch.slotText = SCHEDULE.name + ' · 第 ' + slot.seq + ' 位 · ' + slot.time
+        patch.slotText = s.name + ' · 第 ' + slot.seq + ' 位 · ' + slotTimeOf(slot)
       } else {
         patch.slotMissing = true
         patch.slotText = '这个妆位已经不在了'

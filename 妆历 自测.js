@@ -2264,14 +2264,19 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
   }
   // 表单字段走的是同一个 onInput（data-k 决定写哪个字段）
   const type = (k, v) => pg.onInput({ currentTarget: { dataset: { k } }, detail: { value: v } })
-  /* 🔴 顾客自填必须**带一个真 slot_id** 打开 —— 这几行原先写的是 `reopen({})`，
-     靠的正是那个「找不到就静默回落到 SLOTS[1]」的实现。那个回落这一轮被删掉了
+  /* 🔴 顾客自填必须**带一个真妆位**打开 —— 这几行原先写的是 `reopen({})`，
+     靠的正是那个「找不到就静默回落到 SLOTS[1]」的实现。那个回落第十七处被删掉了
      （它是妆师端代填挂错漫展的成因），于是这几条当场变红。
      ⚠️ 这恰好说明「旧版这几条断言在验什么」：它们在验一个**不存在的路径** ——
-        真实入口 pages/landing/landing.js 的 pickSlot 永远会带 slot_id 过来。
-        改成带 slot_id 之后，测的才是顾客真走的那条路。
-     ⚠️ 用 demo-s2：它就是老回落 `SLOTS[1]` 挑中的那一个，换上去行为不变。 */
-  const USER_OPEN = { slot_id: 'demo-s2' }
+        真实入口 pages/landing/landing.js 的 pickSlot 永远会带妆位过来。
+        改带妆位之后，测的才是顾客真走的那条路。
+     🔴 2026-10-01（第二十处第 ⑥ 步）：写法从 `?slot_id=demo-s2` 换成
+        `?schedule_id=&seq=`。**判据和意图一个字没改** ——
+        这条钉的仍然是「真入口过来的那个妆位，填写页认得出来」，
+        变的只是妆位身份怎么表达（`slot_id` 是那份已退役的冻结夹具才有的东西）。
+     ⚠️ 用 sched-demo-0502 的第 2 位：它就是老夹具里 `demo-s2` 的对应物
+        （同一个漫展、同一个时段），换上去期望的文案一个字都不用改。 */
+  const USER_OPEN = { schedule_id: 'sched-demo-0502', seq: 2 }
 
   reopen(USER_OPEN)
   eq('★ 顾客自填：CN 预填好（审核员一键可提交）', pg.data.form.cn, '千夏')
@@ -2284,8 +2289,8 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
     pg.data.slotText, '示例漫展 · 第 2 位 · 10:30 – 11:50')
   eq('★ 而且没有「妆位没找到」这个标记', pg.data.slotMissing, false)
 
-  // 顾客自填：?slot_id= 传了个不存在的妆位 → 拦住，⛔ 不是随便挑一个顶上
-  reopen({ slot_id: 'demo-不存在' })
+  // 顾客自填：查询串带了个不存在的妆位 → 拦住，⛔ 不是随便挑一个顶上
+  reopen({ schedule_id: 'sched-不存在', seq: 2 })
   eq('🔴★ 妆位找不到 → 标记出来', pg.data.slotMissing, true)
   eq('🔴 卡片上明说「这个妆位已经不在了」', pg.data.slotText, '这个妆位已经不在了')
   toasts.length = 0
@@ -2293,6 +2298,16 @@ console.log('\n════ ⑦ 预约单填写页 · CN 必填 ════')
   eq('🔴★ 提交也被拦住（⛔ 不落到任何一个妆位上）',
     /已经不在了/.test(toasts[0]), true)
   eq('🔴★ 而且【一张单都没生成】', BS.getBookings().length, snap7.length)
+
+  /* 🔴★ 第二种查不到：**场次在、妆位没了**。
+     这一支比上面那条更接近真事 —— 妆娘在顾客选好之后把那个妆位删了，
+     顾客手上那个链接还是旧的。⚠️ 判据不变（查不到就出声）；
+     加这一条是因为 (schedule_id, seq) 是两个字段，只验「场次不存在」
+     等于只验了一半的路（`seq` 对不上时走的是同一支，但没人钉过）。 */
+  reopen({ schedule_id: 'sched-demo-0502', seq: 99 })
+  eq('🔴★ 场次在、序号不在 → 同样是「已经不在了」', pg.data.slotMissing, true)
+  eq('🔴 而且没有落到任何别的妆位上',
+    pg.data.slotText, '这个妆位已经不在了')
 
   reopen({ mode: 'artist' })
   eq('★ 妆师代填：CN 不预填（线下口头约的，得她自己问清圈名）', pg.data.form.cn, '')
@@ -3367,6 +3382,58 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     ['demo_makeup', 'demo_mian_makeup', 'demo_ali_makeup']
       .filter((w) => JSON.stringify(ARTIST_DIRECTORY).indexOf(w) >= 0), [])
 
+  /* ── D4. schedulesOfArtist + 「默认那一场至少 2 个空妆位」 ───────────
+     2026-10-01（第二十处第 ③④ 步）。
+
+     🔴 这一段是**那条换过判据的断言的新家**（原来是 ⑨ 段的
+        「pages/landing 不许 require bookingStore」）。规矩 31 说清了：
+        换机制、换判据，⛔ 不是把断言删掉 —— 它保的性质一个字没变：
+        **「C1 上永远有点得动的妆位」**。
+        提审截图 ② 上唯一可点的东西就是「选这个妆位」，一个空位都没有
+        = 那张截图作废、顾客路径当场断掉。
+        原先靠 mock 里写死的 `SLOTS.busy`（两个 false）实现；夹具退役之后
+        换成这里这条：**每一位妆娘、离今天最近的那一场，至少还有 2 个空妆位。**
+
+     ⚠️ 门槛是 2 不是 1：留一个空位等于「刚好够截图」——
+        示例单的状态被谁动一下（比如把 bk-1 从 pending 改成 rejected）
+        就掉到 1 甚至 0，而屏幕上不会报任何错。这条断言就是那个守门人。
+     ⚠️ 「每一位」而不是只验 demo：顾客能从「我约过的妆娘」点进三位中的任意一位，
+        只有 demo 有得选等于另外两条路径是坏的。 */
+  restoreBookings()   // ⚠️ 先还原：⑥⑦⑧ 三段会真的往 BOOKINGS 里塞单
+  const DIR_IDS = require(R('妆历小程序/mock/data.js')).ARTIST_DIRECTORY
+    .map((e) => e.artist_id)
+  eq('🔴★ 每一位妆娘都取得到场次（⛔ 不是只有 demo 有）',
+    DIR_IDS.filter((id) => !AS.schedulesOfArtist(id).length), [])
+  eq('🔴★ 每一位都有【今天及以后】的场次（全过期的话顾客点进来是空的）',
+    DIR_IDS.filter((id) => !AS.schedulesOfArtist(id).some((s) => S.isTodayOrLater(s.date))), [])
+  /* 「默认那一场」= 离今天最近的那一场 —— 和 landing.js 的 liveSchedulesOf()
+     同一个判据（升序取第 0 个）。⚠️ 这儿是**重写了一遍排序**，不是调页面那个
+     私有函数：页面那个没 export，而且这条断言的意图是「独立地算一次，
+     跟页面比」—— 调它自己就成了拿自己证明自己。 */
+  const defaultSchedOf = (id) => AS.schedulesOfArtist(id)
+    .filter((s) => S.isTodayOrLater(s.date))
+    .sort((a, b) => S.awayFromToday(a.date) - S.awayFromToday(b.date))[0]
+  const freeOf = (s) => {
+    const taken = BS.bookedSeqsOfSchedule(s)
+    return (s.slots || []).filter((x) => !x.is_break && taken.indexOf(x.seq) < 0).length
+  }
+  console.log('  默认场次的空妆位：' +
+    DIR_IDS.map((id) => id + '=' + freeOf(defaultSchedOf(id))).join('  '))
+  eq('🔴★ 每位妆娘的默认场次都【至少还有 2 个空妆位】（提审截图 ② 点得动的唯一保证）',
+    DIR_IDS.filter((id) => freeOf(defaultSchedOf(id)) < 2), [])
+  /* 🔴 两位/三位的场次必须【同名不同日】—— 光看名字分不出来的那天，
+     就是「场次筛选」存在的理由；一场一人一场的演示数据是演示不出它的。 */
+  eq('🔴★ 每一位都至少有 2 场（↓ 场次筛选条才有的可选）',
+    DIR_IDS.filter((id) => AS.schedulesOfArtist(id).length < 2), [])
+  eq('🔴★ 每一位的场次都是【同名不同日】（光看名字分不出是哪天）',
+    DIR_IDS.filter((id) => {
+      const dates = AS.schedulesOfArtist(id).map((s) => s.date)
+      return dates.filter((d, i, a) => a.indexOf(d) === i).length !== dates.length
+    }), [])
+  /* ⛔ 已取消的场次不许出现在顾客端（判据只有一条，数据源有两个）。 */
+  eq('🔴★ 已取消的场次不进顾客端（demo 走 scheduleStore 那一层已经滤了）',
+    AS.schedulesOfArtist('demo').filter((s) => s.status === 'cancelled'), [])
+
   // ── E. 派生字段：style_text 只算不存；avatar_color 是【存了但不派生】 ──
   const saved2 = AS.saveArtist({ style_tags: ['展妆', '古风妆'] })
   eq('★ 改了 style_tags，style_text 当场跟着变',
@@ -3539,12 +3606,27 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
     /function getBookings\(\) \{\s*return BOOKINGS\s*\}/.test(bsPlain10), true)
   eq('★ addBooking 走 getBookings()（⛔ 不直接用 BOOKINGS.push）',
     /getBookings\(\)\.push\(rec\)/.test(bsPlain10), true)
-  /* 🔴 决定 2：给顾客看的那一页不许读预约单。C1 的可约标记在 M0 是写死的夹具
-     （mock/data.js 的 SLOTS.busy），不是从 BOOKINGS 推的 —— 真要推的话
-     seq 1/2/3 会全变「已约」，提审那条路当场废掉。 */
-  eq('🔴★ pages/landing 不许 require bookingStore（两个世界故意解耦）',
-    /bookingStore/.test(stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))),
-    false)
+  /* 🔴🔴 2026-10-01（第二十处）：这一条**翻了个面**（原先是「不许 require」）。
+     ⚠️ 规矩 31：换机制、换判据，⛔ 不是把断言删掉 —— 它保的那个性质一个字没变：
+        「C1 上永远有点得动的妆位」，而且妆位状态**只有一处口径**。
+        当初用「冻结夹具（SLOTS.busy 写死两个 false）」实现那个性质；
+        第二十处改成真数据之后，夹具退役，保证换成
+        「**默认那一场至少 2 个空妆位**」（数据层那条断言在 ⑩ 段）。
+     🔴 所以这条现在钉的是**相反的东西**：landing 必须从 bookingStore 取
+        「哪些妆位被占了」，⛔ 不许在这一页自己判 —— `done` 也算占
+        （第十五处定死的口径）就住在 BOOKED_STATUS 里，重写一份迟早漏掉它。
+     ⚠️ 别再翻回去：夹具已经删了（mock/data.js 里那段退役说明写着原因）。 */
+  const landJs10 = stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))
+  eq('🔴★ pages/landing 【必须】require bookingStore（妆位状态只认一处口径）',
+    /bookingStore/.test(landJs10), true)
+  eq('🔴★ 而且调的是 bookedSeqsOfSchedule()，⛔ 不是另写一份「什么算被占」',
+    /bookedSeqsOfSchedule/.test(landJs10), true)
+  eq('🔴★ landing 里⛔ 不许出现 BOOKED_STATUS / 手写的状态枚举',
+    /BOOKED_STATUS|status\s*===\s*'(pending|confirmed|done)'/.test(landJs10), false)
+  /* ⚠️ 同时钉住反向：那份夹具的字段名不许再回到这一页 ——
+     它一回来就说明有人把数据源换回了写死的那份。 */
+  eq('🔴★ landing 里不再有 slot_id / SLOTS（夹具退役，妆位身份 = (schedule_id, seq)）',
+    /slot_id|SLOTS\b/.test(landJs10), false)
 
   // ── K. 🔴 新加的两个页面：注册 + 落点 + 形状 ─────────────────────────
   const appJson10 = JSON.parse(fs.readFileSync(R('妆历小程序/app.json'), 'utf8'))
@@ -3665,6 +3747,37 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('★ 换行保留（她分的段落不能被吃掉）',
     /\.intro\{[^}]*white-space:pre-wrap/.test(fs.readFileSync(R('妆历小程序/app.wxss'), 'utf8')),
     true)
+
+  // ── P2. 🔴 妆面样片【已经不在了】（第二十处 · 用户决定 D8）────────────
+  /* ⚠️ 这三条是【反向断言】：它们钉的不是「做了什么」，是「**不许再回来**」。
+     🔴 判据（为什么删）：个人主体没有「社交-笔记 / 社区」类目，用户上传的
+        图片给别人看正落在平台驳回原话那条线上 —— 第十五处为同一件事
+        删掉了整个「我的作品」板块。⛔ 所以这不是「这一轮先不做」，
+        是**做不了**；哪天有人想把样片加回 C1，这三条会红着拦住他。
+     ⚠️ 它们是**整文件扫**（⛔ 不是只看 landing.wxml）：`.work-grid`/`.work`
+        全项目就这一个消费者（第十五处删作品页之后就归零了），
+        所以样式类名本身也得一起钉死，否则下一个人在别处写一份同样会红。 */
+  eq('🔴★ C1 的「妆面样片」整块【已删】（⛔ 不许再长回来）',
+    /妆面样片|占位图/.test(landWxml10), false)
+  eq('🔴★ 全项目没有 `.work-grid` / `.work` 的消费者',
+    (() => {
+      const hits = []
+      /* 扫全部 wxml：⛔ 不用「只扫 landing」那种写法 —— 这条要能抓住
+         「在别的页面又开一个图片位」这种情况。 */
+      const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).forEach((d) => {
+        const p = dir + '/' + d.name
+        if (d.isDirectory()) walk(p)
+        else if (/\.wxml$/.test(d.name)) {
+          const t = stripHtml(fs.readFileSync(p, 'utf8'))
+          if (/\bwork-grid\b|\bclass="work\b/.test(t)) hits.push(p)
+        }
+      })
+      walk(R('妆历小程序/pages'))
+      return hits
+    })(), [])
+  eq('🔴★ `app.wxss` 里的 `.work-grid` / `.work` 样式【已删】（⛔ 不留半截）',
+    /\.work-grid\s*\{|\.work\s*\{/.test(fs.readFileSync(R('妆历小程序/app.wxss'), 'utf8')),
+    false)
   /* ⛔ 「我的」Tab 那张卡片刻意不显示简介：那是她自己的页头，塞 200 字会撑开。 */
   eq('🔴★「我的」页那张卡片【不】显示简介（那是她自己的页头）',
     /artist\.intro/.test(stripHtml(fs.readFileSync(R('妆历小程序/pages/mine/mine.wxml'), 'utf8'))),
@@ -4456,6 +4569,265 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
   eq('🔴★ artist-list 页只有 .js + .wxml（样式全在 app.wxss）',
     fs.readdirSync(R('妆历小程序/pages/artist-list')).sort().join(','),
     'artist-list.js,artist-list.wxml')
+
+  /* ════════════════════════════════════════════════════════════════════
+     AA. 「我约过的妆娘」这一层（第二十处第 ①②步）
+     ════════════════════════════════════════════════════════════════════
+     🔴 这一整块在第二十处之前**一条断言的落点都没有** —— `utils/myArtists.js`
+        和 `pages/artist-list/` 都是新文件，但它们要保的那条性质
+        （**列表长度 = 我自己约过几个人**）是全项目最容易被"顺手"改坏的一条：
+        改坏的方向只有一个 —— 读 ARTIST_DIRECTORY ⇒ 那就是一份**人肉目录**，
+        红线 1（README §3.7）。改了不会报错、页面还更好看，所以必须钉死。
+
+     ⚠️ 下面每一条都用 `rows.length` / `rows[0]` 现算，⛔ 不写死「3 位」之外的
+        名字和城市：写死的话，某天有人动了一次示例数据，断言会跟着"改经文"，
+        而它本来该红。写死的只有**行数**这一个数 —— 因为"演示数据自洽"这件事
+        本身就是要钉的（3 位妆娘、每位都有一条"我约过她"的单）。 */
+  restoreBookings()   // ⚠️ 上面的代填测试会往 BOOKINGS 里塞单，先还原
+  const MY = require(R('妆历小程序/utils/myArtists.js'))
+  const myRows = MY.listMyArtists()
+  eq('🔴★ 列表长度 = 我自己约过几个人（3 位；⛔ 不是"目录里有几个人"）',
+    myRows.length, 3)
+  /* 🔴 这是这一块的**核心断言**（规矩 36）：列表里每一位，都要有一条
+     `created_by === 'user'` 的单撑着她。⛔ 一个都少不得 ——
+     演示数据里出现一个"没约过却在列表上"的人，就是把这一页演示成了目录。 */
+  eq('🔴★ 每一位都真的有「我约过她」的单（⛔ 演示数据也不许出现没约过的人）',
+    myRows.filter((r) =>
+      !MY.myBookings().some((b) => (b.artist_id || 'demo') === r.id)), [])
+  /* ⚠️ 反向也钉一下：行数必须**正好等于**「我那些单里去重后的妆娘数」——
+     正向那条只能抓住"多出来的人"，抓不住"少了一个人"
+     （比如某个兜底把 artist_id 读丢了，两组人并成一组）。 */
+  eq('★ 反过来也不许少：行数 === 我那些单里去重后的妆娘数（同一份判据算出来的）',
+    myRows.length, (() => {
+      const seen = {}
+      MY.myBookings().forEach((b) => { seen[b.artist_id || 'demo'] = 1 })
+      return Object.keys(seen).length
+    })())
+  /* ⚠️ 这一条钉的是"两处不各算一遍"（规矩 11）：首页那张卡说的人数
+     和列表页的行数**必须同源**，否则会出「首页说 3 位、点进去 4 行」。 */
+  const myBrief = MY.myArtistsBrief()
+  eq('🔴★ 首页那张卡说的人数 === 列表的行数（⛔ 不许各算一遍）',
+    myBrief.count, myRows.length)
+  /* 🔴 同理：「首页说最近约的是 X」⇒ 点进去**第一行**就是 X。
+     两处要是各排一次序（比如首页按 created_at、列表按漫展日期），
+     首页说的和列表第一行就不是同一个人，而两处各自看都挺合理。 */
+  eq('🔴★ 首页说「最近约的是 X」⇒ 列表第一行就是 X（同一个 sort）',
+    myBrief.sub.indexOf(myRows[0].nickname) >= 0, true)
+  /* 排序本身也独立算一次来比（⛔ 不是调 byRecent —— 那是拿自己证明自己）。 */
+  eq('★ 最近下过单的那位排第一',
+    myRows[0].id, (() => {
+      const bs = MY.myBookings().slice().sort((a, b) =>
+        String(a.created_at || '') < String(b.created_at || '') ? 1 : -1)
+      return bs[0].artist_id || 'demo'
+    })())
+  /* 每行的「约过几次」也得是真的次数 —— 数错了不会报错，
+     只会在页面上安静地写一个「约过 2 次」。 */
+  eq('★ 每行的「约过几次」= 那一行对应的真单数',
+    myRows.filter((r) =>
+      r.count !== MY.myBookings().filter((b) => (b.artist_id || 'demo') === r.id).length), [])
+  /* 🔴 头像令牌必须跟着行一起出来，而且字段名是 `avatar_color`（⛔ 不是 `color`）。
+     这一页要写成 `c-{{artist.avatar_color}}`，和另外四处**逐字一样** ——
+     名不对的话 `.c-*` 选不中 ⇒ 一个透明底的头像贴在白卡片上，
+     屏幕上一句话都不解释（第十九处那类静默渲染失败）。 */
+  eq('🔴★ 每一行都带着头像颜色令牌（⛔ 字段名必须是 avatar_color）',
+    myRows.filter((r) => !r.avatar_color).length, 0)
+  /* lastText：缺字段的**直接不占位**，⛔ 不许把 undefined 落到页面上。 */
+  eq('🔴★ 缺 event / date / status 时不留占位符（⛔ 不是「undefined · 2026-05-02」）',
+    MY.lastText({ event: '青蓝漫展', date: '', status: '' }), '青蓝漫展')
+  eq('★ 全缺 → 空串（这一行就只剩昵称，比写一串 undefined 诚实）', MY.lastText({}), '')
+  eq('★ 喂 null 也不炸', MY.lastText(null), '')
+
+  /* ── 搜索判据：只认昵称 / 城市 ───────────────────────────────────── */
+  eq('★ 按昵称搜得到', MY.matchArtist(myRows[0], myRows[0].nickname), true)
+  eq('★ 按城市搜得到', MY.matchArtist(myRows[0], myRows[0].city), true)
+  eq('★ 大小写不敏感 + 前后空格不敏感',
+    MY.matchArtist({ nickname: 'Ali', city: '上海' }, '  aLi '), true)
+  eq('★ 空词放行（没筛 = 全都要）', MY.matchArtist(myRows[0], ''), true)
+  eq('★ 喂 undefined 也放行（⛔ 不是把整页筛空）', MY.matchArtist(myRows[0], undefined), true)
+  /* 🔴 这一条是**故意的**：风格词搜不到人。
+     「按风格筛人」那个功能是被明确砍掉的（第十九处），搜索的语义是
+     「我记得她叫什么 / 她在哪个城市」。两件事混进一个框里，顾客打一个
+     「古风」会得到一份她解释不了的名单。⛔ 别"顺手"把 style_text 也加进去。 */
+  eq('🔴★ ⛔ 不搜风格词（搜索语义是"她叫什么/在哪儿"，不是"筛人"）',
+    MY.matchArtist({ nickname: '阿黎', city: '上海', style_text: '古风妆' }, '古风'), false)
+
+  /* ── 列表页（pages/artist-list）页面级 ────────────────────────────── */
+  const nav10 = []
+  global.wx.navigateTo = (o) => nav10.push(o.url)
+  const al = loadPage10('pages/artist-list/artist-list.js')
+  al.onShow()
+  eq('★ 进来就列出我约过的妆娘', al.data.rows.length, myRows.length)
+  eq('★ 一开始没有搜索框（先让她看见人，⛔ 不是先给她一个空框）', al.data.open, false)
+  eq('★ 一开始不是"筛过"的状态（否则空态说的是答非所问的那句）',
+    al.data.searching, false)
+  eq('★ 标题来自 myArtists（⛔ 这一页不自己写一遍）', al.data.title, MY.TITLE)
+  al.toggleSearch()
+  eq('★ 点「搜索」→ 框开了', al.data.open, true)
+  al.onKwInput({ detail: { value: myRows[0].nickname } })
+  eq('★ 打字即筛（⛔ 没有回车、没有放大镜、没有两级状态）',
+    al.data.rows.length >= 1, true)
+  eq('★ 筛过之后 searching = true（空态才分得清「没有」和「筛没了」）',
+    al.data.searching, true)
+  al.onKwInput({ detail: { value: '绝不可能存在的词xyz' } })
+  /* 🔴 这一条钉的是**空态的两支**：搜不到的时候说「换个词」，
+     ⛔ 不许说「你还没约过妆娘」—— 她明明约过，只是这个词没对上，
+     那句话会让她以为记录丢了（规矩 25：结论必须和当前范围同口径）。 */
+  eq('🔴★ 搜不到 → 行空了、但 searching 还是 true（空态得说「换个词」）',
+    al.data.rows.length + '/' + al.data.searching, '0/true')
+  /* 🔴 收起搜索框**必须把词一起清掉**。只收框不清词的后果是
+     「列表里只有一位，而屏幕上没有任何地方写着为什么」——
+     顾客会以为数据丢了（看得见的列表必须能被看得见的状态解释）。 */
+  al.toggleSearch()
+  eq('🔴★ 收起搜索框一定把词清掉（⛔ 不留一个看不见的筛选）',
+    al.data.open + '/' + al.data.kw, 'false/')
+  eq('★ 收起后列表回到全部（不是只剩上次筛出来的那几行）',
+    al.data.rows.length, myRows.length)
+  nav10.length = 0
+  al.goArtist(ev10({ id: 'demo-mian' }))
+  /* ⚠️ 判据是**跳去 landing + 带上 artist_id**，⛔ 不是"跳去某个妆娘主页"——
+     第二十处定的：没有第二个妆娘主页，C1 复用（规矩 11 / 37）。 */
+  eq('★ 点一行 → 那位妆娘的妆位页（复用 C1，带 artist_id）',
+    nav10.join(','), '/pages/landing/landing?artist_id=demo-mian')
+
+  /* ════════════════════════════════════════════════════════════════════
+     AB. 妆位页（pages/landing）页面级 —— 第二十处第 ③④⑥ 步
+     ════════════════════════════════════════════════════════════════════
+     🔴 这一页在第二十处之前同样**一条页面级断言都没有**（只有源码级那几条）。
+        它现在是提审截图 ② 的落点，也是顾客端唯一一条"能真的走到底"的路，
+        所以这一步把它的行为整个钉一遍：认人 / 默认场次 / **排序** / 换场次 / 跳转。
+
+     ⚠️ 下面是**示例数据的算术**，改动示例数据前先读这里：
+        · sched-demo-0502（demo 的默认场）5 个妆位：seq 1/2/3 被 bk-2/bk-1/bk-3
+          占着，**seq 4/5 空着**；午休 12:00–13:00 跟在 seq 2 后面。
+        · sched-demo-0503（第二场）4 个妆位被 bk-4/5/6/7 占满（"约满了"那个状态）。
+        · sched-mian-0701 3 个妆位只有 seq 1 被占；sched-ali-0801 只有 seq 2 被占。 */
+  const D10 = require(R('妆历小程序/mock/data.js'))
+  const landDemo = loadPage10('pages/landing/landing.js')
+  landDemo.onLoad({ artist_id: 'demo' })
+  landDemo.onShow()
+  eq('★ 认人：读的是这一位妆娘的公开资料（⛔ 不是写死的 demo 那一份）',
+    landDemo.data.artist.nickname, AS.getArtistById('demo').nickname)
+  /* ⛔ 微信号⛔ 不在 artist 里 —— 它只能从 contact 那个字段来（唯一出口）。 */
+  eq('🔴★ 妆娘的公开资料里⛔ 没有微信号（它只能走 contact）',
+    'wechat_id' in landDemo.data.artist, false)
+  eq('★ 下拉里有 2 场', landDemo.data.schedList.length, 2)
+  eq('🔴★ 默认选中【离今天最近】的那一场（顾客进来就该看见最近能约的）',
+    landDemo.data.schedId, 'sched-demo-0502')
+  /* ⚠️ 日期只写「月-日」—— 带年份会让每一项都长到撑不住；
+     但日期**必须带着**，因为同一场漫展分两天，光看名字分不出来（下拉存在的理由）。 */
+  eq('★ 下拉条上写着「漫展名 · 月-日」（光看名字分不出是哪天）',
+    landDemo.data.schedLabel, '示例漫展 · ' + D10.SCHEDULES[0].date.slice(5))
+  eq('★ 下拉里每一项都带得出「N 个妆位可约」',
+    landDemo.data.schedList.filter((c) => !c.sub).length, 0)
+  eq('★ 下拉里那两场同名不同日（⛔ 演示数据得有这个形状，筛选条才演示得出来）',
+    landDemo.data.schedList.map((c) => c.label).join('|'),
+    '示例漫展 · ' + D10.SCHEDULES[0].date.slice(5) + '|示例漫展 · ' + D10.SCHEDULES[1].date.slice(5))
+  /* ⚠️ 两场时小标题只说「可约妆位」—— 哪一场由上面那条条子说，
+     不然同一个名字在一屏里出现两遍。 */
+  eq('★ 有两场时小标题只说「可约妆位」（⛔ 不把场次名重复两遍）',
+    landDemo.data.secTitle, '可约妆位')
+
+  /* ── 排序：可约 → 午休 → 已约（🔴 2026-10-01 顾客当场三选一定的）─────
+     🔴 这一组断言是**这一轮最重要的一条**：方案里那三条要求
+        （「午休不参与排序」+「不进被占那一段」+「还在原位」）在示例数据上
+        互相打架，是当场问他、画三种排法给他看才定下来的。
+        ⛔ 别按着方案的原文改回去 —— 方案那一处是错的，这里才是准的。 */
+  const landKinds = (p) => p.data.rows
+    .map((r) => (r.type === 'lunch' ? 'L' : (r.booked ? 'B' : 'F'))).join('')
+  eq('🔴★ 段序 = 可约 → 午休 → 已约（示例数据的准确形状）', landKinds(landDemo), 'FFLBBB')
+  eq('★ 可约那一段按开始时间从早到晚', landDemo.data.rows
+    .filter((r) => r.type === 'slot' && !r.booked).map((r) => r.seq).join(','), '4,5')
+  eq('★ 已约那一段也按开始时间从早到晚', landDemo.data.rows
+    .filter((r) => r.type === 'slot' && r.booked).map((r) => r.seq).join(','), '1,2,3')
+  const landLi = landDemo.data.rows.findIndex((r) => r.type === 'lunch')
+  eq('🔴★ 午休夹在两段【中间】（既不在头也不在尾）',
+    landLi > 0 && landLi < landDemo.data.rows.length - 1, true)
+  /* 🔴 下面这两条是这一组里**真正防"改回按时间排"的闩**。
+     ⚠️ 上面写的那个"位置 === 可约行数"是个**弱断言**，别改回去：
+        按时间排时这张表是 `已约、已约、午休、已约、可约、可约`，
+        午休恰好也落在第 2 位 —— 和"可约行数 2"凑巧相等，
+        于是那条断言**在错误实现下照样绿**（突变测试逮到过它一次）。
+     判据换成"它的上下两行分别是什么"之后，按时间排那一版当场红：
+        那一版午休上面是**已约**的、下面是**已约**的。 */
+  eq('🔴★ 它上面一行是可约的（⛔ 不是已约 —— 按时间排的版本这里会是已约）',
+    landDemo.data.rows[landLi - 1].booked, false)
+  eq('🔴★ 它下面一行是已约的（它就是这两段之间的那条分隔条）',
+    landDemo.data.rows[landLi + 1].booked, true)
+  /* ⚠️ 午休行自带时长（档期生成时算好的 `min`）—— 漏了就是一行
+     「午休 12:00 – 13:00 · undefined 分钟」。 */
+  eq('🔴★ 午休行带着时长（⛔ 不是 undefined 分钟）',
+    /^\d+$/.test(String(landDemo.data.rows[landLi].minutes)), true)
+  /* ⚠️ 「可约」和「已约」的判据必须同源：条子上的「N 个妆位可约」
+     和表里真能点的行数要对得上，否则会出现「条子写 3 个可约、点进去 2 行能点」。 */
+  eq('🔴★ 条子上的「N 个妆位可约」=== 表里可约的行数（⛔ 不许各算一遍）',
+    landDemo.data.schedList[0].sub,
+    landDemo.data.rows.filter((r) => r.type === 'slot' && !r.booked).length + ' 个妆位可约')
+
+  /* ── 换场次：⚠️ 这一场是【被约满】的那一场（free = 0）───────────────
+     ⚠️ 用它来验两件事：① 表当场重画；② 一个可约的都没有时，
+        段序退化成「午休 → 已约」（午休排在头是**对的**，因为没有可约段）。 */
+  landDemo.pickSched(ev10({ id: 'sched-demo-0503' }))
+  eq('★ 选另一场 → 面板收起（不收起就盖在妆位表上，还得再点一下）',
+    landDemo.data.schedOpen, false)
+  eq('★ 选另一场 → 妆位表当场重画', landKinds(landDemo), 'LBBBB')
+  eq('★ 换了场次，条子上的字跟着换',
+    landDemo.data.schedLabel, '示例漫展 · ' + D10.SCHEDULES[1].date.slice(5))
+  /* 🔴 约满那一场的空态/提示得说实话（⛔ 不是"这个妆娘没有妆位"——
+     她有，只是这一场满了，这两句话对顾客是两件事）。 */
+  eq('🔴★ 一场约满时条子上直说「已约满」（⛔ 不是「0 个妆位可约」）',
+    landDemo.data.schedList.filter((c) => c.id === 'sched-demo-0503')[0].sub, '已约满')
+
+  /* ── 换妆娘：这一页是【任意一位】的，⛔ 不是 demo 一个人的分享页 ────── */
+  const landMian = loadPage10('pages/landing/landing.js')
+  landMian.onLoad({ artist_id: 'demo-mian' })
+  landMian.onShow()
+  eq('🔴★ 换一位妆娘 → 资料跟着换（⛔ 不是永远渲染 demo）',
+    landMian.data.artist.nickname, AS.getArtistById('demo-mian').nickname)
+  eq('★ 换一位妆娘 → 她的场次跟着换（⛔ 不串成别人的）',
+    landMian.data.schedList.map((c) => c.id).join(','), 'sched-mian-0701,sched-mian-0702')
+  eq('★ 换一位妆娘 → 默认那一场是她的（离今天最近）',
+    landMian.data.schedId, 'sched-mian-0701')
+  eq('★ 她的场次里只有 seq 1 被占（bk-8，演示数据自洽）', landKinds(landMian), 'FFLB')
+  /* ⚠️ 只有一场时，筛选条整个不显示（只剩一项的下拉等于没得选，白占一行），
+     于是小标题必须自己把场次名带上，不然顾客不知道这是哪一天。 */
+  const landAli = loadPage10('pages/landing/landing.js')
+  landAli.onLoad({ artist_id: 'demo-ali' })
+  landAli.onShow()
+  eq('★ 星轨展那两场 → 段序也对（只有 seq 2 被占）', landKinds(landAli), 'FFLB')
+
+  /* ── 跳转：妆位的身份是 (schedule_id, seq) ─────────────────────────── */
+  nav10.length = 0
+  landDemo.pickSlot(ev10({ sid: 'sched-demo-0503', seq: 3 }))
+  /* 🔴 这一条和填写页那边是**一对**（⑦ 段的 USER_OPEN）。查询串的字段名
+     写错一个字，后果不是报错 —— 是每一位顾客都被告诉
+     「这个妆位已经不在了」（出声了，但那句话是假的）。 */
+  eq('🔴★ 点「选这个妆位」→ 查询串是 ?schedule_id=&seq=（⛔ 不是 slot_id）',
+    nav10.join(','), '/pages/booking-form/booking-form?schedule_id=sched-demo-0503&seq=3')
+  eq('★ 而且 landDemo 上⛔ 没有再挂一个 slot_id 的写法',
+    /slot_id/.test(stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))), false)
+
+  /* ── 源码级：这一页【没有输入框】，所以⛔ 一句 hideKeyboard 都不许有 ──
+     🔴 README 第 20 条：判据不是"习惯性先收键盘"，而是
+        「**这一页此刻有没有可能开着键盘**」。这一页从头到尾没有一个输入框，
+        收键盘只可能打断当前触摸序列（Request N 那个"点了没反应"就是这么来的）。
+        ⚠️ 所以这条是**这一页专属**的，⛔ 别照抄到 artist-list 上去 ——
+           那一页真有输入框（收起搜索时要它是对的）。 */
+  eq('🔴★ 妆位页没有输入框，所以⛔ 一句 hideKeyboard 都没有（README 第 20 条）',
+    /hideKeyboard/.test(stripJs(fs.readFileSync(R('妆历小程序/pages/landing/landing.js'), 'utf8'))), false)
+  eq('🔴★ 同理 wxml 里也没有 <input> / <textarea>（有的话上面那条就失效了）',
+    /<(input|textarea)\b/.test(stripHtml(fs.readFileSync(R('妆历小程序/pages/landing/landing.wxml'), 'utf8'))), false)
+  /* ⚠️ 「这一页是谁的」只能来自 onLoad 的查询串 —— 判据是**存在**
+     `options.artist_id` 这个读取，⛔ 不是"别处不许出现 'demo' 字面量"：
+     缺省仍是 demo 是**故意留的**（提审备注那条老路径 + 所有老分享卡片），
+     它写在 onLoad 里、和 `options.artist_id ||` 挨着。 */
+  eq('🔴★ 认人只认查询串里的 artist_id（缺省 demo 是故意留的兜底）',
+    /options\.artist_id/.test(landJs10), true)
+  /* ⚠️ 数据源必须是【顾客端那一层】—— `schedulesOfArtist` 按 artist_id 分人，
+     ⛔ 不是 `getSchedules()`（那是妆师端自己的档期，读到别人头上就是串场）。 */
+  eq('🔴★ 场次走 schedulesOfArtist(artist_id)（⛔ 不是妆师端那份 getSchedules()）',
+    /schedulesOfArtist/.test(landJs10), true)
+  eq('★ wxml 里的妆位按钮用的就是 (schedule_id, seq) 这两个 data-*',
+    /data-sid="\{\{schedId\}\}"[\s\S]{0,120}data-seq="\{\{item\.seq\}\}"/.test(landWxml10), true)
 }
 
 restoreBookings()

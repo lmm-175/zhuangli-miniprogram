@@ -42,13 +42,11 @@
   background:var(--brand-l);border-radius:6rpx;vertical-align:middle;
 }
 
-/* ── 午休：独立一行，浅蓝，比妆位显眼 ──────────────────────────────── */
-.lunch-row{background:var(--info-l)}
-.lunch-row .sq{background:#D6E4FB;color:#2B4E96;font-size:24rpx}
-.lunch-row .tm .lt{
-  display:block;font-size:29rpx;font-weight:700;line-height:38rpx;color:#2B4E96;
-}
-.lunch-row .tm .sub{color:#4B7BE5}
+/* ── 午休行：📌 2026-10-01（第二十处）四条规则已【搬到 app.wxss】─────
+   搬走的理由：顾客端妆位页（landing）也要画这一行，那儿只能读全局样式。
+   ⇒ 留在这里的第二份就是第二份真相（规矩 11），所以整段删掉，⛔ 不是留个副本。
+   ⚠️ 样式没变、选择器没变、详情页的观感也没变（`.lt` 的 38rpx 行高本来
+      就是从 `.slot-row .tm` 继承来的）。改午休的样子请去 app.wxss。 */
 /* 午休的起点：点开原生时间选择器，所以做成一个看得出来的「块」 */
 .t-pick-v{
   height:38rpx;line-height:38rpx;padding:0 10rpx;

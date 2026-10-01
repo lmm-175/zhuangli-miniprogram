@@ -29,8 +29,12 @@
  * ══════════════════════════════════════════════════════════════════════
  */
 const KEY = 'zhuangli_artist'
-const { ARTIST_PUBLIC, ARTIST_DIRECTORY, STYLE_GROUPS } = require('../mock/data')
+const { ARTIST_PUBLIC, ARTIST_DIRECTORY, STYLE_GROUPS, SCHEDULES_OTHER } = require('../mock/data')
 const { TOAST } = require('./toast')
+/* ⚠️ 2026-10-01（第二十处）：为了 schedulesOfArtist()。
+   方向是 artistStore → scheduleStore 单向，⛔ 反过来不行
+   （scheduleStore 只认 mock/data，加了反向依赖会成环）。 */
+const { getSchedules } = require('./scheduleStore')
 
 const NICKNAME_MAX = 12
 const CITY_MAX = 12
@@ -582,6 +586,31 @@ function getArtistById(id) {
   return project(directoryRecord(hit))
 }
 
+/* ══ 一位妆娘在【顾客端】能看到的场次（2026-10-01 第二十处新增）═══════
+   ⛔ 这是顾客端唯一该用的取场次入口 —— 别在页面里 require
+      `SCHEDULES` / `SCHEDULES_OTHER` / `scheduleStore` 自己拼一份。
+
+   🔴 两个数据源，⛔ 别混（`mock/data.js` 里那段长注释说的是同一件事）：
+      · `demo`  → `scheduleStore.getSchedules()`，**读 storage 的活的**。
+        理由和 getArtistById 那条一样：demo 是【妆娘端那一位】，
+        她会新建档期、改妆位、取消场次 —— 顾客看到的必须是改过的。
+        ⚠️ 它顺带把「已取消的场次」滤掉了（scheduleStore 那一层的事），
+           ⛔ 这里不要再滤一遍（两处过滤 = 两份真相）。
+      · 其余    → `SCHEDULES_OTHER` 里按 `artist_id` 查，**只读、不落 storage**
+        （她们没有妆娘端）。⚠️ 仍然过一遍 status 滤，理由同上：
+          判据只有一条，只是数据源有两个。
+
+   ⚠️ 返回的是【原始档期对象】（带 `slots` / `lunch`），⛔ 不是选好的妆位行 ——
+      排序、标已约都是页面那一层的事（那边才有 `bookedSeqsOfSchedule`）。
+   ⚠️ 按 artist_id 认人、⛔ 不按名字认（第十四处 `belongsToSchedule` 那条教训：
+      同名不同日的场次用名字分不开）。 */
+function schedulesOfArtist(artistId) {
+  const id = String(artistId == null ? '' : artistId).trim()
+  const selfId = String((ARTIST_PUBLIC && ARTIST_PUBLIC.artist_id) || 'demo')
+  if (!id || id === selfId) return getSchedules()
+  return (SCHEDULES_OTHER || []).filter((s) => s && s.artist_id === id && s.status !== 'cancelled')
+}
+
 /* 目录里那一条 → storage 形状的记录。
    ⚠️ 目录写的是【那 7 个展示键】（含 style_text），没有 style_custom ——
       它是「顾客看得到的资料」，不是「她编辑页的状态」。
@@ -696,5 +725,5 @@ module.exports = {
   eachCustom, isValidGroup, normalizeCustom, customWords,
   toggleCustomTag, validateCustomWord, validateCustomTag, addCustomTag, removeCustomTag,
   validateNickname, validateCity, validateIntro, validateStyles,
-  getArtist, getArtistById, getStyleState, saveArtist, raw
+  getArtist, getArtistById, schedulesOfArtist, getStyleState, saveArtist, raw
 }

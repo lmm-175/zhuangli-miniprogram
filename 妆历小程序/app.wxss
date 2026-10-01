@@ -150,14 +150,33 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
 .slot-row.busy{background:#FAFAFB}
 .slot-row.busy .sq{background:#F0F1F2;color:var(--t3)}
 
-/* ── 妆面样片占位块 ────────────────────────────────────
-   ⚠️ 只用「占位图」三个字，⛔ 不带编号 —— 任何计数都构成
-      「可枚举的公开内容区」（红线 1）。
-   ──────────────────────────────────────────────────── */
-.work-grid{display:flex;flex-wrap:wrap;gap:22rpx}
-.work{width:calc((100% - 44rpx) / 3);height:205rpx;border-radius:18rpx;
-      background:linear-gradient(135deg,#F3E4E8,#E8D2D9);
-      display:flex;align-items:center;justify-content:center;color:#B08D98;font-size:24rpx}
+/* ── 午休：独立一行，浅蓝，比妆位显眼 ────────────────────────────────
+   📌 2026-10-01（第二十处）：这四条原先住在 pages/schedule-detail/schedule-detail.wxss。
+      顾客端妆位页（landing）现在也要画午休行（真档期带午休，顾客看不到的话
+      妆位表上会凭空缺一段 11:50 → 13:00），所以【搬】上来，⛔ 不是抄一份 ——
+      「两份实现就是两份真相」（同 .grp-sec / .grp-tag 那一段的先例）。
+      ⚠️ 搬的时候一个字没改：`.lt` 那条的 `line-height:38rpx` 在详情页本来就
+         由 `.slot-row .tm` 继承而来，写在这儿对那一页是同一个值；
+         对 landing 只是让这一行走 38rpx 行高，视觉上无差别。
+      ⚠️ 顺序要紧：`.lunch-row .sq` 和上面 `.slot-row .sq` 同权重(0,2,0)，
+         靠的就是「住在后面」才盖得住 —— ⛔ 别把这一段挪到 .slot-row 上面去。 */
+.lunch-row{background:var(--info-l)}
+.lunch-row .sq{background:#D6E4FB;color:#2B4E96;font-size:24rpx}
+.lunch-row .tm .lt{
+  display:block;font-size:29rpx;font-weight:700;line-height:38rpx;color:#2B4E96;
+}
+.lunch-row .tm .sub{color:#4B7BE5}
+
+/* ── 妆面样片占位块 · 🔴 2026-10-01（第二十处）已删除 ────────────
+   这里原本是 `.work-grid` / `.work` 两行，唯一消费者是 pages/landing/landing.wxml
+   的「妆面样片」三个占位块，跟着它一起删了（用户决定 D8）。
+   ⚠️ **这条注释不是纪念，是一张封条**：删它的理由不是「暂时没图」，是
+      **个人主体没有「社交-笔记 / 社区」类目**，用户上传的图片给别人看
+      正落在平台驳回原话那条线上（第十五处为同一件事删掉整个「我的作品」板块）。
+      ⇒ 将来谁想给 C1 加回图片位，先看 README 第十五处 + 规矩 36。
+   ⚠️ 「占位图」那三个字本身也带着一条理由：「不带编号，任何计数都构成
+      『可枚举的公开内容区』」—— 连同代码一起退役，但理由没退役。
+   ──────────────────────────────────────────────────────────────── */
 
 /* ── 化妆师头像 / 信息 ───────────────────────────────── */
 /* 🔴 2026-09-30（第十九处）：头像从「昵称首字」改成【人像标识 + 自选颜色】。
@@ -343,6 +362,19 @@ view,text,button,input,textarea,image,scroll-view,label{box-sizing:border-box}
        border-right:3rpx solid var(--t3);border-bottom:3rpx solid var(--t3);
        transform:rotate(45deg) translate(-3rpx,-3rpx)}
 .sb-ar.up{transform:rotate(-135deg) translate(-3rpx,-3rpx)}
+
+/* ── 顾客端妆位页（landing）的变体：这条条子当【一张卡】用，整条可点 ──────
+   ⚠️ 为什么不直接搬妆师端那条：那一页的条子是【通栏、四件套】（场次 + 输入框 +
+      箭头 + 放大镜），站在 .app 底下贴着导航栏；而 landing 的 `.body` 有 22rpx
+      内边距、条子上只有两件（场次 + 箭头）—— 直接搬过去会是一条左挤右空的
+      白条，还带一条通栏的底边线。
+   · `border-radius` + `border:none`：它在 body 里，得当一张卡看。
+   · `.sb-pick` 放开成 `flex:1`：⚠️ 这不是审美问题 —— 妆师端只让左边那点文字
+     可点，右边留一大片白。顾客端这条只有两件，右边那片白会【一眼看着像按钮、
+     点下去什么也没有】（第十九处 Request O 连栽三轮的就是这个形状）。
+     放开之后文字块 + 箭头把整条盖满，没有死区。 */
+.sched-bar.sb-card{border-radius:var(--r);border:none}
+.sched-bar.sb-card .sb-pick{flex:1;max-width:none;background:transparent}
 
 /* 输入框的外壳。⚠️ 背景和圆角画在【壳】上，输入框自己透明 ——
    输入框自带白底，画在它身上的话会把壳里那颗 ✕ 盖住（妆师端条子上那颗）。
