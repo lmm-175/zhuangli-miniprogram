@@ -5378,8 +5378,8 @@ console.log('\n════ ⑩ 资料可编辑 · 风格 · 简介 · 代填 �
         而且序号得跟着改（原来那个「我的（tab 2）」现在叫「tab 3」）。 */
   const projCfg = JSON.parse(fs.readFileSync(R('妆历小程序/project.config.json'), 'utf8'))
   const compileList = projCfg.condition.miniprogram.list
-  eq('🔴★ 6 个编译入口（第二十一处第二轮：「我的预约」也加了一个）',
-    compileList.length, 6)
+  eq('🔴★ 7 个编译入口（第二十七处加了「朋友圈单页模式 scene 1154」）',
+    compileList.length, 7)
   eq('🔴★ 每一个入口都指向 app.json 里真实存在的页（指错＝工具里点了白屏，还不报错）',
     compileList.filter((c) => appJson10.pages.indexOf(c.pathName) < 0).map((c) => c.name + ' → ' + c.pathName),
     [])
@@ -5798,6 +5798,266 @@ console.log('\n════ ⑫ 遗留死代码已清（shareTicket / .btn-share
     /\.btn-share/.test(stripCss('/* .btn-share{flex:1} */\n.btn{color:blue}')), false)
   eq('🔴★ 扫描器自检：真写了 .btn-share 必须认得出（否则上面那条是恒真）',
     /\.btn-share/.test(stripCss('.btn-share{flex:1}')), true)
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ⑬ 分享到朋友圈（第二十七处 · 规矩 43）
+   ──────────────────────────────────────────────────────────────────────
+   这一段护着的是**一条平台约束**，不是一段我们自己的逻辑：
+   朋友圈卡片的页面路径**控不了**（官方：自定义分享内容不支持自定义页面路径）。
+   ⛔ 所以「18 页统一落到 C1」那一套在这儿**做不到**，只能反过来
+   —— 只在「本来就该被顾客看到的那一页」上开朋友圈。
+   于是全项目只有 C1 一页有 `onShareTimeline`，这条性质必须钉死：
+   哪天有人在妆娘的「档期 / 预约单」上也加一行，那一行**不会报错**，
+   别人点开看到的是她的管理界面、按钮还全是死的，而她自己看不见。
+
+   还有两件「不报错的事」被这一段按住了：
+     · 卡片返回值里写 `path` —— 微信**忽略**它，但会让下一个人以为落点控住了；
+     · 单页模式（`scene === 1154`）里那几个键点了没反应 —— 藏掉它们才是诚实的，
+       留着「复制微信号」尤其坏：剪贴板被禁，可我们的 fail 分支照样弹
+       「微信号已复制」（规矩 41）。
+   ══════════════════════════════════════════════════════════════════════ */
+console.log('\n════ ⑬ 分享到朋友圈（规矩 43）════')
+{
+  const fs = require('fs')
+  const stripJs = (s) => String(s)
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/gm, '$1')
+  const stripWxml = (s) => String(s).replace(/<!--[\s\S]*?-->/g, '')
+  const read = (rel) => fs.readFileSync(R('妆历小程序/' + rel), 'utf8')
+  const appJson = JSON.parse(read('app.json'))
+
+  const toasts = []
+  const navs = []
+  const store = {}
+  const launch = { scene: 1007 }
+  const prevWx = global.wx
+  global.wx = {
+    getStorageSync: (k) => store[k],
+    setStorageSync: (k, v) => { store[k] = v },
+    getLaunchOptionsSync: () => ({ scene: launch.scene }),
+    showToast: (o) => toasts.push(o.title),
+    navigateTo: (o) => navs.push(o.url)
+  }
+
+  const AS = require(R('妆历小程序/utils/artistStore.js'))
+  const SH = require(R('妆历小程序/utils/share.js'))
+  const { buildRows } = require(R('妆历小程序/utils/schedule.js'))
+  const self = AS.getArtist()
+
+  // ── A. shareTimeline() 的卡片内容 ─────────────────────────────────
+  /* 🔴🔴 这一段最值钱的一条：**返回值里没有 path**。
+     微信对朋友圈卡片**忽略** path（约束 ①），所以写了它也不会报错 ——
+     但下一个读代码的人会以为「落点已经控住了」，然后去 C1 找落点、找不到、
+     也没有任何信号。⛔ 别为了「和 shareCard 长得像」把它补上。 */
+  eq('🔴🔴 朋友圈卡片里【没有 path】这个键（微信忽略它，留着等于骗下一个人）',
+    Object.keys(SH.shareTimeline()).sort(), ['query', 'title'])
+  eq('★ 同上：真的取不到 path（⛔ 不是恰好为空串）',
+    SH.shareTimeline().path, undefined)
+
+  const mian = AS.getArtistById('demo-mian')
+  const sMian = AS.scheduleById('sched-mian-0701')
+  eq('★ 指定了妆娘和场次 → 标题带上漫展名',
+    SH.shareTimeline('demo-mian', 'sched-mian-0701').title,
+    sMian.name + ' · ' + mian.nickname + '的妆位')
+  eq('🔴★ query 里两位都要有（卡片点开就是这一场）',
+    SH.shareTimeline('demo-mian', 'sched-mian-0701').query,
+    'artist_id=demo-mian&schedule_id=sched-mian-0701')
+  eq('★ 不带场次 → query 里也不带 schedule_id（⛔ 不留一个空的 &schedule_id=）',
+    SH.shareTimeline('demo-mian').query, 'artist_id=demo-mian')
+  eq('★ 不带场次 → 标题就只写昵称',
+    SH.shareTimeline('demo-mian').title, mian.nickname + '的妆位')
+  /* ⚠️ 认不出的场次 = 「没指定」，⛔ 不是把那个坏 id 带进 query。
+     带过去的话 C1 只会当没指定，于是**卡片自己前后矛盾**：
+     标题写的是这位妆娘的妆位，参数指着一个不存在的东西。 */
+  eq('🔴★ 认不出的场次 → 回落成「没指定」，⛔ 坏 id 不进 query',
+    SH.shareTimeline('demo-mian', '查无此场').query, 'artist_id=demo-mian')
+  eq('🔴★ 同上：标题也回落',
+    SH.shareTimeline('demo-mian', '查无此场').title, mian.nickname + '的妆位')
+  eq('🔴★ 认不出的妆娘 → 落到兜底那位（和 shareCard 同一个口径）',
+    SH.shareTimeline('查无此人', 'sched-mian-0701').query,
+    'artist_id=' + self.artist_id + '&schedule_id=sched-mian-0701')
+  /* 形参纪律照抄 shareCard：微信的 options 是个对象，误传会拼出
+     `schedule_id=[object Object]` —— **不报错，卡片照发**。 */
+  eq('🔴🔴 被当成微信的 options 传进来也不许拼出 [object Object]',
+    SH.shareTimeline({ from: 'menu' }, { target: undefined }).query.indexOf('[object'), -1)
+  eq('★ 数组 / 数字一律当没传（只认字符串）',
+    SH.shareTimeline([1], 7).query, 'artist_id=' + self.artist_id)
+
+  // ── B. inSinglePage()：判据只有 1154 一个 ─────────────────────────
+  launch.scene = 1154
+  eq('★ scene 1154（朋友圈单页模式）→ true', SH.inSinglePage(), true)
+  launch.scene = 1007
+  eq('★ scene 1007（普通入口）→ false', SH.inSinglePage(), false)
+  /* 🔴 取不到环境信息时宁可当成**正常模式**：正常模式的键点了都有反应。
+     反过来会把顾客手里一个好好的妆位页降级成只读页，而且不报错。 */
+  global.wx.getLaunchOptionsSync = () => { throw new Error('boom') }
+  eq('🔴★ 取环境信息抛错 → 当成正常模式（⛔ 不许反过来把好页面锁成只读）',
+    SH.inSinglePage(), false)
+  global.wx.getLaunchOptionsSync = () => ({ scene: launch.scene })
+  eq('★ 返回 undefined（某些环境）→ 也是 false，不抛',
+    (() => { global.wx.getLaunchOptionsSync = () => undefined; return SH.inSinglePage() })(), false)
+  global.wx.getLaunchOptionsSync = () => ({ scene: launch.scene })
+
+  // ── C. C1 页面级：单页模式只降级那三处 ────────────────────────────
+  const loadPageIn = (p) => {
+    let cfg = null
+    global.Page = (c) => { cfg = c }
+    delete require.cache[require.resolve(R('妆历小程序/' + p))]
+    require(R('妆历小程序/' + p))
+    const pg = {}
+    for (const k in cfg) pg[k] = cfg[k]
+    pg.data = JSON.parse(JSON.stringify(cfg.data || {}))
+    pg.setData = function (patch) { for (const k in patch) this.data[k] = patch[k] }
+    return pg
+  }
+
+  launch.scene = 1154
+  const pSp = loadPageIn('pages/landing/landing.js')
+  /* ⚠️ 这条钉的是「必须在 onLoad 里算」的**结果** —— 页面模块只求值一次
+     然后被缓存，写成 data 初值的话第二次进这一页拿到的还是第一次那个答案。 */
+  pSp.onLoad({ artist_id: 'demo' })
+  eq('★ scene 1154 → 这一页知道自己该降级', pSp.data.sp, true)
+
+  launch.scene = 1007
+  const pOk = loadPageIn('pages/landing/landing.js')
+  pOk.onLoad({ artist_id: 'demo' })
+  eq('🔴★ scene 1007 → 一点都不降级（提审截图 ② 走的就是这条路，一个像素没变）',
+    pOk.data.sp, false)
+
+  // ── D. 妆娘从档期详情页过来时，给她预选那一场 ─────────────────────
+  launch.scene = 1007
+  const pWant = loadPageIn('pages/landing/landing.js')
+  pWant.onLoad({ artist_id: 'demo-mian', schedule_id: 'sched-mian-0702' })
+  pWant.onShow()
+  eq('🔴★ 带 ?schedule_id= 进来 → 默认选中的就是**这一场**（分享的落点靠它）',
+    pWant.data.schedId, 'sched-mian-0702')
+  eq('★ 而且妆位表真的是这一场的（⛔ 不是「选中了 A 却画 B」的那张表）',
+    pWant.data.rows.length,
+    buildRows(AS.scheduleById('sched-mian-0702').slots, AS.scheduleById('sched-mian-0702').lunch).length)
+
+  const pBad = loadPageIn('pages/landing/landing.js')
+  pBad.onLoad({ artist_id: 'demo-mian', schedule_id: '查无此场' })
+  pBad.onShow()
+  eq('🔴★ 指定的那一场找不着 → 回落成「离今天最近的那一场」，⛔ 不把整页弄空',
+    pBad.data.schedId, 'sched-mian-0701')
+  eq('🔴★ 而且妆位表**不是空的**（一个坏参数不该让顾客看到空白页）',
+    pBad.data.rows.length > 0, true)
+
+  const pNone = loadPageIn('pages/landing/landing.js')
+  pNone.onLoad({ artist_id: 'demo-mian' })
+  pNone.onShow()
+  eq('★ 不带 schedule_id → 还是老规矩：离今天最近的那一场',
+    pNone.data.schedId, 'sched-mian-0701')
+
+  /* 🔴 最关键的一条：`wantSched` 是**优先项、不是命令**。
+     少了这条，顾客在页面上换一场之后，任何一次 onShow（比如从填写页退回来）
+     都会被弹回妆娘分享的那一场 —— 他刚挑的场次凭空跳走，而且不报错。 */
+  pWant.pickSched({ currentTarget: { dataset: { id: 'sched-mian-0701' } } })
+  pWant.onShow()
+  eq('🔴🔴 顾客手动换过场次之后，onShow 不许把他弹回分享时那一场',
+    pWant.data.schedId, 'sched-mian-0701')
+
+  // ── E. 妆师端入口：档期详情页的「分享」 ───────────────────────────
+  const sd = loadPageIn('pages/schedule-detail/schedule-detail.js')
+  sd.data.s = { schedule_id: 'sched-demo-0502' }
+  toasts.length = 0; navs.length = 0
+  sd.goShare()
+  eq('🔴★ 妆师端「分享」→ 落到**这一场**的妆位页（C1 是全项目唯一能发朋友圈的页）',
+    navs[0], '/pages/landing/landing?schedule_id=sched-demo-0502')
+  /* 🔴 这个键只做了一半（把妆娘带到 C1），另一半必须她本人点右上角。
+     小程序⛔ 不能自己弹分享面板（官方），所以那句 toast 是**唯一**的说明书
+     —— 删掉它就变成一个「点了没反应」的键（规矩 41）。 */
+  eq('🔴★ 而且必须出声说清楚「还得你自己点右上角 ···」（⛔ 删了就是「点了没反应」）',
+    toasts.length, 1)
+  eq('★ 那句话得提到「朋友圈」', toasts[0].indexOf('朋友圈') >= 0, true)
+
+  sd.data.s = null
+  toasts.length = 0; navs.length = 0
+  sd.goShare()
+  eq('🔴★ 数据没到时不跳（⛔ 不许拼出 ?schedule_id=undefined 这种坏路径）',
+    navs.length, 0)
+  eq('🔴★ 而且**出声**：静默 return 会让「键坏了」和「数据没到」长得一模一样',
+    toasts.length, 1)
+
+  // ── F. 源码结构：这几条 node 里跑不出来，只能读文件钉 ─────────────
+  eq('🔴★ landing.json 把单页模式的导航栏设成 squeezed'
+    + '（默认对自定义导航栏的页是 float = 微信那条栏压在页面上）',
+    JSON.parse(read('pages/landing/landing.json')).singlePage.navigationBarFit, 'squeezed')
+
+  /* 🔴🔴 全项目只有 C1 一页实现 onShareTimeline —— 见这一段开头。 */
+  const tlReg = /onShareTimeline\s*\(/
+  const tlPages = appJson.pages.filter((p) => tlReg.test(stripJs(read(p + '.js'))))
+  eq('🔴🔴 全项目只有 C1 一页有 onShareTimeline（其余页发出去是「她自己的管理界面」）',
+    tlPages, ['pages/landing/landing'])
+  /* ⚠️ 规矩 35：上面那条在「只有一页时」是**恒真**的 —— 扫描器写坏了照样绿。
+     喂三段合成源码，认得出 / 认不出各验一次。 */
+  eq('★ 扫描器自检：页面写了 onShareTimeline → 认得出',
+    tlReg.test(stripJs('Page({ onShareTimeline() { return shareTimeline(1) } })')), true)
+  eq('★ 扫描器自检：整页没写 → 认不出',
+    tlReg.test(stripJs('Page({ onShareAppMessage() { return shareCard() } })')), false)
+  eq('🔴★ 扫描器自检：注释里的反例不算数（否则上面那条恒真）',
+    tlReg.test(stripJs('Page({\n  // onShareTimeline() { return shareTimeline(1) },\n  data: {}\n})')), false)
+
+  /* 落点那一页的降级只有三处，判据是同一个 `sp`。
+     ⚠️ 数「有多少个 {{!sp}}」而不是逐个 grep 元素：多藏一个（比如把妆位表
+       也藏了）顾客就白点进来一趟，少藏一个就是「点了没反应」。 */
+  const lw = stripWxml(read('pages/landing/landing.wxml'))
+  eq('🔴★ C1 上恰好三处单页模式降级（nav-bar / 复制微信号 / 选这个妆位）',
+    (lw.match(/\{\{!sp\}\}/g) || []).length, 3)
+  eq('★ 其中 nav-bar 是 wx:if（单页模式整条不画 —— 微信自己有一条，叠两条是双栏）',
+    /<nav-bar wx:if="\{\{!sp\}\}"/.test(lw), true)
+  eq('★ 「选这个妆位」是 wx:elif（⛔ 不能改成 wx:if：那会把「已预约 / 已被预订」两个分支顶掉）',
+    /wx:elif="\{\{!sp\}\}"/.test(lw), true)
+
+  /* ⚠️ `sp` 的初值必须是 false，真值在 onLoad 里算 —— 写成 `sp: inSinglePage()`
+     就把「页面模块只求值一次」这个坑踩实了（见 landing.js 那段）。 */
+  const ljs = stripJs(read('pages/landing/landing.js'))
+  eq('★ landing.js 的 data 初值 sp 是 false（真值在 onLoad 里算）',
+    /sp:\s*false/.test(ljs), true)
+  /* 🔴 真的能咬住 `sp: inSinglePage()` 那种写法的，不是正则，是这一条：
+     在 scene 1154 下**加载这一页但不调 onLoad** —— 初值要是求值式，
+     模块一被 require 它就已经是 true 了。 */
+  launch.scene = 1154
+  const pFresh = loadPageIn('pages/landing/landing.js')
+  eq('🔴★ data 初值⛔ 不许写成 `sp: inSinglePage()`（页面模块只求值一次，第二次进来就错了）',
+    pFresh.data.sp, false)
+  launch.scene = 1007
+  eq('★ 降级判据真的挂上了（onLoad 里 setData sp）',
+    /setData\(\{\s*sp:\s*inSinglePage\(\)/.test(ljs), true)
+
+  /* `shareTimeline` 的函数体里⛔ 不许出现 `path` —— 这一条比 A 段那两条更硬：
+     A 段验的是「现在这一次返回值里没有」，这条验的是**源码里就没有**。
+     ⚠️ 抽取器本身要能验：同一把尺子量 shareCard，它**必须**量出 path
+        （否则抽取器写坏了 —— 比如切到一个空串 —— 这条也恒真）。 */
+  const fnBody = (src, name) => {
+    const i = src.indexOf('function ' + name)
+    if (i < 0) return ''
+    const j = src.indexOf('\n}', i)
+    return src.slice(i, j < 0 ? src.length : j)
+  }
+  const shareSrc = stripJs(read('utils/share.js'))
+  eq('🔴★ shareTimeline 的源码里根本没有 `path` 这个字（不只是「这一次没返回」）',
+    /\bpath\b/.test(fnBody(shareSrc, 'shareTimeline')), false)
+  eq('★ 抽取器自检：同一把尺子量 shareCard，必须量得出 path（否则上面那条恒真）',
+    /\bpath\b/.test(fnBody(shareSrc, 'shareCard')), true)
+
+  eq('🔴★ 妆师端那个入口挂在导航栏右槽上（默认居中标题的页 + flex:1 的右槽 = 不动居中）',
+    /slot="right"[^>]*bindtap="goShare"/.test(stripWxml(read('pages/schedule-detail/schedule-detail.wxml'))), true)
+  /* ⛔ 第二十六处清过一次死代码（规矩 42），别再冒一个「从没造出来的按钮」。 */
+  eq('★ 全项目 wxml 里没有 open-type="share"（不能自己弹分享面板，微信不支持）',
+    appJson.pages.filter((p) => fs.existsSync(R('妆历小程序/' + p + '.wxml'))
+      && /open-type\s*=\s*["']share["']/.test(read(p + '.wxml'))), [])
+
+  // ── G. 编译入口：开发者工具里唯一能验降级分支的办法 ───────────────
+  const condList = JSON.parse(read('project.config.json')).condition.miniprogram.list
+  eq('★ 编译入口 7 个（第 7 个是「朋友圈单页模式」）', condList.length, 7)
+  const spEntry = condList.filter((e) => e.scene === 1154)[0]
+  eq('🔴★ 有一个 scene 1154 的入口（⛔ 没有它，「降级分支」在工具里根本走不到）',
+    spEntry && spEntry.pathName, 'pages/landing/landing')
+  eq('★ 它落的也是 C1', spEntry && spEntry.query, 'artist_id=demo')
+
+  global.wx = prevWx
 }
 
 restoreBookings()

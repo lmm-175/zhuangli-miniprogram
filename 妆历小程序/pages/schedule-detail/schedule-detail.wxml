@@ -19,7 +19,18 @@
      ⚠️ wx:if 与 wx:else 之间不要插注释 —— 注释若参与兄弟节点判定，
         wx:else 会失效变成无条件渲染，一行会冒出四个按钮。 -->
 <view class="app" wx:if="{{s}}">
-  <nav-bar title="{{s.name}}" back="{{true}}"></nav-bar>
+  <!-- 🔴 2026-10-02（第二十七处）· 「分享」= 把妆娘带到**这一场的妆位页**（C1）。
+       为什么要点一下才到得了：朋友圈的卡片**不能自定义落点**（点开的就是分享时
+       那一页），所以「分享到朋友圈」只能开在 C1 上；而妆师端本来没有任何入口
+       能走到 C1（全项目通向 landing 的运行时路径原先只有转发卡片）。
+       ⚠️ 小程序⛔ 不能自己弹出分享面板（官方：「不支持在小程序页面内直接发起分享」），
+          所以最后那一下「点右上角 ···」必须她本人来 —— toast 负责说清楚。
+       ⚠️ `slot="right"`：这一页标题本来就用默认的 `center="usable"`，`.nv-r`
+          是 `flex:1 1 0`，加不加这个槽都不动标题居中；右端止步在微信胶囊左边
+          （`.nv` 自己带 `padding-right: capsulePad`）。 -->
+  <nav-bar title="{{s.name}}" back="{{true}}">
+    <view slot="right" class="nv-act" bindtap="goShare" hover-class="nv-hover" hover-stay-time="80">分享</view>
+  </nav-bar>
 
   <view class="body tight">
     <view class="card tight">

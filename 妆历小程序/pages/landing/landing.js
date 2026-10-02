@@ -124,9 +124,16 @@ function rowsOf(s) {
   return free.sort(byTime).concat(lunch.sort(byTime), busy.sort(byTime))
 }
 
-const { shareCard } = require('../../utils/share')
+const { shareCard, shareTimeline, inSinglePage } = require('../../utils/share')
 Page({
   onShareAppMessage() { return shareCard(this.artistId) },
+
+  /* 🔴 2026-10-02（第二十七处）：本页是全项目**唯一**实现 onShareTimeline 的页
+     —— 理由（朋友圈卡片不能改落点 ⇒ 只能在「本来就该被顾客看到的那一页」上开）
+     写在 utils/share.js 顶部那段，⛔ 别在别的页面照抄一行过来。
+     ⚠️ 传的是 `this.data.schedId`，所以卡片锁的就是**顾客正在看的那一场**；
+        妆娘从档期详情页点「分享」过来时，那一场由 `?schedule_id=` 预选好。 */
+  onShareTimeline() { return shareTimeline(this.artistId, this.data.schedId) },
 
   data: {
     /* ⛔ artist 里没有 wechat_id，也不会有 —— 见 utils/contact.js。
@@ -149,6 +156,10 @@ Page({
     schedList: [],     // 下拉里的项 [{id,label,sub}]
     schedId: '',       // 当前选中的 schedule_id
     schedLabel: '',    // 条子上那行字
+    /* 现在是不是「单页模式」（从朋友圈点开的那个模式）。
+       ⚠️ 初值给 false、真值在 onLoad 里算 —— 理由见下面 onLoad 那段，
+          ⛔ 不许写成 `sp: inSinglePage()`。 */
+    sp: false,
     // 妆位表的小标题。⚠️ 由 refresh() 算，⛔ 不在 wxml 里拼字符串 ——
     // 它要跟着「有几个场次」换口径（见 refresh）。
     secTitle: '可约妆位',
@@ -182,6 +193,21 @@ Page({
     const artistId = options.artist_id || 'demo'
     this.artistId = artistId
 
+    /* 🔴 2026-10-02（第二十七处）· 妆娘从档期详情页点「分享」过来时带的那一场。
+       ⚠️ 只落在**实例**上（`this.wantSched`），⛔ 不进 data：它不是要渲染的东西，
+          而且它只在 refresh() 挑默认场次时用一次。
+       ⚠️ 它【只是优先项、不是命令】：那一场要是被取消了 / 过期了 / 根本不存在，
+          refresh() 里会回落成「离今天最近的那一场」，顾客看到的仍是正常的一页
+          —— ⛔ 不要为了一个坏参数把整页弄空。 */
+    this.wantSched = options.schedule_id || ''
+
+    /* 🔴 单页模式（从朋友圈点开，见 utils/share.js 那段）。
+       ⚠️ **必须在 onLoad 里算**，⛔ 不能写进 data 的初值：
+          页面模块只求值一次然后被缓存（同一段道理见 onShow 上面那段，
+          以及 `artist` 那一行）—— 写在初值里的话，第二次进这一页拿到的
+          还是第一次那个答案。 */
+    this.setData({ sp: inSinglePage() })
+
     // 🔴 这一行就是「微信号唯一出口」的落地处。
     //    M1 换成：
     //      wx.cloud.callFunction({ name: 'showContact', data: { artistId } })
@@ -211,7 +237,17 @@ Page({
           还开着（下拉里已经没有它了，再按 id 去取就会取到 undefined，
           妆位表整个空掉，顾客看到的是「一场空」而不是「那场没了」）。 */
     let id = this.data.schedId
-    if (!chips.some((c) => c.id === id)) id = chips.length ? chips[0].id : ''
+    if (!chips.some((c) => c.id === id)) {
+      /* 🔴 2026-10-02（第二十七处）· 挑默认场次，两级：
+         ① 妆娘分享时指定的那一场（`?schedule_id=...`，见 onLoad）——
+            「从这场漫展分享出去，对方点开就是这一场」就靠它；
+         ② 没指定 / 指定的那一场找不着 → 离今天最近的那一场（list 已排好序）。
+         ⚠️ 两级都【必须】在 chips 里真查一下：一个不存在的 id 直接塞进 schedId，
+            下一句 `list.filter(...)` 会得到 undefined，妆位表整个空掉 ——
+            顾客看到的是「一场空」而不是「那一场没了」（同一个坑见下面那段）。 */
+      const want = this.wantSched
+      id = chips.some((c) => c.id === want) ? want : (chips.length ? chips[0].id : '')
+    }
     const cur = list.filter((s) => s.schedule_id === id)[0] || null
     const hit = chips.filter((c) => c.id === id)[0]
 
@@ -307,12 +343,14 @@ Page({
     wx.switchTab({ url: '/pages/guest-bookings/guest-bookings' })
   }
 
-  /* ⛔ 本页不实现 onShareTimeline —— 理由见 utils/share.js。
-     📌 这里原先写的是「见 pages/schedule-edit 里的说明」，而那段说明
-        在那一页里根本不存在（断链，2026-10-01 查出来的）。
+  /* 🔴 两张卡片（上面的 onShareAppMessage / onShareTimeline）走的是全项目共用
+       那两个函数，⛔ 别在这一页另写一份 —— 这一页唯一特殊的地方是它**知道
+       自己在讲谁**（`this.artistId`，onLoad 里从查询串解出来），所以它把
+       那个人（和当前那一场）传进去。其余 17 页没有 artistId，落点由
+       shareCard 兜底到妆娘端那一位。
 
-     🔴 转发卡片（上面第一行的 onShareAppMessage）走的是全项目共用那一个函数，
-        ⛔ 别在这一页另写一份 —— 这一页唯一特殊的地方是它**知道自己在讲谁**
-        （`this.artistId`，onLoad 里从查询串解出来），所以它把那个人传进去。
-        其余 17 页没有 artistId，落点由 shareCard 兜底到妆娘端那一位。 */
+     📌 2026-10-02（第二十七处）：这一页是**全项目唯一**实现 onShareTimeline 的
+        页 —— 为什么只有它，以及朋友圈那三条硬约束（⛔ 不能改落点、必然先过
+        单页模式、单页模式里哪些键是死的），全部写在 `utils/share.js` 顶部。
+        ⛔ 别的页面别照抄一行 `onShareTimeline` 过去。 */
 })

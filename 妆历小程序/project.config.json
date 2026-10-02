@@ -70,13 +70,19 @@
           "scene": null
         },
         {
-          "name": "C1 落地页（审核员走的路径）",
+          "name": "C1 落地页（审核员走的路径 / 朋友圈入口）",
           "pathName": "pages/landing/landing",
           "query": "artist_id=demo",
           "scene": 1007
         },
         {
-          "name": "壳 5 新建档期（分享入口在这）",
+          "name": "C1 朋友圈单页模式（scene 1154）",
+          "pathName": "pages/landing/landing",
+          "query": "artist_id=demo",
+          "scene": 1154
+        },
+        {
+          "name": "壳 5 新建档期",
           "pathName": "pages/schedule-edit/schedule-edit",
           "query": "",
           "scene": null

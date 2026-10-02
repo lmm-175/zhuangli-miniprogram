@@ -7,7 +7,15 @@
      ⛔ 没有金额 / 价格 / 定金（红线 2）
      📌 妆位行只有三样东西：序号 · 时段 · 可约状态。多一个字段都要问自己为什么。 -->
 <view class="app">
-  <nav-bar title="{{artist.nickname}}的妆位" back="{{true}}">
+  <!-- 🔴 2026-10-02（第二十七处）· 单页模式（从朋友圈点开）下**整条不画**。
+       微信在单页模式里自己画一条固定在顶上的导航栏，我们这条再画一遍就是双栏；
+       而且这条上唯一那个动作（「我的预约」）是 switchTab —— 单页模式里禁用，
+       点了没反应。藏掉它之后微信那条正好占住它原来的位置
+       （靠 pages/landing/landing.json 的 `singlePage.navigationBarFit: squeezed`
+        把页面整体往下挤，⛔ 别把那行配置删了）。
+       ⚠️ 三处降级（这条 + 复制微信号 + 选这个妆位）的判据是同一个 `sp`，
+          在 onLoad 里算，理由见 landing.js。 -->
+  <nav-bar wx:if="{{!sp}}" title="{{artist.nickname}}的妆位" back="{{true}}">
     <view slot="right" class="nv-act" bindtap="goMyBookings" hover-class="nv-hover" hover-stay-time="80">我的预约</view>
   </nav-bar>
 
@@ -36,7 +44,12 @@
           <view class="lbl">微信号</view>
           <view class="wxid">{{contact.wechat_id}}</view>
         </view>
-        <view class="btn sec sm {{copied ? 'dis' : ''}}" bindtap="copyWechat" hover-class="btn-hover" hover-stay-time="80">{{copied ? '已复制' : '复制微信号'}}</view>
+        <!-- 🔴 单页模式下不画这个键：`wx.setClipboardData` 在被禁清单里
+             （官方文档「单页模式下的限制」）。留着它的后果不是「点了没反应」，
+             而是**更糟的一种**——我们的 fail 分支也会弹「微信号已复制」，
+             于是顾客拿到一句假话、复制粘贴时才发现是空的（规矩 41）。
+             微信号本身照常显示，想加她的人截图 / 手输都行。 -->
+        <view wx:if="{{!sp}}" class="btn sec sm {{copied ? 'dis' : ''}}" bindtap="copyWechat" hover-class="btn-hover" hover-stay-time="80">{{copied ? '已复制' : '复制微信号'}}</view>
       </view>
     </view>
 
@@ -94,8 +107,47 @@
     <view class="sec-ttl">{{secTitle}}</view>
     <view wx:if="{{rows.length}}" class="grp">
       <block wx:for="{{rows}}" wx:key="key">
-        <!-- 午休：独立一行，浅蓝，比妆位显眼。⚠️ 它没有按钮、也不灰 ——
-             它不是「可约」也不是「被占」，是这段时间不接单。 -->
+        <!-- 🔴⛔ 这一整块里**不许出现任何注释**，两条 if/elif/else 链上尤其不许
+             —— 注释插在 `wx:if` 和 `wx:else` 之间会参与兄弟节点判定，
+             `wx:else` 会失效变成**无条件渲染**（同一句提醒见
+             `pages/schedule-detail/schedule-detail.wxml` 开头，那边是实跑踩出来的：
+             一行冒出四个按钮）。所以下面两条链之间是干净的，说明全写在**这里**。
+
+          【午休行】独立一行、浅蓝，比妆位显眼。它没有按钮、也不灰 ——
+          它不是「可约」也不是「被占」，是这段时间不接单。
+
+          【妆位行的三种状态】
+            · 可约     → 正常底色 + 「可约」小字 + 那个按钮
+            · 我约的   → 金棋子「**已预约**」（第二十四处新加，仅本人视角）
+            · 别人约的 → 整行灰掉（`.busy`）+ 灰棋子「**已被预订**」
+          🔴 2026-10-01（第二十四处）：用户原话「**只有我本人预约的单子在
+             xx 的妆位里面显示金色的已预约，别人的是灰色的（仅用户本人视角），
+             这样子可以和别人的区分，然后也知道自己约没约**」。
+             ⇒ 两种被占**都不可点**（都是 wx:if 分支，没有 pickSlot），
+                区别只在颜色和那五个字：金色=我的、灰色=别人的。
+          ⚠️ 判据是 `item.mine`，由 `markBooked` 第三个参数标上 ——
+             ⛔ 别在这一页拿 `item.booked` 反推「是不是我的」，「有没有被占」不是它。
+          🔴 2026-10-01（第二十二处）顾客定的：那颗灰棋子写「已被预订」，
+             原先跟小字都写「已约」/「已被约」—— 同一句话在一行里出现两遍。
+             ⇒ 小字**只给可约的行**（它说的是「这一格能约」），
+                被占的行由棋子一个人说完。⛔ 别再把这行小字加回来。
+          ⚠️ 妆师端档期页的妆位小签写的是「已预订」（那边行里还有改/删键，字少一格）；
+             顾客这一页是**问句的答案**，用顾客自己的说法。
+             ⛔ 但 C1 上不许出现第四种写法 —— 「已约」「已被约」这两个词
+                在这一页已经没有资格出现（规矩 25）。
+
+          【那个按钮，第二十七处】
+          · 带过去的两个参数是 `(schedule_id, seq)`，⛔ 不是 `slot_id`
+            （那是冻结夹具的东西）。`schedId` 就是这张表当前那一场 ——
+            两个 data 属性同源，免得「妆位是 A 场的、场次名是 B 场的」。
+            ⚠️ `booking-form` 那边是【同一步】改的，见 landing.js 的 pickSlot。
+          · 🔴 **单页模式（从朋友圈点开）下不画它**：`wx.navigateTo` 在那个模式里
+            被禁用（官方文档「单页模式下的限制」）。⚠️ 信息一个字没丢 ——
+            可约的行本来就在 `item.booked` 那行小字里写着「可约」，顾客看到的
+            仍然是**这一场完整的可约妆位表**，点微信自己那条底部「前往小程序」
+            就落到同一个 C1、能直接约。
+            ⛔ 别把它改成一个点了弹提示的键：小程序不能诱导点击「打开小程序」
+               （微信运营规范），而那句「请前往小程序使用完整服务」本来就归微信画。 -->
         <view wx:if="{{item.type === 'lunch'}}" class="slot-row lunch-row">
           <view class="sq">休</view>
           <view class="tm">
@@ -103,46 +155,24 @@
             <text class="sub">休息 {{item.minutes}} 分钟</text>
           </view>
         </view>
-        <!-- 妆位的三种状态：
-             · 可约     → 正常底色 + 「可约」+ 那个按钮
-             · 我约的   → 金棋子「**已预约**」（第二十四处新加，仅本人视角）
-             · 别人约的 → 整行灰掉（`.busy`）+ 灰棋子「**已被预订**」
-             🔴 2026-10-01（第二十四处）：用户原话「**只有我本人预约的单子在
-                xx 的妆位里面显示金色的已预约，别人的是灰色的（仅用户本人视角），
-                这样子可以和别人的区分，然后也知道自己约没约**」。
-                ⇒ 两种被占**都不可点**（都是 wx:if 分支，没有 pickSlot），
-                   区别只在颜色和那五个字：金色=我的、灰色=别人的。
-             ⚠️ 判据是 `item.mine`，由 `markBooked` 第三个参数标上 ——
-                ⛔ 别在这一页拿 `item.booked` 反推「是不是我的」，
-                   它只知道「有没有被占」。
-             🔴 2026-10-01（第二十二处）顾客定的：那颗灰棋子写「已被预订」，
-                原先跟小字都写「已约」/「已被约」—— 同一句话在一行里出现两遍。
-                ⇒ 小字**只给可约的行**（它说的是「这一格能约」），
-                   被占的行由棋子一个人说完。⛔ 别再把这行小字加回来。
-             ⚠️ 妆师端档期页的妆位小签写的是「已预订」（那边行里还有改/删键，
-                字少一格）；顾客这一页是**问句的答案**，用顾客自己的说法。
-                ⛔ 但 C1 上不许出现第四种写法 —— 「已约」「已被约」这两个词
-                   在这一页已经没有资格出现（规矩 25）。 -->
         <view wx:else class="slot-row {{item.mine ? 'mine' : (item.booked ? 'busy' : '')}}">
           <view class="sq">{{item.seq}}</view>
           <view class="tm">{{item.start}} – {{item.end}}<text wx:if="{{!item.booked}}" class="sub">可约</text></view>
           <view wx:if="{{item.mine}}" class="btn xs gold">已预约</view>
           <view wx:elif="{{item.booked}}" class="btn xs dis">已被预订</view>
-          <!-- 🔴 2026-10-01（第二十处第 ⑥ 步）：带过去的两个参数是
-               `(schedule_id, seq)`，⛔ 不再是 `slot_id`（那是冻结夹具的东西）。
-               ⚠️ `schedId` 就是这张表当前那一场 —— 两个 data 属性同源，
-                  免得出现「妆位是 A 场的、场次名是 B 场的」。
-               ⚠️ `booking-form` 那边是【同一步】改的，见 landing.js 的 pickSlot。 -->
-          <view wx:else class="btn pri xs" data-sid="{{schedId}}" data-seq="{{item.seq}}" bindtap="pickSlot" hover-class="btn-hover" hover-stay-time="80">选这个妆位</view>
+          <view wx:elif="{{!sp}}" class="btn pri xs" data-sid="{{schedId}}" data-seq="{{item.seq}}" bindtap="pickSlot" hover-class="btn-hover" hover-stay-time="80">选这个妆位</view>
         </view>
       </block>
     </view>
 
-    <!-- 空态：一场可约的都没有。
-         ⚠️ 只说这一件事，⛔ 不写「去看看别的妆娘」之类的引导 ——
-            这一页是「某某的妆位」，顾客是奔着她来的，
-            劝他去看别人既答非所问，又是在这一页上开一个「发现」的口子（README §3.7）。 -->
     <view wx:else class="empty">
+      <!-- 空态：一场可约的都没有。
+           ⚠️ 只说这一件事，⛔ 不写「去看看别的妆娘」之类的引导 ——
+              这一页是「某某的妆位」，顾客是奔着她来的，
+              劝他去看别人既答非所问，又是在这一页上开一个「发现」的口子（README §3.7）。
+           ⚠️ 这段注释原先浮在 `wx:if="{{rows.length}}"` 和 `wx:else` **中间**，
+              2026-10-02 挪进来的 —— 注释夹在 if/else 之间会参与兄弟节点判定，
+              `wx:else` 失效变成无条件渲染（同一句提醒见 schedule-detail）。 -->
       <text class="ic">📅</text>
       <view class="et">这位妆娘还没有可约的妆位</view>
       <view style="font-size:26rpx">等她把档期发出来，这里就能选了</view>
