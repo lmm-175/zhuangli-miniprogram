@@ -10,7 +10,7 @@ const { getArtist } = require('../../utils/artistStore')
 const { awayFromToday } = require('../../utils/schedule')
 const { syncTabBar } = require('../../utils/tabbar')
 
-/* 妆娘端预约单列表：四个状态 Tab（方案草案 §4.1 · 预约单列表）。
+/* 妆娘端预约单列表：四个状态 Tab。
    status → tab 的映射：
      pending → 待处理    confirmed → 已确认    done → 已完成    rejected/cancelled → 已取消 */
 const TABS = [
@@ -520,7 +520,7 @@ Page({
     wx.showToast({ title: msg, icon: 'none', duration: n < ids.length ? 2600 : 1800 })
   },
 
-  /* 妆师代填（方案草案 §3.3）：线下谈好的客人，妆娘自己录一张单。
+  /* 妆师代填：线下谈好的客人，妆娘自己录一张单。
      复用顾客填写页，mode=artist。这是单边启动的入口。 */
   goNewArtistForm() {
     wx.navigateTo({ url: '/pages/booking-form/booking-form?mode=artist' })
