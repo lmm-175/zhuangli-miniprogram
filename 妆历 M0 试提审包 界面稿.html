@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>妆历 · M0 试提审包 界面稿</title>
+<title>妆历 · 界面稿（现状）</title>
 <style>
 /* ═══════════════════════════════════════════════════════════════
    以下 :root 到 body 的令牌，逐字复制自 `妆历 界面设计与交互说明.html`
@@ -179,7 +179,7 @@ table.spec tr.rl td.no{color:var(--danger)}
 @media(max-width:900px){.dev{flex-direction:column}.dev-l{flex:none;width:100%}.grid2{grid-template-columns:1fr}}
 
 /* ═══════════════════════════════════════════════════════════════
-   M0 追加样式 —— 只新增，不改动上方任何一条令牌
+   追加样式 —— 只新增，不改动上方任何一条令牌
    ═══════════════════════════════════════════════════════════════ */
 .phone{position:relative}
 .mk.ok{background:var(--ok)}
@@ -211,22 +211,38 @@ table.spec tr.rl td.no{color:var(--danger)}
 .chk{background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-top:16px}
 .chk .hd{padding:13px 16px;background:var(--bg);font-weight:700;font-size:13.5px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
 .chk .hd .ct{font-size:12px;color:var(--t3);font-weight:500}
+
+/* ── 现状稿追加（2026-10-06）────────────────────────────────── */
+.ava{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700}
+.ava.sm{width:38px;height:38px;font-size:12px}
+.piece{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid transparent}
+.piece.gray{background:#F0F1F2;color:var(--t3);border-color:#E2E5E8}
+.piece.gold{background:#FDF3E0;color:#8A6414;border-color:#F0DFB4}
+.meta-line{font-size:11.5px;color:var(--t3);margin-top:3px}
+.warnbar{background:var(--warn-l);border:1px solid #F5D9B8;color:#7A3D08;border-radius:8px;padding:8px 10px;font-size:11.5px;line-height:1.65}
+
+/* 🔴 原样式给 .grp 用 `overflow:hidden` 来磨圆角。但这一版里 .mk 编号是从
+   元素的【左上角往外探 8px】的 —— 挂在 .grp 里面的编号会被整个裁掉，
+   表现是「清单里有 40 号，图上死活找不到」。
+   改成「让第一/最后一个子元素自己带圆角」，角一样是圆的，探出去的编号能露出来。 */
+.grp{overflow:visible}
+.grp > *:first-child{border-radius:var(--r) var(--r) 0 0}
+.grp > *:last-child{border-radius:0 0 var(--r) var(--r)}
 </style>
 </head>
 <body>
 
 <div class="hero">
   <div class="in">
-    <h1>妆历 · M0 试提审包 界面稿</h1>
+    <h1>妆历 · 界面稿（现状）</h1>
     <p class="sub">
-      这是 <b>M0（2 人天试提审包）</b>的界面稿 —— 只为回答一个问题：<b>个人主体 + 这套形态，审核能不能过。</b><br>
-      设计令牌逐字沿用 <b>《妆历 界面设计与交互说明》</b>（品牌色 <code>#C0556E</code> / 手机框 340px / <code>.mk</code> 编号标记），
-      内容换成 M0 实际要交付的两屏 + 撑住「点哪里都不崩」的 6 个壳页面。
+      这是 <b>妆历小程序当前代码</b>的界面稿 —— <b>已落地、真机跑通</b>的 18 个页面，逐页画在这里。<br>
+      设计令牌逐字沿用 <b>《妆历 界面设计与交互说明》</b>（品牌色 <code>#C0556E</code> / 手机框 340px / <code>.mk</code> 编号标记）。
     </p>
     <div class="meta">
-      <span class="pill">v1.0 · 2026-09-30</span>
-      <span class="pill">2 人天</span>
-      <span class="pill">2 屏 + 6 个壳</span>
+      <span class="pill">v2.0 · 2026-10-06</span>
+      <span class="pill">18 个页面</span>
+      <span class="pill">2 个角色 · 各 3 格 tabBar</span>
       <span class="pill hot">⛔ 顾客端零金额</span>
       <span class="pill">本页可点击走查</span>
     </div>
@@ -234,15 +250,15 @@ table.spec tr.rl td.no{color:var(--danger)}
 </div>
 
 <nav class="sticky"><div class="in">
-  <a href="#howto">这份文件怎么用</a>
-  <a href="#a1">屏 1 · A1 工作台空态</a>
-  <a href="#c1">屏 2 · C1 分享落地页</a>
-  <a href="#c1">🔴 分享：用原生的</a>
-  <a href="#shells">壳页面（6）</a>
+  <a href="#howto">怎么用</a>
+  <a href="#role">入口 · 角色选择</a>
+  <a href="#artist">妆师端（10）</a>
+  <a href="#guest">约妆端（4）</a>
+  <a href="#shared">共用页（3）</a>
   <a href="#clicks">可点性清单</a>
   <a href="#toasts">Toast 文案</a>
   <a href="#redlines">红线自查</a>
-  <a href="#data">假数据预置</a>
+  <a href="#data">数据与假数据</a>
 </div></nav>
 
 <div class="wrap">
@@ -251,740 +267,2077 @@ table.spec tr.rl td.no{color:var(--danger)}
 <section id="howto">
   <h2 class="sec"><span class="n">1</span>这份文件怎么用</h2>
   <p class="lead">
-    照着敲代码用。<b>两张主屏是提审截图要拍的，6 个壳页面是让审核员点不白的。</b>
-    真正的工量不在画页面，在 §5 可点性清单 —— 每一个能点的地方都要有合理响应。
+    <b>这是代码的可读呈现，不是设想。</b>画在这里的每一屏，都是 <code>妆历小程序/</code> 里真实存在、已经真机跑通的页面。
+    它回答两个问题：<b>这个工具长什么样</b>、<b>能点的地方点下去发生什么</b>。
   </p>
 
-  <div class="rl-bar">
-    📌 <b>M0 的交付标准（唯一一条）</b><br>
-    <b>「审核员能走完一条完整路径，中途没有任何一处白屏、崩溃或死链。」</b><br>
-    ⚠️ 提审最常见的驳回理由之一是「功能不完整」。审核员点到空白页 = 态度问题，<b>不是「功能少」的问题</b>。
+  <div class="note">
+    <b>它和代码的关系：</b>代码是事实，本文件是事实的呈现。<b>两边不一致时，以代码为准，然后把这份改过来 —— ⛔ 不许两边各说各的。</b><br>
+    📌 <b>本文件的前身是《妆历 M0 试提审包 界面稿》</b>（2026-09-29，2 屏 + 6 个壳，含后来被取消的 A1 工作台）。
+    那份稿子在提审之后就和代码脱节了，2026-10-06 按代码实际情况整份重做。<br>
+    🗄 <b>M0 原版仍在 git 里</b>（提交 <span class="k">3ed48e4</span> 及之前），要看「当时给审核员看的是什么」随时可捞。
   </div>
 
-  <h3 class="sub">1.1 M0 一共 8 个界面 —— 2 张脸 + 6 个落点</h3>
-  <div class="flow">
-    <span class="n2 p">A1 工作台空态</span><span class="ar">→</span>
-    <span class="n2">新建档期（壳）</span><span class="ar">→</span>
-    <span class="n2">档期列表空态</span>
-  </div>
-  <div class="flow">
-    <span class="n2" style="border-style:dashed">📤 分享我的妆位</span><span class="ar">←</span>
-    <span style="font-size:12.5px;color:var(--t2);margin-right:8px">微信<b>原生</b>转发，我们不做分享 UI（见 §3.1）</span>
-    <span class="ar">→</span>
-    <span class="n2 p">C1 分享落地页</span><span class="ar">→</span>
-    <span class="n2">填写预约单（壳）</span><span class="ar">→</span>
-    <span class="n2">我的预约空态</span>
-  </div>
-  <div class="flow">
-    <span class="n2">我的</span><span class="ar">·</span>
-    <span class="n2">设置</span>
-    <span style="font-size:12.5px;color:var(--t2);margin-left:6px">← A1 导航栏右「设置」和 Tab 4 的落点</span>
+  <h3 class="sub">1.1 全部 18 个页面</h3>
+
+  <div class="chk" style="margin-top:12px">
+    <div class="hd"><span>🗺 页面总表</span><span class="ct">顺序 = <span class="k">app.json</span> 的 <span class="k">pages</span> 顺序</span></div>
+    <table class="spec">
+      <thead><tr><th>#</th><th>页面</th><th>端</th><th>职责</th><th>从哪进</th></tr></thead>
+      <tbody>
+        <tr><td class="no">1</td><td class="nm">角色选择</td><td class="ps">入口</td><td class="ps">一进小程序先选身份：<b>妆师</b> / <b>约妆</b></td><td class="ps">启动首屏</td></tr>
+        <tr><td class="no">2</td><td class="nm">档期</td><td class="ps">妆师端 <span class="k pri">tab 1</span></td><td class="ps">自己的场次列表；<b>卡片上就能「取消场次」</b></td><td class="ps">角色选择 / tab</td></tr>
+        <tr><td class="no">3</td><td class="nm">档期详情</td><td class="ps">妆师端</td><td class="ps">时段表：改时长 / 删妆位 / 插妆位 / 午休；右上角「分享」</td><td class="ps">档期卡片</td></tr>
+        <tr><td class="no">4</td><td class="nm">新建 / 编辑档期</td><td class="ps">妆师端</td><td class="ps">填参数 → 自动排出时段表</td><td class="ps">档期页「新建」</td></tr>
+        <tr><td class="no">5</td><td class="nm">档期模板</td><td class="ps">妆师端</td><td class="ps">存过的排班，一键「应用」成新档期；右下角可拖动圆「＋」</td><td class="ps">档期页</td></tr>
+        <tr><td class="no">6</td><td class="nm">预约单</td><td class="ps">妆师端 <span class="k pri">tab 2</span></td><td class="ps">4 个状态 Tab × 场次筛选 × 搜索 × 批量处理</td><td class="ps">tab</td></tr>
+        <tr><td class="no">7</td><td class="nm">预约单详情</td><td class="ps">妆师端</td><td class="ps">一张单的全部信息 + 状态动作</td><td class="ps">预约单列表</td></tr>
+        <tr><td class="no">8</td><td class="nm">我的</td><td class="ps">妆师端 <span class="k pri">tab 3</span></td><td class="ps">资料卡（点头像换色 / 点整卡改资料）</td><td class="ps">tab</td></tr>
+        <tr><td class="no">9</td><td class="nm">我的资料</td><td class="ps">妆师端</td><td class="ps">昵称 / 城市 / 接妆风格 / 简介，<b>四行全都能点</b></td><td class="ps">我的页资料卡</td></tr>
+        <tr><td class="no">10</td><td class="nm">接妆风格</td><td class="ps">妆师端</td><td class="ps">预设多选 + 每组可自填词</td><td class="ps">我的资料</td></tr>
+        <tr><td class="no">11</td><td class="nm">简介</td><td class="ps">妆师端</td><td class="ps">≤200 字</td><td class="ps">我的资料</td></tr>
+        <tr><td class="no">12</td><td class="nm">我约过的妆娘</td><td class="ps">约妆端 <span class="k pri">tab 1</span></td><td class="ps"><b>我自己约过的</b>妆娘（私人记录，不是目录）；搜昵称 / 城市</td><td class="ps">角色选择 / tab</td></tr>
+        <tr><td class="no">13</td><td class="nm">我的预约</td><td class="ps">约妆端 <span class="k pri">tab 2</span></td><td class="ps">自己提交过的单</td><td class="ps">tab / C1 右上角</td></tr>
+        <tr><td class="no">14</td><td class="nm">我的</td><td class="ps">约妆端 <span class="k pri">tab 3</span></td><td class="ps">三行：切换身份 / 问题反馈 / 设置</td><td class="ps">tab</td></tr>
+        <tr><td class="no">15</td><td class="nm">妆位页（C1）</td><td class="ps">约妆端</td><td class="ps">一位妆娘的妆位页，<b>无需登录</b>；分享卡片的落点</td><td class="ps">分享卡片 / 我约过的妆娘</td></tr>
+        <tr><td class="no">16</td><td class="nm">填写预约单</td><td class="ps">共用</td><td class="ps">顾客自填 / 妆师代填，<b>同一页两个模式</b></td><td class="ps">C1 选妆位 / 预约单页「代填」</td></tr>
+        <tr><td class="no">17</td><td class="nm">设置</td><td class="ps">共用</td><td class="ps">微信号展示开关（<b>只对妆师画</b>）+ 隐私指引</td><td class="ps">两个「我的」页</td></tr>
+        <tr><td class="no">18</td><td class="nm">问题反馈</td><td class="ps">共用</td><td class="ps">≤500 字，<b>全项目唯一真写云端的通道</b></td><td class="ps">两个「我的」页</td></tr>
+      </tbody>
+    </table>
   </div>
 
-  <div class="legend">
-    <span><i>1</i>可点元素（黑色 = 壳，有合理响应即可）</span>
-    <span><i class="ok">2</i>M0 必须真响应（真跳转 / 真功能）</span>
-    <span><i class="rd">⛔</i>类目红线（此屏不允许出现）</span>
-    <span style="margin-left:auto;color:var(--t3)">📌 本页所有带编号的控件<b>都可以点</b>，会滚到它的真实落点并高亮</span>
+  <h3 class="sub">1.2 两个角色，各一条底栏</h3>
+  <p class="lead" style="margin-bottom:12px">
+    小程序全局<b>只有一个</b> <code>tabBar</code>，而两个角色需要两条不同的底栏 —— 所以走的是微信官方的
+    <code>"custom": true</code> + 根目录 <code>custom-tab-bar/</code>。
+    <b>⛔ 不是「在页面里画一条假底栏」</b> —— 假底栏在 <code>wx.switchTab</code> 眼里根本不存在，
+    这个项目为「看着像控件、其实不是」栽过好几次。
+  </p>
+
+  <div class="grid2">
+    <div class="note ok" style="margin:0">
+      <b>妆师端 · 3 格</b>（<span class="k">utils/tabbar.js</span> 的 <span class="k">TABS.artist</span>）<br>
+      ① <b>档期</b> → <span class="k">pages/schedule/</span><br>
+      ② <b>预约单</b> → <span class="k">pages/booking/</span><br>
+      ③ <b>我的</b> → <span class="k">pages/mine/</span>
+    </div>
+    <div class="note ok" style="margin:0">
+      <b>约妆端 · 3 格</b>（<span class="k">TABS.guest</span>）<br>
+      ① <b>我约过的妆娘</b> → <span class="k">pages/artist-list/</span><br>
+      ② <b>我的预约</b> → <span class="k">pages/guest-bookings/</span><br>
+      ③ <b>我的</b> → <span class="k">pages/guest-mine/</span>
+    </div>
   </div>
 
-  <h3 class="sub">1.2 两道防线（M0 同样生效，不因「最小版本」放宽）</h3>
+  <div class="note warn">
+    ⚠️ <b>清单有两处、必须逐项相同：</b><span class="k">app.json</span> 的 <span class="k">tabBar.list</span>（6 条）和
+    <span class="k">utils/tabbar.js</span> 的 <span class="k">TABS</span>（3 + 3）。它们是「同一件事的两半」，
+    自测里钉着二者一致。<br>
+    📌 <b>点亮哪一格靠路由认，不靠页面报序号</b> —— <span class="k">custom-tab-bar</span> 实时读当前路由去匹配槽位，
+    匹配不上<b>不猜 0</b>（保持上次）。<br>
+    ⚠️ <b>自定义 tabBar 不替页面扣底部高度</b>：6 个 tab 页的根容器要带 <span class="k">.app.tabbed</span> 补
+    <span class="k">var(--tabh)</span>。<b>新加一个 tab 页 = 注册进 <span class="k">app.json</span> + 加 <span class="k">.tabbed</span>，两件事一起做</b>
+    —— 只做一件的现象是「最后一行被底栏盖住」，屏幕上<b>一个字都不报</b>。
+  </div>
+
+  <h3 class="sub">1.3 三道防线（整份稿子都在守这三条）</h3>
   <div class="grid2">
     <div class="note red" style="margin:0">
-      <b>防线 ① · 全顾客端零金额</b><br>
-      落地页 / 填表页 / 我的预约，<b>一个 ¥ 都不许有。</b><br>
+      <b>防线 ① · 顾客端零金额</b><br>
+      妆位页 / 填表页 / 我的预约，<b>一个 ¥ 都不许有。</b><br>
       个人主体可以有金额（「记账」就是消费记录），违规的是「<b>构成一次服务要约</b> + <b>分享给顾客看</b>」。<br>
-      → 妆位表不带价格字段，定金只标「已收 / 未收」。
+      → 妆位不带价格字段，定金<b>只标状态、不带金额</b>。
     </div>
     <div class="note red" style="margin:0">
       <b>防线 ② · 零社交特征</b><br>
-      妆面样片区<b>没有点赞、评论、收藏、浏览数、转发数</b>，<b>没有「更多作品」入口</b>。<br>
-      个人主体没有「社交」类目，而「工具-图片处理」明写「如提供传播和公开访问服务，属于社交范畴」。<br>
-      → 落地页的叙事是「<b>这个化妆师的个人页</b>」，不是作品广场。
+      全项目<b>没有点赞、评论、收藏、浏览数、转发数</b>，<b>没有作品列表页</b>。<br>
+      个人主体没有「社交」类目；「工具-图片处理」明写「如提供传播和公开访问服务，属于社交范畴」。<br>
+      → 妆位页的叙事是「<b>这个化妆师的个人页</b>」，不是作品广场。<br>
+      ⚠️ <b>妆娘的作品集整块取消</b>（不是延后）—— 给顾客看就落在那条线上。
     </div>
   </div>
-
-  <div class="note warn">
-    ⚠️ <b>M0 最容易犯的三个错</b>（因为它们都长得像「正常功能」）：<br>
-    ① 加「<b>邀请同行</b>」——多商户入驻最直接的证据，<b>M0 更容易犯，因为它最像增长手段</b>；<br>
-    ② 加「<b>浏览所有化妆师</b>」入口——立刻是平台；<br>
-    ③ 提审备注里写「<b>平台</b>」二字——<b>这就是上次驳回的直接根因</b>。
-  </div>
-</section>
-
-<!-- ══════════════════ 2 A1 ══════════════════ -->
-<section id="a1">
-  <h2 class="sec"><span class="n">2</span>屏 1 · A1 工作台（空态）</h2>
-  <p class="lead">
-    化妆师打开小程序看到的第一屏。<b>空态是刻意的</b> —— 审核员第一眼读到的必须是「这是一个排班工具」。
-  </p>
-
-  <div class="dev" id="p-a1">
-    <div class="dev-l">
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav">
-          <span class="lft"></span>
-          <span class="ttl">妆历</span>
-          <span class="rgt rel" data-goto="p-settings">设置<span class="mk ok" style="left:20px;top:-8px">1</span></span>
-        </div>
-        <div class="pb" style="justify-content:center;gap:4px">
-          <div class="empty" style="padding:18px 16px 4px">
-            <span class="ic">📅</span>
-            <div style="font-size:15.5px;font-weight:700;color:var(--t1);margin-bottom:9px">欢迎使用妆历</div>
-            <div>这是你的排班本。<br>排好妆位，把链接发给客人，<br>预约单就记在这里。</div>
-          </div>
-          <div class="btn pri rel" style="margin:10px 12px 0" data-goto="p-new">
-            新建第一个档期
-            <span class="mk ok" style="left:-9px;top:-9px">2</span>
-          </div>
-          <div style="text-align:center;font-size:11px;color:var(--t3);padding:0 24px;line-height:1.7;margin-top:12px">
-            客人不需要下载、不需要注册<br>点开链接就能看到你的妆位
-          </div>
-        </div>
-        <div class="tabbar">
-          <span class="tb on rel"><span class="ic">🏠</span>工作台<span class="mk ok" style="left:6px;top:-9px">3</span></span>
-          <span class="tb rel" data-goto="p-sched"><span class="ic">📅</span>档期<span class="mk ok" style="left:6px;top:-9px">4</span></span>
-          <span class="tb rel" data-goto="p-orders"><span class="ic">📋</span>预约单<span class="mk ok" style="left:6px;top:-9px">5</span></span>
-          <span class="tb rel" data-goto="p-me"><span class="ic">👤</span>我的<span class="mk ok" style="left:6px;top:-9px">6</span></span>
-        </div>
-      </div>
-    </div>
-    <div class="dev-r">
-      <div class="dev-hd">
-        <span class="id">A1</span>
-        <span class="nm">工作台（空态）</span>
-        <span class="tg g">M0 主屏</span>
-        <span class="tg">提审截图 ①</span>
-      </div>
-      <div class="dev-desc">
-        结构 = <b>导航栏 + 居中空态 + 主按钮 + 4 个 Tab</b>，仅此四件。<b>没有「快捷操作」分组</b> ——
-        那一组（档期管理 / 预约单 / 新建 / 分享）在 M1 出现，且<b>只在已有 ≥1 个档期时渲染</b>。
-      </div>
-
-      <table class="spec">
-        <thead><tr><th>#</th><th>控件</th><th>位置</th><th>类型</th><th>点击后</th></tr></thead>
-        <tbody>
-          <tr><td class="no">1</td><td class="nm">设置</td><td class="ps">导航栏右 · 文字</td><td><span class="k pri">ghost</span></td><td class="ps">→ 设置页（壳）。页内含<b>微信号展示开关</b> + 用户隐私保护指引入口</td></tr>
-          <tr><td class="no">2</td><td class="nm">新建第一个档期</td><td class="ps">空态中央 · 通栏</td><td><span class="k pri">pri</span></td><td class="ps">→ 新建档期页（表单壳）。<b>本屏唯一主按钮</b></td></tr>
-          <tr><td class="no">3</td><td class="nm">Tab · 工作台</td><td class="ps">Tabbar 第 1 位</td><td><span class="k pri">选中</span></td><td class="ps">当前页，无跳转</td></tr>
-          <tr><td class="no">4</td><td class="nm">Tab · 档期</td><td class="ps">Tabbar 第 2 位</td><td><span class="k">tab</span></td><td class="ps">→ 档期列表空态（「还没有档期」）</td></tr>
-          <tr><td class="no">5</td><td class="nm">Tab · 预约单</td><td class="ps">Tabbar 第 3 位</td><td><span class="k">tab</span></td><td class="ps">→ 预约单列表空态（「还没有预约单」）</td></tr>
-          <tr><td class="no">6</td><td class="nm">Tab · 我的</td><td class="ps">Tabbar 第 4 位</td><td><span class="k">tab</span></td><td class="ps">→ 我的（静态资料项）</td></tr>
-          <tr class="rl"><td class="no">⛔</td><td class="nm">「待处理预约单」渐变大卡</td><td class="ps">—</td><td><span class="k rd">本屏不渲染</span></td><td class="ps">计数为 0 时<b>整张卡不出现</b>（全景稿 A1 里那张卡是 M1 的有数据态）</td></tr>
-          <tr class="rl"><td class="no">⛔</td><td class="nm">浏览所有化妆师 / 排行榜 / 推荐位</td><td class="ps">—</td><td><span class="k rd">禁止</span></td><td class="ps">立刻是平台。<b>个人主体没有平台类目可申请 = 无解</b></td></tr>
-          <tr class="rl"><td class="no">⛔</td><td class="nm">邀请同行 / 邀请有奖</td><td class="ps">—</td><td><span class="k rd">禁止</span></td><td class="ps">「多商户入驻」最直接的证据。它是最自然的增长手段，也正因如此要忍住</td></tr>
-        </tbody>
-      </table>
-
-      <div class="note ok" style="margin-bottom:0">
-        ✅ <b>审核员在这一屏读到的：这是一个排班工具。</b><br>
-        空态文案「排好妆位，把链接发给客人，预约单就记在这里」一句话把三件事说清：<b>它是给谁用的</b>（你的）、<b>怎么用</b>（排 + 发）、<b>产出是什么</b>（预约单）。<br>
-        ⛔ 全屏<b>没有任何「浏览妆娘」入口</b>，也<b>没有任何金额</b>。
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════ 3 C1 ══════════════════ -->
-<section id="c1">
-  <h2 class="sec"><span class="n">3</span>屏 2 · C1 分享落地页</h2>
-  <p class="lead">
-    化妆师分享卡片的落地页，<b>也是顾客唯一入口</b>。全部用假数据（「示例」/ <code>demo_makeup</code> / 占位图）。
-  </p>
-
-  <div class="dev" id="p-c1">
-    <div class="dev-l">
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav">
-          <span class="lft">‹ 返回</span>
-          <span class="ttl">示例的妆位</span>
-          <span class="rgt rel" data-goto="p-orders">我的预约<span class="mk ok" style="left:20px;top:-8px">7</span></span>
-        </div>
-        <div class="pb">
-          <!-- 化妆师信息 -->
-          <div class="card">
-            <div style="display:flex;gap:10px;align-items:center">
-              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">示</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:14.5px;font-weight:700">示例</div>
-                <div style="font-size:11.5px;color:var(--t3);margin-top:2px">上海 · 建模感 / 浓系 / 展妆</div>
-              </div>
-            </div>
-            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <div>
-                <div style="font-size:11px;color:var(--t3)">微信号</div>
-                <div style="font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums">demo_makeup</div>
-              </div>
-              <span class="btn sec sm rel" style="cursor:pointer" data-goto="p-toast">复制微信号<span class="mk ok" style="left:-9px;top:-9px">8</span></span>
-            </div>
-          </div>
-
-          <!-- 妆面样片 -->
-          <div class="sec-ttl">妆面样片</div>
-          <div class="card tight">
-            <div class="work-grid">
-              <div class="work">占位图 1</div><div class="work">占位图 2</div><div class="work">占位图 3</div>
-            </div>
-          </div>
-
-          <!-- 妆位表 -->
-          <div class="sec-ttl">可约妆位 · 示例漫展</div>
-          <div class="grp">
-            <div class="slot-row busy">
-              <span class="sq">1</span>
-              <span class="tm">09:00 – 10:20<small>已被约</small></span>
-              <span class="btn xs dis">已约</span>
-            </div>
-            <div class="slot-row">
-              <span class="sq">2</span>
-              <span class="tm">10:30 – 11:50<small>可约</small></span>
-              <span class="btn pri xs rel" style="cursor:pointer" data-goto="p-form">选这个妆位<span class="mk ok" style="left:58px;top:-10px">9</span></span>
-            </div>
-            <div class="slot-row">
-              <span class="sq">3</span>
-              <span class="tm">13:00 – 14:20<small>可约</small></span>
-              <span class="btn pri xs rel" style="cursor:pointer" data-goto="p-form">选这个妆位<span class="mk ok" style="left:58px;top:-10px">10</span></span>
-            </div>
-          </div>
-
-          <div class="noti info rel">
-            <span>ℹ️</span>
-            <span>提交后化妆师会主动联系你。<b>如果你填完很久没人联系，可以直接加化妆师的微信。</b></span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="dev-r">
-      <div class="dev-hd">
-        <span class="id">C1</span>
-        <span class="nm">分享落地页（妆位页）</span>
-        <span class="tg g">M0 主屏</span>
-        <span class="tg">无需登录</span>
-        <span class="tg">提审截图 ②</span>
-      </div>
-      <div class="dev-desc">
-        结构 = <b>化妆师信息 + 妆面样片 + 可约妆位表 + 预期说明条</b>。<br>
-        本质是「<b>这个化妆师的个人页</b>」，不是作品广场 —— 没有点赞、没有评论、没有浏览数、没有「更多作品」。
-      </div>
-
-      <table class="spec">
-        <thead><tr><th>#</th><th>控件</th><th>位置</th><th>类型</th><th>点击后</th></tr></thead>
-        <tbody>
-          <tr><td class="no">—</td><td class="nm">‹ 返回</td><td class="ps">导航栏左</td><td><span class="k">系统</span></td><td class="ps">返回微信上一屏，无需实现</td></tr>
-          <tr><td class="no">7</td><td class="nm">我的预约</td><td class="ps">导航栏右 · 文字</td><td><span class="k pri">ghost</span></td><td class="ps">→ 我的预约列表（空态）。<br><b>⛔ 空态里绝不放「浏览化妆师」按钮</b> —— 那是收藏关系</td></tr>
-          <tr><td class="no">8</td><td class="nm">复制微信号</td><td class="ps">化妆师卡片第 2 行 · 行尾</td><td><span class="k pri">sec-sm</span></td><td class="ps"><b>✅ 真功能（约 10 行）</b>：复制到剪贴板 → Toast「微信号已复制」<br><b>⛔ 条件显示</b>：只在化妆师的「展示微信号」开关打开时渲染。关闭时<b>这一行整个不出现</b></td></tr>
-          <tr><td class="no">9</td><td class="nm">选这个妆位</td><td class="ps">妆位表第 2 行 · 行尾</td><td><span class="k pri">pri-xs</span></td><td class="ps">携 <span class="k">slot_id</span> → 填写预约单页。<b>提交前不锁定</b>，只在提交时才做并发校验</td></tr>
-          <tr><td class="no">10</td><td class="nm">选这个妆位</td><td class="ps">妆位表第 3 行 · 行尾</td><td><span class="k pri">pri-xs</span></td><td class="ps">同上（同一控件的第 2 行）</td></tr>
-          <tr><td class="no">—</td><td class="nm">已约妆位</td><td class="ps">妆位表第 1 行 · 行尾</td><td><span class="k gr">禁用态</span></td><td class="ps">灰色「已约」，<b>不可点</b>。<br>判定 = 该妆位存在 <span class="k">status ∈ {pending, confirmed}</span> 的单</td></tr>
-          <tr><td class="no">—</td><td class="nm">预期说明条</td><td class="ps">妆位表下方 · 常驻</td><td><span class="k">静态</span></td><td class="ps">不可点。<b>这是产品必需的，不是装饰</b>：化妆师拒绝顾客时没有任何通道能通知他，必须在落地页就把预期说清楚</td></tr>
-          <tr class="rl"><td class="no">⛔</td><td class="nm">点赞 / 评论 / 收藏 / 浏览数 / 转发数</td><td class="ps">妆面样片区</td><td><span class="k rd">禁止</span></td><td class="ps"><b>红线 1</b>：社交特征。个人主体没有「社交」类目</td></tr>
-          <tr class="rl"><td class="no">⛔</td><td class="nm">「更多作品」/ 作品列表页入口</td><td class="ps">妆面样片区</td><td><span class="k rd">禁止</span></td><td class="ps"><b>红线 1</b>：可枚举入口</td></tr>
-          <tr class="rl"><td class="no">⛔</td><td class="nm">金额 / 价格 / 定金 ¥X</td><td class="ps">全页任意位置</td><td><span class="k rd">禁止</span></td><td class="ps"><b>红线 2</b>：金额不得出现在顾客端</td></tr>
-        </tbody>
-      </table>
-
-      <div class="note red" style="margin-bottom:0">
-        🔴 <b>本屏最容易被驳回的两处，都不在「少做了什么」，而在「多做了什么」。</b><br>
-        ① 妆面样片区一旦出现任何一个计数（哪怕是「3 张图」这种无害的数字），就构成<b>可枚举的公开内容区</b>；<br>
-        ② 妆位表一旦带上价格或「定金 ¥100」，就从<b>排班信息</b>变成<b>一次服务要约</b> —— 这是类目红线 2 的原文口径。<br>
-        → 妆位行<b>只有三样东西</b>：序号 · 时段 · 可约状态。多一个字段都要问自己为什么。
-      </div>
-    </div>
-  </div>
-
-  <!-- ────────── 3.1 分享 ────────── -->
-  <h3 class="sub">3.1 分享：只用微信自带的，我们不做任何分享 UI</h3>
-
-  <div class="note ok">
-    ✅ <b>不做自定义分享面板。</b>微信原生分享（右上角「···」→ 转发，或页面里一个 <span class="k">&lt;button open-type="share"&gt;</span>）已经包含选聊天、转发、生成图片等全部能力。
-    <b>自己画一个只会更差，而且审核看到「诱导分享」还会额外找麻烦。</b><br>
-    📌 所以规格书里那 4 处「分享」（A1 快捷操作 / A4 卡片行尾 ×2 / A5 底栏）<b>本来也只是触发按钮，没有一处是要画面板的</b>。
-  </div>
-
-  <table class="spec">
-    <thead><tr><th>项</th><th>口径</th></tr></thead>
-    <tbody>
-      <tr><td class="nm">触发方式</td><td class="ps">① 用户点右上角「···」→ 转发；② 页面里放一个 <span class="k">&lt;button open-type="share"&gt;</span>，用户点它。<br>⚠️ <b>小程序没有能从 JS 主动唤起转发的 API</b>（<span class="k">wx.shareAppMessage</span> 是<b>小游戏</b>的，小程序里不适用）→ <b>所以按钮必须存在，否则只能靠用户自己去点右上角</b>。</td></tr>
-      <tr><td class="nm">「写那个代码」写在哪</td><td class="ps"><b>页面级 JS，不是云函数</b>：<br><span class="k">Page({ onShareAppMessage() { return { title, path, imageUrl } } })</span><br>唯一算后端活的只有 <span class="k">path</span> 里那个 <span class="k">artist_id</span> —— 由 C1 拿去调云函数拉 <span class="k">artists</span> / <span class="k">slots</span>。</td></tr>
-      <tr><td class="nm">卡片返回什么</td><td class="ps"><span class="k">title</span> =「示例的妆位 · 示例漫展」<br><span class="k">path</span> = <code>/pages/landing/landing?artist_id=demo</code><br><span class="k">imageUrl</span> = 第一张样片，比例 <b>5:4</b></td></tr>
-      <tr><td class="nm">按钮样式</td><td class="ps"><span class="k">&lt;button&gt;</span> 是<b>原生组件</b>，自带的 border / background / <span class="k">::after</span> 会给按钮套一层灰边，跟我们的 <span class="k">.btn</span> 打架，<b>必须重置</b>：<br><span class="k">border:none;background:transparent;line-height:normal</span> + <span class="k">button::after{border:none}</span>。这十几行是必写的。</td></tr>
-    </tbody>
-  </table>
-
-  <div class="note warn">
-    ⚠️ <b>原生分享带来一个 M0 必须解决的问题：审核员怎么走到 C1？</b><br>
-    C1 是提审截图要拍的屏，可它的唯一入口是分享卡片 —— <b>没有谁能分享给审核员</b>。<br>
-    <b>解法正好是原生分享</b>：审核员以化妆师身份进小程序 → 新建档期 → 点【分享我的妆位】→ <b>转发给「文件传输助手」</b> → 从聊天里点开卡片 → 进 C1。<br>
-    这是<b>自助的</b>，不依赖我们的任何自定义 UI。<br>
-    → 代价：<b>M0 里必须有一个 <span class="k">open-type="share"</span> 按钮</b>（已加在壳 5 底栏，见 <a href="#clicks" style="color:inherit">§6</a> 第 14 项）。<br>
-    → 📌 同时在<b>提审备注里写明顾客端页面路径</b> <code>/pages/landing/landing?artist_id=demo</code>，双保险。
-  </div>
-
-  <div class="note red">
-    🔴 <b>M0 明确不做 <span class="k">onShareTimeline</span>（分享到朋友圈）—— 这不是省事，是避坑。</b><br>
-    朋友圈点开进的是<b>「小程序单页模式」</b>，在那个模式下：<br>
-    ① <b>所有路由 API 被禁用</b>（<span class="k">navigateTo / redirectTo / switchTab / reLaunch / navigateBack</span>）→ <b>【选这个妆位】点不动</b>，只会弹「请前往小程序使用完整服务」；<br>
-    ② <b>没有登录态</b>，<span class="k">wx.login</span> 不可用，<b>云开发资源要开「未登录访问」才读得到</b> → C1 是要拉 <span class="k">artists</span> / <span class="k">slots</span> 的，<b>会白屏</b>（进单页模式时场景值 <span class="k">1154</span>）。<br>
-    → 这<b>正好同时踩中 M0 最怕的两件事：点了没反应 + 白屏。</b><br>
-    → 真要朋友圈，得单独做一个「单页模式展示版」落地页。<b>M0 不做，M1 之后再评估。</b>
-  </div>
-</section>
-
-<!-- ══════════════════ 4 壳页面 ══════════════════ -->
-<section id="shells">
-  <h2 class="sec"><span class="n">4</span>壳页面（6 个）</h2>
-  <p class="lead">
-    <b>这 6 屏不是可选项，是 M0 交付标准的一半。</b>上面两屏的每一个可点元素，落点都在这里 ——
-    它们可以只会「进得去 + 显示一句话 + 能退回来」，但<b>不能是白屏</b>。
-  </p>
-
-  <div class="shell-grid">
-
-    <!-- 壳 1 -->
-    <div class="shell-card" id="p-sched">
-      <div class="sh-hd"><span class="id">壳 1</span><span class="nm">档期列表 · 空态</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft" data-goto="p-a1">‹ 返回</span><span class="ttl">档期</span><span class="rgt" data-goto="p-new">新建</span></div>
-        <div class="pb" style="justify-content:center">
-          <div class="empty" style="padding:20px 14px">
-            <span class="ic">📅</span>
-            <div style="font-weight:600;color:var(--t1);margin-bottom:4px">还没有档期</div>
-            <div style="font-size:12px">新建一个档期，排好妆位<br>就能把链接发给客人了</div>
-          </div>
-          <div class="btn pri" style="margin:6px 12px 0;height:38px;font-size:13.5px" data-goto="p-new">新建档期</div>
-        </div>
-      </div>
-      <div class="sh-note">
-        落点：A1 <b>Tab · 档期</b>。<br>
-        <b>空态也必须有出口</b> —— 「新建」和「新建档期」都通到表单壳，避免审核员在这一屏走进死路。
-      </div>
-    </div>
-
-    <!-- 壳 2 -->
-    <div class="shell-card" id="p-orders">
-      <div class="sh-hd"><span class="id">壳 2</span><span class="nm">预约单列表 · 空态</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft" data-goto="p-a1">‹ 返回</span><span class="ttl">预约单</span><span class="rgt"></span></div>
-        <div class="pb" style="justify-content:center">
-          <div class="empty" style="padding:20px 14px">
-            <span class="ic">📋</span>
-            <div style="font-weight:600;color:var(--t1);margin-bottom:4px">还没有预约单</div>
-            <div style="font-size:12px">客人通过你分享的链接填单后<br>预约单会出现在这里</div>
-          </div>
-        </div>
-      </div>
-      <div class="sh-note">
-        落点：A1 <b>Tab · 预约单</b> + C1 <b>我的预约</b>（同一个列表，化妆师看到自己的单、顾客看到自己的单）。<br>
-        ⛔ <b>空态里绝不放「浏览化妆师」按钮</b> —— 那是收藏关系，红线。
-      </div>
-    </div>
-
-    <!-- 壳 3 -->
-    <div class="shell-card" id="p-me">
-      <div class="sh-hd"><span class="id">壳 3</span><span class="nm">我的</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft"></span><span class="ttl">我的</span><span class="rgt"></span></div>
-        <div class="pb tight">
-          <div class="card tight" style="display:flex;gap:10px;align-items:center">
-            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">示</div>
-            <div style="flex:1">
-              <div style="font-size:14px;font-weight:700">示例</div>
-              <div style="font-size:11px;color:var(--t3);margin-top:1px">上海 · 建模感 / 浓系 / 展妆</div>
-            </div>
-          </div>
-          <div class="grp">
-            <div class="cell"><span class="cl">我的资料</span><span class="cr">›</span></div>
-            <div class="cell"><span class="cl">我的作品</span><span class="cr">0 张 ›</span></div>
-            <div class="cell" data-goto="p-settings"><span class="cl">设置</span><span class="cr">›</span></div>
-            <div class="cell"><span class="cl">关于妆历</span><span class="cr">›</span></div>
-          </div>
-        </div>
-        <div class="tabbar">
-          <span class="tb" data-goto="p-a1"><span class="ic">🏠</span>工作台</span>
-          <span class="tb" data-goto="p-sched"><span class="ic">📅</span>档期</span>
-          <span class="tb" data-goto="p-orders"><span class="ic">📋</span>预约单</span>
-          <span class="tb on"><span class="ic">👤</span>我的</span>
-        </div>
-      </div>
-      <div class="sh-note">
-        落点：A1 <b>Tab · 我的</b>。<br>
-        M0 只放静态资料项。<b>⛔ 绝不放「邀请同行」</b> —— 它最像增长手段，同时是多商户入驻最直接的证据。
-      </div>
-    </div>
-
-    <!-- 壳 4 -->
-    <div class="shell-card" id="p-settings">
-      <div class="sh-hd"><span class="id">壳 4</span><span class="nm">设置</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft" data-goto="p-a1">‹ 返回</span><span class="ttl">设置</span><span class="rgt"></span></div>
-        <div class="pb tight">
-          <div class="sw-row">
-            <div style="flex:1">
-              <div style="font-size:13.5px">在分享页展示我的微信号</div>
-              <div style="font-size:11px;color:var(--t3);margin-top:3px;line-height:1.6">
-                打开后，<b style="color:var(--warn)">所有拿到链接的人（含被转发后）都能看到</b><br>
-                <b style="color:var(--ok)">关掉不减少任何功能</b>，客人仍能提交预约单
-              </div>
-            </div>
-            <span class="sw on"></span>
-          </div>
-          <div class="grp">
-            <div class="cell"><span class="cl">我的资料</span><span class="cr">›</span></div>
-            <div class="cell"><span class="cl">用户隐私保护指引</span><span class="cr">›</span></div>
-            <div class="cell"><span class="cl">关于妆历</span><span class="cr">版本 0.1.0 ›</span></div>
-          </div>
-        </div>
-      </div>
-      <div class="sh-note">
-        落点：A1 导航栏右<b>「设置」</b> + 我的页「设置」行。<br>
-        📌 <b>这个开关是本产品的政策核心，两条提示缺一不可</b>：只说「关掉不影响功能」，化妆师不敢关；只说「会被看到」，她不敢开。<br>
-        ⚠️ 「用户隐私保护指引」入口<b>是提审必需项</b>，M0 就要挂上。
-      </div>
-    </div>
-
-    <!-- 壳 5 -->
-    <div class="shell-card" id="p-new">
-      <div class="sh-hd"><span class="id">壳 5</span><span class="nm">新建档期（表单壳）</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft" data-goto="p-a1">取消</span><span class="ttl">新建档期</span><span class="rgt" data-goto="p-toast">保存</span></div>
-        <div class="pb nopad">
-          <div class="fld"><span class="lb">日期</span><span class="vl filled">2026-05-02</span></div>
-          <div class="fld"><span class="lb">名称</span><span class="vl filled">示例漫展</span></div>
-          <div class="fld"><span class="lb">起始时间</span><span class="vl filled">09:00</span></div>
-          <div class="fld"><span class="lb">妆位时长</span><span class="vl filled">80 分钟</span></div>
-          <div class="fld"><span class="lb">休息间隔</span><span class="vl filled">10 分钟</span></div>
-          <div class="fld"><span class="lb">妆位数</span><span class="vl filled">3 个</span></div>
-          <div class="note warn" style="margin:9px;font-size:11.5px;line-height:1.65">
-            ⚠️ <b>「名称」必须是自由文本</b>（红线 3）。个人主体没有「文娱 / 资讯」类目，做成平台维护的枚举字典或「展会页」= 双违规。
-          </div>
-        </div>
-        <div class="footbar">
-          <div class="btn pri" style="flex:1;position:relative" data-goto="p-c1">📤 分享我的妆位<span class="mk ok" style="left:-9px;top:-9px">14</span></div>
-        </div>
-      </div>
-      <div class="sh-note">
-        落点：A1 <b>【新建第一个档期】</b> + 档期列表的「新建」。<br>
-        <b>M0 深度</b>：表单壳 + 导航栏「保存」给成功 Toast 即可。<br>
-        ⚠️ 「保存」之后要有响应 —— 弹 Toast 再退回档期列表（空态），<b>不要停在原页什么都不发生</b>。<br>
-        <br>
-        🔴 <b>底栏【分享我的妆位】是 M0 的必需件，不是锦上添花。</b><br>
-        它是<b>审核员走到 C1 的唯一自助路径</b>（转发给「文件传输助手」再点开）。实现 = <span class="k">&lt;button open-type="share"&gt;</span> + 页面里的 <span class="k">onShareAppMessage</span>，
-        <b>零额外 UI</b>，见 §3.1。<br>
-        ⚠️ 点它会走原生分享（不是跳页）—— 这里指向 C1 只是让走查看得见因果。
-      </div>
-    </div>
-
-    <!-- 壳 6 -->
-    <div class="shell-card" id="p-form">
-      <div class="sh-hd"><span class="id">壳 6</span><span class="nm">填写预约单</span><span class="tag red">M0 最关键落点</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft" data-goto="p-c1">‹ 返回</span><span class="ttl">填写预约单</span><span class="rgt"></span></div>
-        <div class="pb tight">
-          <div class="card tight" style="border:1px solid #EFD3DA;background:var(--brand-l)">
-            <div style="font-size:11px;color:var(--brand-d);opacity:.85">你选的妆位</div>
-            <div style="font-size:13.5px;font-weight:600;color:var(--brand-d);margin-top:2px">示例漫展 · 第 2 位 · 10:30 – 11:50</div>
-          </div>
-          <div class="grp">
-            <div class="fld"><span class="lb">角色名</span><span class="vl filled">示例角色</span></div>
-            <div class="fld"><span class="lb">微信号</span><span class="vl filled">demo_guest</span></div>
-            <div class="fld"><span class="lb">备注</span><span class="vl">选填</span></div>
-          </div>
-          <div class="sec-ttl" style="padding-top:2px">妆感（可多选）</div>
-          <div class="chips">
-            <span class="chip on">建模感</span><span class="chip on">浓系</span><span class="chip">展妆</span>
-            <span class="chip">日常妆</span><span class="chip">正片妆</span><span class="chip">古风妆</span>
-            <span class="chip">韩妆</span><span class="chip">其他</span>
-          </div>
-          <div style="font-size:11px;color:var(--t3);line-height:1.65;padding:2px">
-            ⚠️ 妆感是<b>封闭枚举</b>（15 项），化妆师勾的选项直接变成这一排 chip。<br>
-            纯工具版没有搜索了，<b>但仍必须封闭 —— 理由从「要能筛」变成「用户要能读懂」</b>。
-          </div>
-        </div>
-        <div class="footbar">
-          <div class="btn pri" style="flex:1" data-goto="p-toast">提交预约单</div>
-        </div>
-      </div>
-      <div class="sh-note">
-        落点：C1 <b>【选这个妆位】</b>。<br>
-        🔴 <b>这是整份文件最关键的一行。</b>审核员一定会点它 —— 点进去看到白屏就是「功能不完整」驳回。<br>
-        <b>它必须是真跳转</b>，哪怕落地页只是表单壳。<br>
-        📌 <b>建议做到「能提交」</b>：比做到「能看」多不了多少工作，但审核员点「提交」得到成功反馈，比得到「功能开发中」强得多。<br>
-        <b>M0 深度二选一</b>：① 压成一步 + 真写库（推荐）；② 保留 5 步进度条，只做第 1 步 + 「下一步」给 Toast。
-        <br><br>
-        📌 <b>提交按钮上还挂着一个「只能挂在这里」的东西</b>：<span class="k">wx.requestSubscribeMessage</span>（订「预约提醒」模板）。<br>
-        官方规定<b>必须在用户点击行为里调起</b> —— 全流程只有「提交」这一次机会。<b>所以它是界面结构级的约束，不是后端细节。</b>
-        M0 可以先不实现，但<b>按钮的位置和时机要给它留出来</b>（见 §5 第 12 项）。
-        <br><br>
-        ⚠️ <b>若「提交」真写库</b>：顾客填的角色名 / 备注就是落库的 UGC，按微信要求要过 <span class="k">security.msgSecCheck</span>。
-        <b>M0 要么不落库（纯前端假成功，最省），要么落库前过检。</b>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="note warn">
-    ⚠️ <b>壳不等于随便。</b>一个合格的壳 = <b>进得去（不是白屏）+ 有一句像样的话 + 能退回来（导航栏左「‹ 返回」永远在）</b>。<br>
-    最容易被忽略的是第三条：审核员点进「我的作品」发现只有一片空白且没有返回，会以为卡死了。
-  </div>
-</section>
-
-<!-- ══════════════════ 5 可点性清单 ══════════════════ -->
-<section id="clicks">
-  <h2 class="sec"><span class="n">5</span>可点性清单【M0 的真正工作量】</h2>
-  <p class="lead">
-    <b>每一个可点元素都必须有响应。这张表就是 M0 的验收标准 —— 逐行点过去，没有一处白屏就过关。</b>
-  </p>
-
-  <div class="chk">
-    <div class="hd"><span>✅ 全部可点元素 · 14 个</span><span class="ct">按「先主屏、后壳内」的顺序排</span></div>
-    <table class="spec">
-      <thead><tr><th>#</th><th>屏</th><th>可点元素</th><th>M0 响应</th><th>做不做真功能</th></tr></thead>
-      <tbody>
-        <tr><td class="no">1</td><td class="ps">A1</td><td class="nm">设置</td><td class="ps">进「设置」页，页内含微信号开关 + 隐私指引入口</td><td><span class="k or">壳</span></td></tr>
-        <tr><td class="no">2</td><td class="ps">A1</td><td class="nm">新建第一个档期</td><td class="ps">进档期编辑页（表单壳 +「保存」给 Toast）</td><td><span class="k or">壳</span></td></tr>
-        <tr><td class="no">3</td><td class="ps">A1</td><td class="nm">Tab · 工作台</td><td class="ps">当前页，无跳转</td><td><span class="k">—</span></td></tr>
-        <tr><td class="no">4</td><td class="ps">A1</td><td class="nm">Tab · 档期</td><td class="ps">进档期列表（空态：「还没有档期」）</td><td><span class="k or">壳</span></td></tr>
-        <tr><td class="no">5</td><td class="ps">A1</td><td class="nm">Tab · 预约单</td><td class="ps">进预约单列表（空态：「还没有预约单」）</td><td><span class="k or">壳</span></td></tr>
-        <tr><td class="no">6</td><td class="ps">A1</td><td class="nm">Tab · 我的</td><td class="ps">进「我的」页（静态资料项）</td><td><span class="k or">壳</span></td></tr>
-        <tr><td class="no">7</td><td class="ps">C1</td><td class="nm">我的预约</td><td class="ps">进「我的预约」（空态，<b>⛔ 不放「浏览化妆师」按钮</b>）</td><td><span class="k or">壳</span></td></tr>
-        <tr><td class="no">8</td><td class="ps">C1</td><td class="nm">复制微信号</td><td class="ps">真复制 + Toast「微信号已复制」</td><td><span class="k gr">✅ 真功能（约 10 行）</span></td></tr>
-        <tr><td class="no">9</td><td class="ps">C1</td><td class="nm">选这个妆位（第 2 行）</td><td class="ps">🔴 <b>必须能进填表页</b> —— 审核员一定会点</td><td><span class="k rd">壳，但必须是真跳转</span></td></tr>
-        <tr><td class="no">10</td><td class="ps">C1</td><td class="nm">选这个妆位（第 3 行）</td><td class="ps">同上，携带各自 <span class="k">slot_id</span></td><td><span class="k rd">壳，但必须是真跳转</span></td></tr>
-        <tr><td class="no">—</td><td class="ps">C1</td><td class="nm">已约妆位</td><td class="ps">灰色禁用态，<b>不可点</b></td><td><span class="k">—</span></td></tr>
-        <tr><td class="no">11</td><td class="ps">壳 1/5</td><td class="nm">保存（新建档期）</td><td class="ps">Toast「档期已保存」→ 退回档期列表</td><td><span class="k or">壳</span></td></tr>
-        <tr><td class="no">12</td><td class="ps">壳 6</td><td class="nm">提交预约单 / 下一步</td><td class="ps">成功反馈 → 进「我的预约」。<b>推荐真写库</b></td><td><span class="k gr">壳 或 真</span></td></tr>
-        <tr><td class="no">13</td><td class="ps">全部壳</td><td class="nm">‹ 返回</td><td class="ps">返回上一屏。<b>每一屏都必须有</b></td><td><span class="k">导航</span></td></tr>
-        <tr><td class="no">14</td><td class="ps">壳 5</td><td class="nm">📤 分享我的妆位</td><td class="ps">🔴 唤起<b>微信原生转发</b>（<span class="k">&lt;button open-type="share"&gt;</span>）<br><b>它是审核员走到 C1 的唯一自助路径</b> —— 见 §3.1</td><td><span class="k gr">✅ 真功能（零额外 UI）</span></td></tr>
-      </tbody>
-    </table>
+  <div class="note red" style="margin:0">
+    <b>防线 ③ · 不做目录</b><br>
+    「我约过的妆娘」是一份<b>私人记录</b>：<b>长度 = 你自己约过几个人</b>，一次没约过的人永远不会出现在这里。<br>
+    ⛔ 不许改成「平台上有哪些妆娘」、不许加「看看还有哪些妆娘」空态、<b>不许按风格筛人</b>。<br>
+    📌 这和「没有「浏览所有化妆师」入口」不矛盾：<b>私人记录不是目录</b>。
   </div>
 
   <div class="rl-bar">
-    🔴 <b>最关键的一行是 #9 / #10。【选这个妆位】。</b><br>
-    审核员点进去看到白屏 = 「功能不完整」驳回。它必须是真跳转，哪怕落地页只是表单壳。
-  </div>
-
-  <h3 class="sub">5.1 走查路径（照这个顺序点一遍，全过 = M0 可提审）</h3>
-
-  <div class="sec-ttl">路径 1 · 化妆师自己用</div>
-  <div class="flow">
-    <span class="n2 p">打开小程序</span><span class="ar">→</span>
-    <span class="n2">工作台空态</span><span class="ar">→</span>
-    <span class="n2">新建第一个档期</span><span class="ar">→</span>
-    <span class="n2">保存</span><span class="ar">→</span>
-    <span class="n2">档期列表</span><span class="ar">→</span>
-    <span class="n2">返回工作台</span>
-  </div>
-
-  <div class="sec-ttl" style="margin-top:14px">路径 2 · 顾客端（也是审核员看到 C1 的唯一路径）</div>
-  <div class="flow">
-    <span class="n2 p">新建档期页</span><span class="ar">→</span>
-    <span class="n2">📤 分享我的妆位</span><span class="ar">→</span>
-    <span class="n2">转发给「文件传输助手」</span><span class="ar">→</span>
-    <span class="n2">从聊天点开卡片</span><span class="ar">→</span>
-    <span class="n2 p">C1 落地页</span><span class="ar">→</span>
-    <span class="n2">选这个妆位</span><span class="ar">→</span>
-    <span class="n2">填表 → 提交</span><span class="ar">→</span>
-    <span class="n2">我的预约</span><span class="ar">→</span>
-    <span class="n2">返回</span>
-  </div>
-
-  <div class="note ok">
-    ✅ <b>两条路径走完，一共经过 8 个界面，没有任何一处白屏 = M0 的交付标准达成。</b><br>
-    📌 建议在提审前<b>自己用真机走三遍</b>，每一遍都会发现一两个「点了没反应」的地方 —— 那就是驳回点。<br>
-    ⚠️ <b>路径 2 的第一步不能省</b>：审核员没有别的办法进 C1，这一整条链子就是他的入口。
+    🔴 <b>最重要的一条，写在这里是因为它决定生死：</b><br>
+    个人主体开放的类目里，<b>没有任何一个是「平台」性质</b>。一旦被判「多商户平台」，
+    <b>不是补资质能解决，是无解。</b>所以下面这些不是「尽量避免」，是<b>唯一活路</b>。
   </div>
 </section>
 
-<!-- ══════════════════ 6 Toast ══════════════════ -->
-<section id="toasts">
-  <h2 class="sec"><span class="n">6</span>Toast 文案清单（照抄）</h2>
+<!-- ══════════════════ 2 入口 ══════════════════ -->
+<section id="role">
+  <h2 class="sec"><span class="n">2</span>入口 · 角色选择页</h2>
   <p class="lead">
-    M0 一共只需要 3 条 Toast。<b>文案要一次定死</b> —— 审核员会看到它，它也是「功能是完整的」这个印象的一部分。
+    进小程序看见的第一屏。两个角色共用这一页 —— <b>选完就进各自那一端</b>，两端从此互不打扰。
   </p>
 
-  <div class="shell-grid" style="margin-bottom:4px">
-
-    <div class="shell-card" id="p-toast">
-      <div class="sh-hd"><span class="id">C1</span><span class="nm">复制微信号 · Toast</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft">‹ 返回</span><span class="ttl">示例的妆位</span><span class="rgt">我的预约</span></div>
-        <div class="pb" style="justify-content:flex-end">
-          <div class="card">
-            <div style="display:flex;gap:10px;align-items:center">
-              <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">示</div>
-              <div style="flex:1"><div style="font-size:13.5px;font-weight:700">示例</div>
-                <div style="font-size:11px;color:var(--t3);margin-top:1px">上海 · 建模感 / 浓系 / 展妆</div></div>
-            </div>
-            <div style="margin-top:9px;padding-top:9px;border-top:1px solid var(--line2);display:flex;align-items:center;justify-content:space-between;gap:8px">
-              <div>
-                <div style="font-size:10.5px;color:var(--t3)">微信号</div>
-                <div style="font-size:13px;font-weight:600">demo_makeup</div>
-              </div>
-              <span class="btn sec sm" style="background:#E8DDE0;color:var(--t3)">已复制</span>
-            </div>
-          </div>
-        </div>
-        <div class="toast">微信号已复制</div>
-      </div>
-      <div class="sh-note">
-        <b>停留原页，不跳转。</b>按钮短暂变「已复制」再复原。<br>
-        📌 不要用「跳去微信」的引导弹窗 —— 小程序<b>无法唤起微信加好友</b>，那个弹窗一定是死路。
-      </div>
-    </div>
-
-    <div class="shell-card">
-      <div class="sh-hd"><span class="id">壳 5</span><span class="nm">保存档期 · Toast</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft">取消</span><span class="ttl">新建档期</span><span class="rgt">保存</span></div>
-        <div class="pb nopad" style="justify-content:flex-end">
-          <div class="fld"><span class="lb">日期</span><span class="vl filled">2026-05-02</span></div>
-          <div class="fld"><span class="lb">名称</span><span class="vl filled">示例漫展</span></div>
-          <div class="fld"><span class="lb">妆位数</span><span class="vl filled">3 个</span></div>
-        </div>
-        <div class="toast">档期已保存</div>
-      </div>
-      <div class="sh-note">
-        <b>Toast 结束后退回档期列表。</b><br>
-        ⚠️ 不要停在原页什么都不发生 —— 审核员会连点三次「保存」，然后判定按钮坏了。
-      </div>
-    </div>
-
-    <div class="shell-card">
-      <div class="sh-hd"><span class="id">壳 6</span><span class="nm">提交预约单 · Toast</span></div>
-      <div class="phone">
-        <div class="statusbar"><span class="dot">●●●●</span><span>微信</span><span>100%</span></div>
-        <div class="nav"><span class="lft">‹ 返回</span><span class="ttl">填写预约单</span><span class="rgt"></span></div>
-        <div class="pb tight" style="justify-content:flex-end">
-          <div class="card tight" style="border:1px solid #EFD3DA;background:var(--brand-l)">
-            <div style="font-size:10.5px;color:var(--brand-d);opacity:.85">你选的妆位</div>
-            <div style="font-size:12.5px;font-weight:600;color:var(--brand-d);margin-top:2px">示例漫展 · 第 2 位 · 10:30 – 11:50</div>
-          </div>
-          <div class="grp">
-            <div class="fld"><span class="lb">角色名</span><span class="vl filled">示例角色</span></div>
-            <div class="fld"><span class="lb">微信号</span><span class="vl filled">demo_guest</span></div>
-          </div>
-        </div>
-        <div class="toast">预约单已提交，化妆师会联系你</div>
-      </div>
-      <div class="sh-note">
-        <b>之后进「我的预约」</b>（真写库的话，这里会看到刚提交的 1 条）。<br>
-        📌 这条文案把「<b>谁来联系 · 怎么联系</b>」说清了 —— 它同时替掉了那条发不出去的订阅消息。
-      </div>
-    </div>
-
+  <div class="legend">
+    <span><i>1</i> 可点元素编号 → 与 <a href="#clicks">§6 可点性清单</a> 一一对应</span>
+    <span><i class="ok">·</i> 点了会发生什么，全写在 §6</span>
   </div>
 
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft"></div><div class="ttl">妆历</div><div class="rgt"></div></div>
+        <div class="pb" style="justify-content:center;gap:12px;padding:30px 20px">
+          <div style="text-align:center;margin-bottom:14px">
+            <div style="width:62px;height:62px;border-radius:19px;background:var(--brand);color:#fff;font-size:29px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 11px">妆</div>
+            <div style="font-size:12px;color:var(--t3)">妆娘的排班本 + 接单本</div>
+          </div>
+
+          <div class="rel">
+            <span class="mk" style="top:-7px;left:-8px" data-goto="c1">1</span>
+            <div style="display:flex;align-items:center;gap:11px;padding:15px 13px;background:#fff;border-radius:var(--r)">
+              <div style="font-size:21px">💄</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700">我是妆师</div>
+                <div style="font-size:11.5px;color:var(--t2);margin-top:2px">排妆位 · 存模板 · 收预约单</div>
+              </div>
+              <div style="color:var(--t4);font-size:16px">›</div>
+            </div>
+          </div>
+
+          <div class="rel">
+            <span class="mk" style="top:-7px;left:-8px" data-goto="c2">2</span>
+            <div style="display:flex;align-items:center;gap:11px;padding:15px 13px;background:var(--brand-l);border:1px solid #EFD3DA;border-radius:var(--r)">
+              <div style="font-size:21px">🧾</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700">我是约妆</div>
+                <div style="font-size:11.5px;color:var(--t2);margin-top:2px">选妆位 · 填预约单 · 等妆娘联系</div>
+              </div>
+              <div style="color:var(--t4);font-size:16px">›</div>
+            </div>
+          </div>
+
+          <div style="text-align:center;font-size:11px;color:var(--t4);margin-top:10px">
+            上次以「妆师」身份进入，可重新选择
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/role-select/</span>
+        <span class="nm">角色选择</span>
+        <span class="tg">启动首屏</span>
+        <span class="tg">无 tabBar</span>
+      </div>
+      <p class="dev-desc">
+        这是 <code>app.json</code> 里的<b>第一个页面</b>，也就是冷启动必然落到的那一屏。
+        <b>没有底栏</b> —— 底栏是「两端各一条」的，而站在这一页时她还没选边。
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">这一页负责</td><td class="ps">问一句「你是谁」，然后把这个人送到对应的一端的首页</td></tr>
+          <tr><td class="nm">两个落点</td><td class="ps">妆师 → <span class="k">pages/schedule/</span>（档期）<br>约妆 → <span class="k">pages/artist-list/</span>（我约过的妆娘）</td></tr>
+          <tr><td class="nm">怎么跳</td><td class="ps"><b>必须是 <span class="k">wx.switchTab</span></b> —— 两个落点都是 tab 页，用 <span class="k">navigateTo</span> / <span class="k">redirectTo</span> 会<b>静默失败</b>（页面不动、控制台不报错）</td></tr>
+          <tr><td class="nm">「上次身份」那行</td><td class="ps">只是<b>一句提示</b>，不是按钮。有过记录才出现（从 <span class="k">zhuangli_role</span> 读）</td></tr>
+        </tbody>
+      </table>
+      <div class="note warn" style="margin-top:14px">
+        ⚠️ <b>这一页没有「记住我，下次直接进」</b> —— 用户 2026-09-29 真机调试时定的：
+        每进一次都想得起来「还有另一端」。加自动跳过会把切换身份这件事变成藏起来的暗门。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 3 妆师端 ══════════════════ -->
+<section id="artist">
+  <h2 class="sec"><span class="n">3</span>妆师端 · 10 个页面</h2>
+  <p class="lead">
+    底栏三格：<b>档期</b> / <b>预约单</b> / <b>我的</b>。这是这个工具的主场 ——
+    <b>整个 M0 的起点就是「妆娘怎么排班、怎么接单」</b>。
+  </p>
+  <div class="flow">
+    <span class="n2 p">新建档期</span><span class="ar">→</span>
+    <span class="n2">存为模板</span><span class="ar">→</span>
+    <span class="n2">把妆位页分享出去</span><span class="ar">→</span>
+    <span class="n2">收预约单</span><span class="ar">→</span>
+    <span class="n2">一键处理 / 确认</span><span class="ar">→</span>
+    <span class="n2">标定金 → 已完成</span>
+  </div>
+
+  <!-- ── 3.1 档期 ── -->
+  <h3 class="sub">3.1 档期（tab 1）</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft" style="display:flex;gap:13px">
+            <span class="rel" style="font-size:13px;color:var(--t2)"><span class="mk" style="top:-9px;left:-10px" data-goto="c3">3</span>模板</span>
+            <span class="rel" style="font-size:13px;color:var(--t2)"><span class="mk" style="top:-9px;left:-10px" data-goto="c4">4</span>新建</span>
+          </div>
+          <div class="ttl">档期</div>
+          <div class="rgt"></div>
+        </div>
+        <div class="pb tight">
+          <div class="grp">
+            <div class="card rel" style="border-radius:var(--r)">
+              <span class="mk" style="top:-7px;left:-8px" data-goto="c5">5</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:700;max-width:8em">示例漫展</div>
+                <div class="rel" style="padding-left:56rpx;flex:none">
+                  <span class="mk ok" style="top:-8px;left:44rpx" data-goto="c6">6</span>
+                  <div style="border:1px solid #EFD3DA;background:var(--brand-l);color:var(--brand-d);font-size:11.5px;font-weight:600;border-radius:6px;padding:6px 10px;white-space:nowrap">取消场次</div>
+                </div>
+              </div>
+              <div class="meta-line">2026-05-02 · 4 个妆位 · 10:00–13:30<span style="color:var(--info)"> · 3 人已预约</span></div>
+            </div>
+
+            <div class="card" style="border-radius:var(--r);margin-top:9px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:700;max-width:8em">五月场·妆</div>
+                <div style="padding-left:56rpx;flex:none">
+                  <div style="border:1px solid #EFD3DA;background:var(--brand-l);color:var(--brand-d);font-size:11.5px;font-weight:600;border-radius:6px;padding:6px 10px;white-space:nowrap">取消场次</div>
+                </div>
+              </div>
+              <div class="meta-line">2026-05-04 · 3 个妆位 · 11:00–13:00</div>
+            </div>
+          </div>
+          <div class="hint" style="text-align:center;font-size:11px;color:var(--t3);line-height:1.7">点开档期看每个妆位时段，<br>特殊妆位可改时间，后续时段自动顺延</div>
+        </div>
+        <div class="tabbar">
+          <div class="tb on"><span class="ic">📅</span>档期</div>
+          <div class="tb"><span class="ic">📋</span>预约单</div>
+          <div class="tb"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/schedule/</span>
+        <span class="nm">档期</span>
+        <span class="tg">tab 1</span>
+        <span class="tg g">已落地</span>
+      </div>
+      <p class="dev-desc">
+        她建过的所有场次。<b>一屏看完「哪几场、每场几个妆位、有几个人约了」</b>。
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">左上「模板 / 新建」</td><td class="ps">两个动作都放左边 —— <b>右上角是微信胶囊的地盘</b>，动作贴过去会被误当成微信自己的按键点到</td></tr>
+          <tr><td class="nm">标题居中</td><td class="ps">动作全挪到左边之后，右边只剩胶囊 ⇒ 标题要传 <span class="k">center="screen"</span> 对齐<b>整屏</b>中心，不是对齐剩余空间</td></tr>
+          <tr><td class="nm">空态</td><td class="ps">新人进来必然是空的 —— 所以这一屏<b>就是新手引导</b>：「点下面的『新建档期』就能建立你的第一个档期」+ 一个大按钮</td></tr>
+          <tr><td class="nm">底栏那格</td><td class="ps">根容器必须带 <span class="k">.app.tabbed</span>，否则最后一张卡被压到条子底下</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note red" style="margin-top:14px">
+        🔴 <b>卡片上那个「取消场次」是整份稿子最贵的一处。</b>它长这样是因为<b>连错三轮</b>：<br>
+        ① 原先在<b>详情页底栏</b>，真机上「只有它点不动」；<br>
+        ② 挪到列表卡片上，但名字是 <span class="k">flex:1</span> —— 名字吃满整行，把小签<b>顶到最右边、紧挨 <span class="k">›</span></b>，
+        中间留出一大片「<b>看着像按钮、点下去却是卡片</b>」的空白，手指落在那儿进的是详情页 —— 妆娘的说法就是「点了没取消」；<br>
+        ③ 名字改成 <span class="k">flex:0 1 auto</span> + <span class="k">min-width:0</span> 之后，小签总高才 45rpx 上下，
+        <b>远低于微信给的 88rpx 点击区建议</b>，还是「有时点得中、有时完全没动静」。<br>
+        ⇒ 现在的做法：小签<b>外面再套一层 <span class="k">.s-cancel-hit</span></b>，
+        用 <b><span class="k">padding-left</span></b> 把小签和那段间距<b>一起圈进来</b>（<b>⛔ 不是 <span class="k">margin-left</span></b> ——
+        margin 是<b>点不到的空白</b>）；事件挂在壳上；间距 56rpx（≈ 两个字）。
+      </div>
+
+      <div class="note warn" style="margin-top:12px">
+        ⚠️ <b>「N 人已预约」和拦住她时说的张数必须是同一个数</b> —— 两处都走
+        <span class="k">bookingStore.blockingBookings()</span>，⛔ 不许各算一遍。
+        各算一遍的后果是「卡片写 3 人，点取消却放行」。<br>
+        ⚠️ 「取消场次」必须用 <b><span class="k">catchtap</span></b> —— 整张卡片是 <span class="k">bindtap="goDetail"</span>，
+        用 <span class="k">bindtap</span> 会冒泡成「<b>又开详情、又弹取消框</b>」，两个都做了。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3.2 档期详情 ── -->
+  <h3 class="sub">3.2 档期详情 · 妆位时段表</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft">‹</div>
+          <div class="ttl">示例漫展</div>
+          <div class="rgt rel"><span class="mk" style="top:-9px;left:-9px" data-goto="c7">7</span>分享</div>
+        </div>
+        <div class="pb tight">
+          <div class="card" style="padding:9px 11px">
+            <div style="font-size:14.5px;font-weight:700">示例漫展</div>
+            <div class="meta-line">2026-05-02 · 4 个妆位 · 10:00–13:30</div>
+          </div>
+
+          <div class="sec-ttl">妆位时段</div>
+          <div class="grp">
+            <div class="slot-row">
+              <div class="sq">1</div>
+              <div class="tm">10:00 – 10:30<small>30 分钟</small></div>
+              <div style="display:flex;gap:5px">
+                <span class="btn xs sec rel"><span class="mk" style="top:-8px;left:-8px" data-goto="c8">8</span>改</span>
+                <span class="btn xs dan rel"><span class="mk" style="top:-8px;left:-8px" data-goto="c9">9</span>取消</span>
+              </div>
+            </div>
+            <div style="text-align:center;color:var(--brand);font-size:15px;line-height:1.4" class="rel"><span class="mk" style="top:-6px;left:50%;margin-left:8px" data-goto="c10">10</span>＋</div>
+
+            <div class="slot-row">
+              <div class="sq">2</div>
+              <div class="tm">10:40 – 11:10<small>30 分钟 · <span style="color:var(--ok)">已预订</span></small></div>
+              <div style="display:flex;gap:5px">
+                <span class="btn xs sec">改</span>
+                <span class="btn xs dan">取消</span>
+              </div>
+            </div>
+            <div style="text-align:center;color:var(--brand);font-size:15px;line-height:1.4">＋</div>
+
+            <div class="slot-row" style="background:#EDF2FD">
+              <div class="sq" style="background:#DCE6FA;color:#2B4E96">休</div>
+              <div class="tm">午休 11:20 – 12:20<small>休息 60 分钟</small></div>
+              <div style="display:flex;gap:5px" class="rel">
+                <span class="mk" style="top:-9px;left:-9px" data-goto="c11">11</span>
+                <span class="btn xs sec">改</span>
+                <span class="btn xs dan">取消</span>
+              </div>
+            </div>
+            <div style="text-align:center;color:var(--brand);font-size:15px;line-height:1.4">＋</div>
+
+            <div class="slot-row">
+              <div class="sq">3</div>
+              <div class="tm">12:20 – 12:50<small>30 分钟</small></div>
+              <div style="display:flex;gap:5px">
+                <span class="btn xs sec">改</span>
+                <span class="btn xs dan">取消</span>
+              </div>
+            </div>
+          </div>
+          <div class="hint" style="text-align:left;font-size:10.5px;color:var(--t3);line-height:1.7">
+            点「改」在该行原位置改时长，点「确认」后面时段自动顺延；顶到【已预订】的妆位就停住。
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/schedule-detail/</span>
+        <span class="nm">档期详情</span>
+        <span class="tg">妆师端</span>
+      </div>
+      <p class="dev-desc">
+        一场档期的<b>时段表</b>：一行一个妆位，能改时长、能删、能插、午休能改能取消。
+        <b>这一页只管「一行的增删改」</b> —— 整场取消<b>不在这里</b>（见 §3.1 的红框）。
+      </p>
+
+      <div class="note" style="margin-top:0">
+        <b>三条时间规则（2026-09-29 真机调试后定的，纯函数在 <span class="k">utils/schedule.js</span>）：</b><br>
+        <b>① 改时长 → 顺延，但顺延到第一个「已预订」妆位为止。</b><br>
+        &nbsp;&nbsp;已预订的妆位是<b>锚点</b>：它自己、以及它后面所有妆位的时间都<b>不许动</b> ——
+        跟客人已经约好的时间，不能被一次排班调整悄悄改掉。<br>
+        <b>② 删妆位 / 插妆位 → 后面妆位的时间一律不动。</b>删掉留一段空档，「＋」只能把新妆位塞进空档里。<br>
+        <b>③ 午休是独立一行（浅蓝）</b>，能改起点 + 时长、能取消。
+        延长午休前的妆位 → <b>只推午休的起始，结束不动</b>（午休被压短）；缩短 → 先问一句「要不要提前午休」。
+      </div>
+
+      <div class="note warn">
+        ⚠️ <b>这一页【没有】「取消这一场」的入口</b>（2026-09-30 用户定的）。<br>
+        整场的取消挪到<b>档期列表卡片</b>上。<b>⛔ 别在这里加回第二个入口</b> —— 上一版两个入口时，
+        底栏那个键在真机上「只有它点不动」；而且留两处入口会让「到底哪个才算数」变成常驻疑问。
+      </div>
+
+      <div class="note warn">
+        ⚠️ <b>布局纪律（踩过的坑）：</b><span class="k">.slot-row</span> 是<b>不换行</b>的 flex 行，
+        父级带 <span class="k">overflow:hidden</span>。编辑态一旦新增一行、或把行撑宽，
+        右侧按钮会被裁到可视区外 —— 表现就是「<b>确认看得见、点不到</b>」。<br>
+        ⇒ 编辑态一律<b>原地替换</b>：输入框占住原来那行「N 分钟」的盒，两个按钮定宽 ——
+        点「改」前后整行的<b>高度、位置、按钮坐标完全不变</b>。
+      </div>
+    </div>
+  </div>
+  <!-- ── 3.3 新建 / 编辑档期 ── -->
+  <h3 class="sub">3.3 新建档期 · 填参数 → 自动排出时段表</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft rel"><span class="mk" style="top:-9px;left:-9px" data-goto="c12">12</span>取消</div>
+          <div class="ttl">新建档期</div>
+          <div class="rgt"></div>
+        </div>
+        <div class="pb tight">
+          <div class="grp">
+            <div class="fld"><span class="lb">名称</span><span class="vl filled" style="font-size:13px">示例漫展</span></div>
+            <div class="fld rel"><span class="mk" style="top:-1px;left:-8px" data-goto="c13">13</span><span class="lb">日期</span><span class="vl filled" style="display:flex;justify-content:space-between">2026-05-02<span style="color:var(--t4)">›</span></span></div>
+            <div class="fld rel"><span class="mk" style="top:-1px;left:-8px" data-goto="c14">14</span><span class="lb">起始时间</span><span class="vl filled" style="display:flex;justify-content:space-between">10:00<span style="color:var(--t4)">›</span></span></div>
+            <div class="fld"><span class="lb">妆位时长</span><span class="vl filled" style="text-align:right">30 <span style="color:var(--t3)">分钟</span></span></div>
+            <div class="fld"><span class="lb">休息间隔</span><span class="vl filled" style="text-align:right">10 <span style="color:var(--t3)">分钟</span></span></div>
+            <div class="fld"><span class="lb">妆位数</span><span class="vl filled" style="text-align:right">4 <span style="color:var(--t3)">个</span></span></div>
+          </div>
+
+          <div class="card" style="margin-top:9px;display:flex;align-items:center;gap:10px">
+            <span class="mk" style="top:-7px;left:-8px" data-goto="c15">15</span>
+            <div style="flex:1">
+              <div style="font-size:14px">午休</div>
+              <div style="font-size:11.5px;color:var(--t3);margin-top:2px">预期 <span style="color:var(--brand-d);font-weight:600">12:00 – 13:00</span>，结束后直接衔接下一个妆位</div>
+            </div>
+            <div class="sw on"></div>
+          </div>
+
+          <div class="grp" style="margin-top:9px">
+            <div class="fld"><span class="lb">午休时长</span><span class="vl filled" style="text-align:right">60 <span style="color:var(--t3)">分钟</span></span></div>
+            <div class="fld rel"><span class="mk" style="top:-1px;left:-8px" data-goto="c16">16</span><span class="lb">在第几个后</span><span class="vl filled" style="display:flex;justify-content:space-between">第 3 个妆位后（12:00）<span style="color:var(--t4)">›</span></span></div>
+          </div>
+
+          <div class="sec-ttl" style="padding:9px 11px 4px">生成预览 · 4 个妆位 · 10:00–13:40</div>
+          <div class="grp">
+            <div class="slot-row" style="padding:6px 11px"><div class="sq">1</div><div class="tm" style="font-size:12px">10:00 – 10:30<small>30 分钟</small></div></div>
+            <div class="slot-row" style="padding:6px 11px"><div class="sq">2</div><div class="tm" style="font-size:12px">10:40 – 11:10<small>30 分钟</small></div></div>
+            <div class="slot-row" style="padding:6px 11px"><div class="sq">3</div><div class="tm" style="font-size:12px">11:20 – 11:50<small>30 分钟 · <span style="color:#2B4E96">午休 12:00–13:00</span></small></div></div>
+            <div class="slot-row" style="padding:6px 11px"><div class="sq">4</div><div class="tm" style="font-size:12px">13:00 – 13:30<small>30 分钟</small></div></div>
+          </div>
+        </div>
+        <div class="footbar">
+          <span class="btn out rel" style="flex:1"><span class="mk" style="top:-8px;left:-8px" data-goto="c17">17</span>存为模板</span>
+          <span class="btn pri rel" style="flex:1"><span class="mk" style="top:-8px;left:-8px" data-goto="c18">18</span>保存</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/schedule-edit/</span>
+        <span class="nm">新建档期</span>
+        <span class="tg">妆师端</span>
+        <span class="tg">兼「新建模板」</span>
+      </div>
+      <p class="dev-desc">
+        调几个参数，<b>下面立刻排出整张时段表</b>（预览是实时的，改一个数就重排）。
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">日期默认</td><td class="ps"><b>本机今天</b>。⚠️ 在 <span class="k">onLoad</span> 里还要再刷一遍 —— 小程序从后台恢复时页面模块<b>不重新执行</b>，不刷的话隔夜进来「今天」还是昨天</td></tr>
+          <tr><td class="nm">「在第几个后」</td><td class="ps">选项<b>跟着妆位数走</b>：妆位数改小，选项跟着少。每项直接写出<b>几点开始</b>，光看「第 3 个之后」不知道是几点</td></tr>
+          <tr><td class="nm">午休能落在哪</td><td class="ps"><b>任意一个妆位后面，含最后一个</b></td></tr>
+          <tr><td class="nm">两个出口</td><td class="ps"><b>保存</b> → 生成档期，进列表；<b>存为模板</b> → 只存参数，不生成档期（下一场一键套用）</td></tr>
+          <tr><td class="nm">左上「取消」</td><td class="ps">直接退回，<b>不弹二次确认</b> —— 这一页没填过什么值钱的东西</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note red" style="margin-top:14px">
+        🔴 <b>踩过的坑：「午休最晚只能到 12:00」。</b><br>
+        真根因 = <span class="k">lunchAfterRange</span> 写死 <span class="k">1..8</span>，<b>和妆位数脱钩</b>。
+        妆位数少于 8 时，越界的选项<b>不是被挡住，是静默不生成</b>（还顺手存出一条<b>空起止的废记录</b>）。<br>
+        ⇒ 现在选项跟着妆位数算，并把 <span class="k">afterSeq</span> 夹进 <span class="k">1..count</span>。
+      </div>
+
+      <div class="note warn">
+        ⚠️ <b>它是「新建档期」和「新建模板」两个入口共用的一页</b> —— 靠 <span class="k">isTemplate</span> 分叉：
+        模板态底栏只剩一个「保存模板」。
+      </div>
+      <div class="note warn">
+        ⚠️ 这一页是全项目<b>第一处</b>「有编辑框的页面」—— 详情页之外，
+        <b>这一页的 <span class="k">wx.hideKeyboard()</span> 该留</b>。
+        （判断标准不是「习惯性先收键盘」，是「<b>这一页此刻有没有可能开着键盘</b>」。）
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3.4 档期模板 ── -->
+  <h3 class="sub">3.4 档期模板 · 排好一次，下一场一键套用</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft">‹</div><div class="ttl">档期模板</div><div class="rgt"></div></div>
+        <div class="pb tight">
+          <div class="grp">
+            <div class="card" style="border-radius:var(--r)">
+              <div style="display:flex;align-items:flex-start;gap:8px">
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:14px;font-weight:700">展妆标准场</div>
+                  <div class="meta-line">4 个妆位 · 更新于 05-01</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+                    <span style="background:var(--bg);color:var(--t2);font-size:10.5px;padding:1px 6px;border-radius:4px">10:00 – 10:30</span>
+                    <span style="background:var(--bg);color:var(--t2);font-size:10.5px;padding:1px 6px;border-radius:4px">10:40 – 11:10</span>
+                    <span style="background:var(--bg);color:var(--t2);font-size:10.5px;padding:1px 6px;border-radius:4px">…</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:5px;align-items:center">
+                  <span class="btn xs out rel"><span class="mk" style="top:-8px;left:-8px" data-goto="c19">19</span>删除</span>
+                  <span class="btn xs pri rel"><span class="mk" style="top:-8px;left:-8px" data-goto="c20">20</span>应用</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hint" style="text-align:center;font-size:11px;color:var(--t3);line-height:1.7">排好一次档期 → 存为模板 →<br>下一场漫展一键生成整套时段</div>
+        </div>
+        <div style="position:relative;flex:1">
+          <div class="rel" style="position:absolute;right:16px;bottom:24px;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:300;box-shadow:0 4px 14px rgba(192,85,110,.45)">
+            <span class="mk ok" style="top:-4px;left:-4px" data-goto="c21">21</span>＋
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/template-list/</span>
+        <span class="nm">档期模板</span>
+        <span class="tg">妆师端</span>
+      </div>
+      <p class="dev-desc">
+        存过的排班参数。点「应用」→ <b>问日期 → 问这场叫什么 → 当场生成一条真档期</b>，然后直接进新档期的详情页。
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">「应用」为什么是 picker</td><td class="ps">微信的原生 picker <b>只能由用户点开，程序叫不动它</b>。想让「应用」顺手把日期问了，就得让它<b>自己就是</b>那个 picker：点它 → 弹日期 → 确认时才触发生成</td></tr>
+          <tr><td class="nm">生成时还要问名字</td><td class="ps">日期选完再弹一句「这场叫什么」，<b>预填模板名</b>。同一场模板会套到不同漫展上，名字不能锁死在模板里。取值顺序：<b>传进来的名字 → 模板名 → 兜底</b></td></tr>
+          <tr><td class="nm">从模板反推</td><td class="ps">纯函数 <span class="k">templateToSchedule(tpl, date, id, name)</span> 从妆位<b>反推</b>起始 / 时长 / 间隔</td></tr>
+          <tr><td class="nm">老模板没有午休</td><td class="ps"><b>绝不生成午休行</b> —— 不猜、不补</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note red" style="margin-top:14px">
+        🔴 <b>踩过的坑：模板套用「点了等于没点」。</b><br>
+        根因是<b>存模板的时候把 <span class="k">slotMin</span> / <span class="k">gapMin</span> / <span class="k">lunch</span> 全丢了</b> ——
+        所以套用出来是个空壳。<b>顺带把「套用」改成「应用」</b>（它现在真会生成一条档期，
+        叫「套用」像是「填进当前表单」）。已补进 <span class="k">buildTemplateRecord()</span>。
+      </div>
+
+      <div class="note warn">
+        ⚠️ <b>右下角那个圆「＋」是故意不放导航栏的</b> —— 右上角是微信胶囊的地盘，
+        贴过去会被误当成微信自己的按键点到。<br>
+        ⚠️ <b>它能拖</b>：它浮在列表上，挡住哪一条由她自己说了算；拖到哪儿记进 storage，下次进来还在那儿。
+        <b>上沿不许越过导航栏下沿</b>（否则把标题和「‹ 返回」盖住）。<br>
+        ⚠️ 拖动那一下必须是 <b><span class="k">catchtouchmove</span></b> 而不是 <span class="k">bindtouchmove</span> ——
+        <b>bind 只是「听一下」，页面照样跟着滚；catch 才把默认滚动拦下来</b>。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3.5 预约单 ── -->
+  <h3 class="sub">3.5 预约单（tab 2）· 唯一一格「干活」的地方</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft rel"><span class="mk" style="top:-9px;left:-9px" data-goto="c22">22</span>代填</div>
+          <div class="ttl">预约单</div>
+          <div class="rgt"></div>
+        </div>
+
+        <div style="position:relative">
+          <div style="display:flex;align-items:center;gap:6px;padding:7px 10px;background:#fff;border-bottom:1px solid var(--line)">
+            <span class="rel" style="flex:0 0 auto;background:var(--bg);border-radius:6px;padding:5px 9px;font-size:11.5px;font-weight:600"><span class="mk" style="top:-9px;left:-9px" data-goto="c23">23</span>示例漫展 ▾</span>
+            <span class="rel" style="flex:1;min-width:0;background:var(--bg);border-radius:6px;padding:5px 9px;font-size:11.5px;color:var(--t3)"><span class="mk" style="top:-9px;left:-9px" data-goto="c24">24</span>搜 CN / 展名</span>
+            <span class="rel" style="color:var(--t3);font-size:11px"><span class="mk" style="top:-9px;left:-9px" data-goto="c25">25</span>✕</span>
+            <span style="color:var(--t3);font-size:11px">▾</span>
+            <span class="rel" style="color:var(--brand)"><span class="mk" style="top:-9px;left:-9px" data-goto="c26">26</span>🔍</span>
+          </div>
+        </div>
+
+        <div style="display:flex;background:#fff;border-bottom:1px solid var(--line);position:relative">
+          <div class="rel" style="flex:1;text-align:center;padding:8px 0;font-size:12px;font-weight:700;color:var(--brand);border-bottom:2px solid var(--brand)">
+            <span class="mk" style="top:-2px;left:2px" data-goto="c27">27</span>待处理
+          </div>
+          <div style="flex:1;text-align:center;padding:8px 0;font-size:12px;color:var(--t2)">已确认</div>
+          <div style="flex:1;text-align:center;padding:8px 0;font-size:12px;color:var(--t2)">已完成</div>
+          <div style="flex:1;text-align:center;padding:8px 0;font-size:12px;color:var(--t2)">已取消</div>
+        </div>
+
+        <div class="pb tight" style="padding:8px 10px">
+          <div class="grp">
+            <div style="display:flex;gap:9px;padding:11px;background:#fff;position:relative">
+              <span class="mk" style="top:-7px;left:-8px" data-goto="c28">28</span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:7px;align-items:baseline">
+                  <span style="font-size:13.5px;font-weight:700">示例漫展</span>
+                  <span style="font-size:12px;color:var(--brand-d)">阿禾</span>
+                </div>
+                <div style="font-size:12px;color:var(--t2);margin-top:2px">第 2 位 · 10:40 – 11:10 · 角色 白狐</div>
+                <div class="meta-line">已付定金 · 05-01 提交</div>
+              </div>
+              <div style="color:var(--t4);font-size:15px">›</div>
+            </div>
+            <div style="display:flex;gap:9px;padding:11px;background:#FAFAFB;border-top:1px solid var(--line2)">
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:7px;align-items:baseline">
+                  <span style="font-size:13.5px;font-weight:700">示例漫展</span>
+                  <span style="font-size:12px;color:var(--brand-d)">小满</span>
+                </div>
+                <div style="font-size:12px;color:var(--t2);margin-top:2px">第 3 位 · 11:20 – 11:50 · 角色 雪见</div>
+                <div class="meta-line"><span style="background:#FDF3E0;color:#8A6414;font-size:10.5px;padding:1px 6px;border-radius:4px;font-weight:600">顾客申请取消</span></div>
+              </div>
+              <div style="color:var(--t4);font-size:15px">›</div>
+            </div>
+          </div>
+          <div class="hint" style="text-align:center;font-size:10.5px;color:var(--t3);line-height:1.7">点开单子查看顾客填写的内容，<br>谈妥后标记定金、加微信。</div>
+        </div>
+
+        <div class="footbar">
+          <span class="btn pri rel" style="flex:1"><span class="mk" style="top:-8px;left:-8px" data-goto="c30">30</span>一键处理</span>
+        </div>
+        <div class="tabbar">
+          <div class="tb"><span class="ic">📅</span>档期</div>
+          <div class="tb on"><span class="ic">📋</span>预约单</div>
+          <div class="tb"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/booking/</span>
+        <span class="nm">预约单</span>
+        <span class="tg">tab 2</span>
+        <span class="tg g">已落地</span>
+      </div>
+      <p class="dev-desc">
+        <b>四个状态 Tab × 场次筛选 × 搜索 × 批量处理</b> —— 这一页的四件事是<b>相乘</b>的。
+      </p>
+
+      <div class="note" style="margin-top:0">
+        <b>状态机（6 个状态，<span class="k">utils/bookingStore.js</span> 一处收拢）：</b><br>
+        <span class="k or">待处理 pending</span> →
+        <span class="k gr">已确认 confirmed</span> →
+        <span class="k gr">已完成 done</span><br>
+        <span class="k rd">顾客申请取消 cancel_requested</span> ·
+        <span class="k rd">拒绝 rejected</span> ·
+        <span class="k rd">已取消 cancelled</span>
+      </div>
+
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">批量处理</td><td class="ps">待处理页「<b>一键处理</b>」、已确认页「<b>一键确认</b>」+「<b>定金一键已支付</b>」。点任意一个键<b>进勾选态</b> —— 进来就是全选；<b>没勾的留在原地，勾上的才走</b>；三个键各走各的勾选态</td></tr>
+          <tr><td class="nm">勾不上的人</td><td class="ps"><b>未付定金的单直接勾不上</b>（不是勾上再报错）。底栏如实播报<b>跳过了几单</b></td></tr>
+          <tr><td class="nm">场次条</td><td class="ps">第一项固定「<b>全部</b>」＝跨场次，和四个状态 Tab <b>相乘</b>。默认记住上次选的场次，首次 = 最新建的那场。<br>⚠️ <b>一场档期都没有时整条不显示</b> —— 只剩「全部」等于没得选，白占一行</td></tr>
+          <tr><td class="nm">搜索拆成两级</td><td class="ps"><span class="k">kwInput</span> 打字只重算面板清单 / <span class="k">kw</span> <b>提交才真搜</b>。合成一个会<b>每敲一个字符重建一次主列表</b></td></tr>
+          <tr><td class="nm">回车 / 放大镜 / 点历史</td><td class="ps">三条路<b>同一个 <span class="k">applySearch</span></b> —— 不许各写一份</td></tr>
+          <tr><td class="nm">搜索范围</td><td class="ps"><b>跟着左边选的场次走，两个条件相乘</b>。选「全部」= 这个 CN 在她这儿的全部单；选某一场 = 只有这一场里她那几单</td></tr>
+          <tr><td class="nm">搜索只认什么</td><td class="ps"><b>顾客 CN / 漫展名</b>，⛔ 不搜微信号</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note red" style="margin-top:14px">
+        🔴 <b>踩过的坑：「结果对、过程有问题」。</b><br>
+        原先下拉面板只匹配<b>场次名</b>、主列表匹配 <b>顾客 CN / 漫展名且跨全部场次</b>，
+        两者<b>共用一个输入框</b> ⇒ 打一个 CN 时面板一场都对不上、弹出「没有叫这个名字的展子 / CN」。<br>
+        <b>那句是假的</b> —— 它一个字没查 CN，人明明在；点放大镜又搜得到了。<br>
+        ⇒ 拆开：<span class="k">[当前场次][▾]</span> 只管选场次，<span class="k">[输入框][🔍]</span> 只管搜人。
+      </div>
+
+      <div class="note warn">
+        ⚠️ <b>空态有四支</b>，说哪句话由「当前筛选范围」决定：<br>
+        ① 选着某一场搜不到 → 「<b>这一场里</b>没有「×」的单」+ 引导她点「全部」<br>
+        ② 选「全部」搜不到 → 「没有叫这个名字的展子 / CN」<br>
+        ③ 某一场这个状态没单 → 「这一场的这个状态还没有单」<br>
+        ④ 全部 + 没搜 → 「这个状态还没有单」<br>
+        <b>「下结论」的文案必须和当前筛选范围同口径。</b>
+      </div>
+
+      <div class="note warn">
+        ⚠️ <b>搜索历史</b>：<span class="k">zhuangli_bk_hist</span> / 上限 <b>10 条</b>。
+        去重<b>按小写比、但存她最后那个写法</b>；重复搜 = <b>置顶</b>（⛔ 不是攒第二条）；超限<b>砍尾巴</b>；<b>只存提交过的词</b>。<br>
+        ⚠️ 这条槽还压着全屏蒙层：<span class="k">.sched-bar</span> 要带 <span class="k">position:relative;z-index:21</span>
+        才能压过蒙层（19），否则<b>输入框点不着</b>。
+      </div>
+    </div>
+  </div>
+
+  <h3 class="sub" style="border-left-color:var(--warn)">3.5+ 预约单 · 勾选态（点「一键处理」之后的样子）</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone" style="min-height:0">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft rel">代填</div>
+          <div class="ttl">预约单</div>
+          <div class="rgt"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 11px;background:var(--brand-l);font-size:11.5px;color:var(--brand-d);font-weight:600">
+          <span>已选 <b>2</b> / 3 单</span>
+          <span style="color:var(--brand-d)">全不选</span>
+        </div>
+        <div class="pb tight" style="padding:8px 10px;flex:1">
+          <div class="grp">
+            <div style="display:flex;gap:9px;padding:11px;background:#fff;align-items:flex-start">
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex:none;margin-top:2px">✓</span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:7px;align-items:baseline"><span style="font-size:13.5px;font-weight:700">示例漫展</span><span style="font-size:12px;color:var(--brand-d)">阿禾</span></div>
+                <div style="font-size:12px;color:var(--t2);margin-top:2px">第 2 位 · 10:40 – 11:10</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:9px;padding:11px;background:#fff;border-top:1px solid var(--line2);align-items:flex-start">
+              <span style="width:18px;height:18px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;flex:none;margin-top:2px">✓</span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:7px;align-items:baseline"><span style="font-size:13.5px;font-weight:700">示例漫展</span><span style="font-size:12px;color:var(--brand-d)">小满</span></div>
+                <div style="font-size:12px;color:var(--t2);margin-top:2px">第 3 位 · 11:20 – 11:50</div>
+              </div>
+            </div>
+            <div class="rel" style="display:flex;gap:9px;padding:11px;background:#FAFAFB;border-top:1px solid var(--line2);align-items:flex-start">
+              <span class="mk" style="top:-7px;left:-8px" data-goto="c29">29</span>
+              <span style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--t4);flex:none;margin-top:2px"></span>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:7px;align-items:baseline"><span style="font-size:13.5px;font-weight:700;color:var(--t2)">示例漫展</span><span style="font-size:12px;color:var(--t2)">阿澈</span></div>
+                <div style="font-size:12px;color:var(--t3);margin-top:2px">第 4 位 · 13:00 – 13:30 · <b>未付定金</b></div>
+              </div>
+            </div>
+          </div>
+          <div class="hint" style="text-align:center;font-size:10.5px;color:var(--t3);line-height:1.7">勾上的单会被处理，没勾的留在这个 Tab。</div>
+        </div>
+        <div class="footbar">
+          <span class="btn out" style="flex:1">取消</span>
+          <span class="btn pri" style="flex:2">标记已确认（2）</span>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/booking/</span>
+        <span class="nm">勾选态</span>
+        <span class="tg">三个批量键共用一套</span>
+      </div>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">怎么进来</td><td class="ps">点底栏任意一个批量键（<b>一键处理</b> / <b>一键确认</b> / <b>定金一键已支付</b>），<b>进来就是全选</b></td></tr>
+          <tr><td class="nm">勾不上的</td><td class="ps"><b>未付定金的单直接勾不上</b>（不是勾上再报错、不是勾上后跳过）—— 图上第 3 张就是</td></tr>
+          <tr><td class="nm">底栏文案</td><td class="ps">跟着当前那个键走：<b>「标记已确认（2）」</b>。数字实时变</td></tr>
+          <tr><td class="nm">一个数字要防的事</td><td class="ps">按钮亮不亮看 <span class="k">selCount</span>：<b>一个都没勾 = 灰键</b>，⛔ 别让它点了没反应</td></tr>
+          <tr><td class="nm">退出</td><td class="ps">「取消」退出勾选态，<b>不处理任何单</b>。⚠️ 换场次 / 换 Tab 也必须<b>退出勾选态</b>，否则勾着的人被换走了、底栏数字还对得上</td></tr>
+        </tbody>
+      </table>
+      <div class="note ok" style="margin-top:14px">
+        ✅ <b>处理完要如实播报。</b>比如「10 单里处理了 8 单，跳过 2 单」——
+        ⛔ 不许只报「处理完成」然后让她自己去数。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3.6 预约单详情 ── -->
+  <h3 class="sub">3.6 预约单详情 · 一张单的全部信息</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft">‹</div><div class="ttl">预约单详情</div><div class="rgt"></div></div>
+        <div class="pb tight" style="padding:9px 10px;overflow:hidden">
+          <div class="card" style="padding:10px 11px">
+            <div style="display:flex;align-items:flex-start;gap:8px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:700">示例漫展 · 2026-05-02</div>
+                <div style="font-size:12px;color:var(--t2);margin-top:2px">第 2 位 · 10:40 – 11:10</div>
+              </div>
+              <span class="tag done">已确认</span>
+            </div>
+            <div class="meta-line" style="margin-top:5px">提交于 05-01 14:20</div>
+          </div>
+
+          <div class="sec-ttl">顾客档案（提交时快照）</div>
+          <div class="grp">
+            <div class="fld" style="padding:7px 11px"><span class="lb" style="flex:0 0 70px;font-size:12px">CN（圈名）</span><span class="vl filled" style="font-size:12px">阿禾</span></div>
+            <div class="fld" style="padding:7px 11px"><span class="lb" style="flex:0 0 70px;font-size:12px">眼型</span><span class="vl filled" style="font-size:12px">双眼皮</span></div>
+            <div class="fld" style="padding:7px 11px"><span class="lb" style="flex:0 0 70px;font-size:12px">肤质</span><span class="vl filled" style="font-size:12px">混油皮</span></div>
+            <div class="fld" style="padding:7px 11px"><span class="lb" style="flex:0 0 70px;font-size:12px">性别</span><span class="vl filled" style="font-size:12px">女</span></div>
+            <div class="fld" style="padding:7px 11px"><span class="lb" style="flex:0 0 70px;font-size:12px">未成年</span><span class="vl filled" style="font-size:12px">否</span></div>
+          </div>
+
+          <div class="sec-ttl">联系方式</div>
+          <div class="grp">
+            <div class="fld" style="padding:7px 11px">
+              <span class="lb" style="flex:0 0 70px;font-size:12px">微信号</span>
+              <span class="vl filled" style="flex:1;font-size:12px">ahe_0502</span>
+              <span class="btn sec sm rel" style="height:25px;font-size:11.5px"><span class="mk" style="top:-8px;left:-8px" data-goto="c31">31</span>复制去加</span>
+            </div>
+          </div>
+
+          <div class="sec-ttl">定金</div>
+          <div class="card" style="padding:10px 11px;display:flex;align-items:center;gap:10px">
+            <div style="flex:1">
+              <div style="font-size:14px">定金 ¥50</div>
+              <div style="font-size:11.5px;color:var(--t3);margin-top:2px">已付定金 · 点一下切换</div>
+            </div>
+            <div class="sw on rel"><span class="mk" style="top:-8px;left:-8px" data-goto="c32">32</span></div>
+          </div>
+        </div>
+        <div class="footbar">
+          <span class="btn pri rel" style="flex:1"><span class="mk" style="top:-8px;left:-8px" data-goto="c33">33</span>标记已完成</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/booking-detail/</span>
+        <span class="nm">预约单详情</span>
+        <span class="tg">妆师端</span>
+      </div>
+      <p class="dev-desc">
+        顾客填的东西<b>在这里一字不差地给她看</b>（提交时快照 —— 顾客后来改了资料，这张单也不变）。
+      </p>
+
+      <div class="note ok" style="margin-top:0">
+        ✅ <b>这一页有 ¥ 是对的，别删。</b>红线「顾客端零金额」管的是<b>顾客看得见的页面</b>。<br>
+        <b>妆师端自己记账（定金收没收）不构成服务要约</b> —— 个人主体的类目里，「记账」本身就明写着可以有钱。
+        违规的是「<b>标价 + 分享给顾客看</b>」这个组合。
+      </div>
+
+      <table class="spec">
+        <thead><tr><th>当前状态</th><th>底栏那两颗键</th></tr></thead>
+        <tbody>
+          <tr><td class="nm"><span class="k or">待处理</span></td><td class="ps">「拒绝并释放」·「标记已确认」</td></tr>
+          <tr><td class="nm"><span class="k gr">已确认</span></td><td class="ps">已付定金 → 「标记已完成」；<b>未付定金 → 灰键「未付定金，不能标已完成」</b></td></tr>
+          <tr><td class="nm"><span class="k rd">顾客申请取消</span></td><td class="ps">「不同意，继续保留」·「同意取消」（红色）</td></tr>
+          <tr><td class="nm">其余</td><td class="ps">灰键「该单已结束」</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note warn">
+        ⚠️ <b>点「标记已确认」会立刻退回列表</b> —— 防手抖。<br>
+        ⚠️ 有 <span class="k">ALLOW</span> 表挡着「<b>已完成的单被拉回已确认</b>」这个<b>没有出口</b>的状态。<br>
+        ⚠️ <b>顾客取消走 <span class="k">cancelled</span>，不删记录</b> —— 妆位空出来，但单子留在「已取消」Tab。
+        因为 60% 的妆娘经常被跑单，<b>删记录等于把唯一凭据也删了</b>。
+      </div>
+
+      <div class="note red">
+        🔴 <b>「顾客取消」是两步的</b>（2026-09-29 改）：顾客申请 → 妆娘同意 / 不同意。<br>
+        <span class="k">cancel_requested</span> <b>仍然占着妆位</b>、仍留在「已确认」Tab，
+        页面上会有一句「<b>在下面点『同意取消』之前，这个妆位还占着，先别答应给别人</b>」。
+      </div>
+    </div>
+  </div>
+  <!-- ── 3.7 我的 ── -->
+  <h3 class="sub">3.7 我的（tab 3）</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft"></div><div class="ttl">我的</div><div class="rgt"></div></div>
+        <div class="pb tight">
+          <div class="card rel" style="padding:10px 11px">
+            <span class="mk" style="top:-7px;left:-8px" data-goto="c34">34</span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span class="rel">
+                <span class="mk ok" style="top:-6px;left:-6px" data-goto="c35">35</span>
+                <span style="display:block;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E)"></span>
+              </span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700">示例</div>
+                <div class="meta-line">上海 · 建模感 / 展妆 / 浓系</div>
+              </div>
+              <span style="color:var(--t4)">›</span>
+            </div>
+          </div>
+
+          <div class="card" style="padding:10px 11px">
+            <div style="font-size:11px;color:var(--t3);margin-bottom:7px">点一个换头像底色，再点一下头像就收起</div>
+            <div style="display:flex;gap:9px;align-items:center">
+              <span class="rel"><span class="mk" style="top:-8px;left:-8px" data-goto="c36">36</span>
+                <span style="display:block;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);outline:2px solid var(--brand);outline-offset:2px"></span></span>
+              <span style="display:block;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#CBD8EE,#5B7FC7)"></span>
+              <span style="display:block;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#D6E8D4,#5E9E62)"></span>
+              <span style="display:block;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#EEDFC9,#B98B4E)"></span>
+            </div>
+          </div>
+
+          <div class="hint" style="text-align:center;font-size:10.5px;color:var(--t3);line-height:1.7">点头像换底色，点上面的空白处进「我的资料」</div>
+
+          <div class="grp">
+            <div class="cell rel" style="padding:9px 11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c37">37</span><span class="cl" style="font-size:13px">设置</span><span class="cr">›</span></div>
+            <div class="cell rel" style="padding:9px 11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c38">38</span><span class="cl" style="font-size:13px">问题反馈</span><span class="cr">›</span></div>
+            <div class="cell rel" style="padding:9px 11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c39">39</span><span class="cl" style="font-size:13px">切换身份</span><span class="cr">约妆 / 妆师 ›</span></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tb"><span class="ic">📅</span>档期</div>
+          <div class="tb"><span class="ic">📋</span>预约单</div>
+          <div class="tb on"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/mine/</span>
+        <span class="nm">我的</span>
+        <span class="tg">tab 3</span>
+      </div>
+      <p class="dev-desc">
+        <b>两张卡 + 三行</b>。上面那张资料卡<b>整张可点</b>（进「我的资料」），
+        但<b>头像那一小块被抠出来单独管事</b>（换底色）。
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">一卡两件事</td><td class="ps">整卡 <span class="k">bindtap</span> 进资料页；头像 <b><span class="k">catchtap</span></b> 换色 —— <b>catch 才拦得住冒泡</b>，否则点头像会「又弹色板又跳页」</td></tr>
+          <tr><td class="nm">色板</td><td class="ps">点头像弹出，<b>再点一下头像收起</b>；选完色再点头像也收起</td></tr>
+          <tr><td class="nm">头像本身</td><td class="ps"><b>纯 CSS 人像剪影</b>，不是文字、不是图片。⚠️ 曾经用「昵称首字」，但 emoji 是<b>代理对</b>，<span class="k">charAt(0)</span> 只切到半个 ⇒ 渲染成「▯」，而<b>这条路没有失败分支能出声</b></td></tr>
+          <tr><td class="nm">颜色存什么</td><td class="ps">存<b>颜色令牌</b>（<span class="k">'rose'</span>），⛔ 不是色值。<span class="k">avatarColorOf</span> 是个<b>全函数</b> ⇒ 没有失败分支 ⇒ 不需要出声</td></tr>
+        </tbody>
+      </table>
+      <div class="note warn">
+        ⚠️ <b>「换底色」这个手势全项目只有这一处。</b>C1 / 约妆首页 / 资料页上那张头像
+        <b>一个手势都不加</b> —— 那是给别人看的脸，不是设置项。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3.8 我的资料 ── -->
+  <h3 class="sub">3.8 我的资料 · 四行全都能点</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft">‹</div><div class="ttl">我的资料</div><div class="rgt"></div></div>
+        <div class="pb tight">
+          <div class="card" style="padding:10px 11px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="display:block;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E)"></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700">示例</div>
+                <div class="meta-line">上海 · 建模感 / 展妆 / 浓系</div>
+              </div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="cell rel" style="padding:10px 11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c40">40</span><span class="cl" style="font-size:13px">昵称</span><span class="cr">示例 ›</span></div>
+            <div class="cell rel" style="padding:10px 11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c41">41</span><span class="cl" style="font-size:13px">常驻城市</span><span class="cr">上海 ›</span></div>
+            <div class="cell rel" style="padding:10px 11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c42">42</span><span class="cl" style="font-size:13px">接妆风格</span><span class="cr">建模感 / 展妆 / 浓系 ›</span></div>
+            <div class="cell rel" style="padding:10px 11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c43">43</span><span class="cl" style="font-size:13px">简介</span><span class="cr">未填 ›</span></div>
+          </div>
+          <div class="hint" style="text-align:center;font-size:10.5px;color:var(--t3);line-height:1.7">这四项就是客人在你的分享页上看到的信息。<br>四行都能点，改完当场存下。</div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/my-profile/</span>
+        <span class="nm">我的资料</span>
+        <span class="tg">只读 + 四个入口</span>
+      </div>
+      <p class="dev-desc">
+        上面那张卡是<b>预览</b>（客人看到的就长这样），下面四行<b>各自去改一样东西</b>。
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">昵称 / 城市</td><td class="ps">走 <span class="k">wx.showModal({editable:true})</span> —— <b>原地弹一个输入框</b>，不另开页</td></tr>
+          <tr><td class="nm">接妆风格</td><td class="ps">另开一页（§3.9）—— 多选 + 分组，塞不进一个弹框</td></tr>
+          <tr><td class="nm">简介</td><td class="ps">另开一页（§3.10）—— 那是段文字，要的是 textarea</td></tr>
+        </tbody>
+      </table>
+      <div class="note red" style="margin-top:14px">
+        🔴 <b>这一页只 <span class="k">require</span> 公开资料，⛔ 连 <span class="k">ARTIST_CONTACT</span> 都不许 require。</b><br>
+        <span class="k">wechat_id</span> 住在 <span class="k">ARTIST_CONTACT</span>，<b>唯一出口是 <span class="k">utils/contact.js → getContact()</span></b>。
+        自测里钉着这一页的源码里<b>没有</b> <span class="k">ARTIST_CONTACT</span> / <span class="k">wechat_id</span> / <span class="k">contact.js</span> 字样。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3.9 接妆风格 ── -->
+  <h3 class="sub">3.9 接妆风格 · 这是唯一两处「改一处、三处变」的地方之一</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft">‹</div><div class="ttl">接妆风格</div><div class="rgt"></div></div>
+        <div class="pb tight">
+          <div class="noti info" style="font-size:11px">
+            <span>ℹ️</span><span>上面这一排是平台给的常用词，点一下就是选中。每一组最右边都能加你自己的词。</span>
+          </div>
+
+          <div class="sec-ttl">妆感质感</div>
+          <div class="chips" style="padding:0 2px">
+            <span class="chip on rel" style="padding:5px 11px;font-size:12px"><span class="mk" style="top:-8px;left:-8px" data-goto="c44">44</span>建模感</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">清透</span>
+            <span class="chip mine on rel" style="padding:5px 11px;font-size:12px;border-color:var(--brand);background:var(--brand-l);color:var(--brand-d)"><span class="mk ok" style="top:-8px;left:-8px" data-goto="c45">45</span>哑光绒面<span class="rel"><span class="mk rd" style="top:-8px;left:-8px" data-goto="c46">46</span><span style="margin-left:5px;color:var(--brand-d)">✕</span></span></span>
+            <span class="chip rel" style="padding:5px 11px;font-size:12px;border-style:dashed;color:var(--brand-d)"><span class="mk" style="top:-8px;left:-8px" data-goto="c47">47</span>＋ 自定义</span>
+          </div>
+
+          <div class="sec-ttl" style="margin-top:12px">浓度</div>
+          <div class="chips" style="padding:0 2px">
+            <span class="chip on" style="padding:5px 11px;font-size:12px">浓系</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">淡妆</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px;border-style:dashed;color:var(--brand-d)">＋ 自定义</span>
+          </div>
+
+          <div class="grp" style="margin-top:14px;padding:9px;display:flex;gap:6px;align-items:center">
+            <span class="rel" style="flex:1;background:var(--bg);border-radius:6px;padding:6px 9px;font-size:11.5px;color:var(--t3)"><span class="mk" style="top:-8px;left:-8px" data-goto="c48">48</span>打一个你自己的风格词…</span>
+            <span class="btn sm pri rel" style="height:26px;font-size:11.5px"><span class="mk" style="top:-8px;left:-8px" data-goto="c49">49</span>添加</span>
+            <span class="btn sm out rel" style="height:26px;font-size:11.5px"><span class="mk" style="top:-8px;left:-8px" data-goto="c50">50</span>丢掉</span>
+          </div>
+        </div>
+        <div class="footbar">
+          <span class="btn pri rel" style="flex:1"><span class="mk" style="top:-8px;left:-8px" data-goto="c51">51</span>保存</span>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/style-edit/</span>
+        <span class="nm">接妆风格</span>
+        <span class="tg">多选 + 自填</span>
+      </div>
+      <p class="dev-desc">
+        分组多选。<b>自填词是她自己的，只有她的分享页上有，客人看得到、搜不到。</b>
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">自填词的规矩</td><td class="ps">不能含「<span class="k">/</span>」（它是分隔符）· 一个词 ≤10 字 · 不能跟预设重复 · 不能重复加 · <b>最多 6 个</b></td></tr>
+          <tr><td class="nm">「丢掉」是干嘛的</td><td class="ps">那个框里打了字但没点「添加」时，点别处会拦一句「<b>『G』那个框里还有没加进来的词</b>」。<b>「丢掉」= 明确地不要它了</b></td></tr>
+          <tr><td class="nm">保存后</td><td class="ps"><span class="k">style_text</span> 是<b>派生值</b>，不落 storage —— 按 <span class="k">STYLE_GROUPS</span> 的<b>词表顺序</b>拼，⛔ 不按点选顺序</td></tr>
+        </tbody>
+      </table>
+      <div class="note warn">
+        ⚠️ <b>为什么必须按词表顺序：</b>同一组标签<b>换个点选次序就换一段文案</b>的话，
+        她在分享页上会看到<b>自己什么都没改、字却变了</b>。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3.10 简介 ── -->
+  <h3 class="sub">3.10 简介 · 全项目唯一的 textarea</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft">‹</div>
+          <div class="ttl">简介</div>
+          <div class="rgt rel"><span class="mk" style="top:-9px;left:-9px" data-goto="c52">52</span>保存</div>
+        </div>
+        <div class="pb tight">
+          <div class="noti info" style="font-size:11px">
+            <span>ℹ️</span><span>这段字会出现在你的分享页上，摆在妆位表的下面 —— 想多了解你的人才会往下看。</span>
+          </div>
+          <div class="grp" style="padding:11px;min-height:150px">
+            <div style="font-size:12.5px;color:var(--t3);line-height:1.8">例如：展妆提前 40 分钟到，眼妆我能做得很细；请自备隐形眼镜和卸妆巾。</div>
+          </div>
+          <div style="text-align:right;font-size:11px;color:var(--t3);padding:0 2px">0/200</div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/intro-edit/</span>
+        <span class="nm">简介</span>
+        <span class="tg">≤200 字</span>
+      </div>
+      <p class="dev-desc">
+        顾客在 C1 上往下翻才看得到的一段字。<b>填了才显示那一段</b> —— 空的就整段不出现。
+      </p>
+      <div class="note warn" style="margin-top:0">
+        ⚠️ <b>「保存」放导航栏右侧，⛔ 不放底栏</b> —— 这一页是全项目第一个
+        <span class="k">&lt;textarea&gt;</span>，<b>键盘弹起来会盖住底栏</b>。<br>
+        ⚠️ <span class="k">maxlength</span> 在 textarea 上<b>默认只有 140</b>，必须显式写 200。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 4 约妆端 ══════════════════ -->
+<section id="guest">
+  <h2 class="sec"><span class="n">4</span>约妆端 · 4 个页面</h2>
+  <p class="lead">
+    底栏三格：<b>我约过的妆娘</b> / <b>我的预约</b> / <b>我的</b>。<br>
+    这一端<b>不找妆娘，只记录你约过的</b> —— 一整条线都在守「<b>不做目录</b>」。
+  </p>
+
+  <div class="rl-bar">
+    🔴 <b>这四页里，只有「妆位页（C1）」会被陌生人看到</b>（分享出去的落点）。<br>
+    另外三页是<b>顾客自己的私人账本</b>，永远不会被别人打开。
+  </div>
+
+  <!-- ── 4.1 我约过的妆娘 ── -->
+  <h3 class="sub">4.1 我约过的妆娘（tab 1）· 私人记录，不是目录</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft"></div>
+          <div class="ttl">我约过的妆娘</div>
+          <div class="rgt rel"><span class="mk" style="top:-9px;left:-9px" data-goto="c53">53</span>搜索</div>
+        </div>
+        <div class="pb tight">
+          <div class="rel" style="background:#fff;border-radius:8px;padding:8px 10px;font-size:12px;color:var(--t3)">
+            <span class="mk" style="top:-8px;left:-8px" data-goto="c54">54</span>搜妆娘昵称 / 城市
+          </div>
+          <div class="grp">
+            <div style="display:flex;align-items:center;gap:10px;padding:11px;background:#fff;position:relative">
+              <span class="mk" style="top:-7px;left:-8px" data-goto="c55">55</span>
+              <span style="display:block;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none"></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:700">示例</div>
+                <div class="meta-line">上海</div>
+                <div class="meta-line">最近约妆：2026-05-02 示例漫展</div>
+              </div>
+              <span style="color:var(--t4)">›</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:11px;background:#fff;border-top:1px solid var(--line2)">
+              <span style="display:block;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#CBD8EE,#5B7FC7);flex:none"></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:700">阿黎</div>
+                <div class="meta-line">杭州</div>
+                <div class="meta-line">最近约妆：2026-04-18 春樱场</div>
+              </div>
+              <span style="color:var(--t4)">›</span>
+            </div>
+          </div>
+          <div class="hint" style="text-align:center;font-size:10.5px;color:var(--t3);line-height:1.7">这些都是你约过的妆娘，点一位看她的妆位。</div>
+        </div>
+        <div class="tabbar">
+          <div class="tb on"><span class="ic">💄</span>我约过的妆娘</div>
+          <div class="tb"><span class="ic">📋</span>我的预约</div>
+          <div class="tb"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/artist-list/</span>
+        <span class="nm">我约过的妆娘</span>
+        <span class="tg">tab 1</span>
+        <span class="tg g">已落地</span>
+      </div>
+
+      <div class="note red" style="margin-top:0">
+        🔴 <b>这一页是整份稿子里最容易被改坏的地方。</b><br>
+        <b>列表的判据 =「<span style="color:#8A2B25">我</span>约过谁」</b>（从预约单里聚合）——
+        <b>⛔ 不是「平台上有哪些妆娘」</b>。<br>
+        ⇒ 一次都没约过的人<b>永远不会</b>出现在这里。<br>
+        ⇒ 它的长度 = <b>你自己约过几个人</b>。<br>
+        ❌ 不许加「看看还有哪些妆娘」的空态 · ❌ 不许按风格筛人 · ❌ 不许做成推荐位。
+      </div>
+
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">「她是谁」从哪来</td><td class="ps">列表本身从<b>预约单聚合</b>出来；<span class="k">ARTIST_DIRECTORY</span> 只负责提供每位的<b>昵称 / 城市 / 风格 / 头像色</b>。<b>判据和资料是两回事</b></td></tr>
+          <tr><td class="nm">演示数据也守这条</td><td class="ps">三位演示妆娘<b>每一位都至少有一条「我约过她」的单</b> —— 自测里钉死这条自洽性，⛔ 不许出现「列表里有她、我却从没约过」</td></tr>
+          <tr><td class="nm">搜索</td><td class="ps">点右上角展开 / 收起。<b>只按昵称和城市找，不按风格找</b> —— 空态里明写了这句</td></tr>
+          <tr><td class="nm">头像</td><td class="ps">同样是<b>纯 CSS 人像剪影</b>，颜色令牌跟着这位妆娘走</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── 4.2 我的预约 ── -->
+  <h3 class="sub">4.2 我的预约（tab 2）</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft"></div><div class="ttl">我的预约</div><div class="rgt"></div></div>
+        <div class="pb tight">
+          <div class="grp">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px;background:#fff">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:700">示例漫展</div>
+                <div class="meta-line">第 2 位 · 10:40 – 11:10</div>
+              </div>
+              <span class="tag done">已确认</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:9px;padding:11px;background:#fff;border-top:1px solid var(--line2)">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13.5px;font-weight:700">春樱场</div>
+                <div class="meta-line">第 1 位 · 09:30 – 10:00</div>
+              </div>
+              <span class="tag wait">待处理</span>
+            </div>
+          </div>
+          <div class="hint" style="text-align:center;font-size:10.5px;color:var(--t3);line-height:1.7">提交后妆娘会主动联系你。<br>如果很久没人联系，可以从妆位页加妆娘的微信。</div>
+        </div>
+        <div class="tabbar">
+          <div class="tb"><span class="ic">💄</span>我约过的妆娘</div>
+          <div class="tb on"><span class="ic">📋</span>我的预约</div>
+          <div class="tb"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/guest-bookings/</span>
+        <span class="nm">我的预约</span>
+        <span class="tg">tab 2</span>
+      </div>
+      <p class="dev-desc">
+        自己提交过的单，<b>只读</b> —— 顾客在这一页<b>不能改、不能撤</b>。
+        要取消得在妆娘那边走「顾客申请取消」。
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">状态棋子</td><td class="ps">用同一套状态文案，和妆师端看到的是同一个词</td></tr>
+          <tr><td class="nm">空态</td><td class="ps">一颗「<b>去找妆位</b>」的按钮 —— ⚠️ 它跳的是 <b>tab 页</b>，所以是 <span class="k">switchTab</span>。<br><b>tab 页上 <span class="k">navigateTo</span> / <span class="k">redirectTo</span> 都会静默失败</b>（页面不动、不报错）</td></tr>
+        </tbody>
+      </table>
+      <div class="note warn">
+        ⚠️ <b>这一页曾经是「我的」的下一层</b>，2026-10-01 升成 tab 2。<br>
+        <b>「升成 tab 页」会连带四类不报错的错：</b>① 页面上 <span class="k">redirectTo</span>/<span class="k">navigateTo</span> 静默失败；
+        ② tab 页不许有返回箭头；③ 旧入口要删干净；④ 空态兜底那个 <span class="k">navigateBack</span> 也得改 <span class="k">switchTab</span>。<br>
+        全项目扫描「跳 tab 页用错 API」时，<b>原先只扫 <span class="k">redirectTo</span> 是不够的</b>。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4.3 我的（约妆端） ── -->
+  <h3 class="sub">4.3 我的（约妆端 tab 3）· 只有三行</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft"></div><div class="ttl">我的</div><div class="rgt"></div></div>
+        <div class="pb tight">
+          <div class="grp">
+            <div class="cell rel" style="padding:11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c56">56</span><span class="cl" style="font-size:13px">切换身份</span><span class="cr">约妆 / 妆师 ›</span></div>
+            <div class="cell rel" style="padding:11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c57">57</span><span class="cl" style="font-size:13px">问题反馈</span><span class="cr">›</span></div>
+            <div class="cell rel" style="padding:11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c58">58</span><span class="cl" style="font-size:13px">设置</span><span class="cr">›</span></div>
+          </div>
+          <div class="hint" style="text-align:center;font-size:10.5px;color:var(--t3);line-height:1.7">你提交过的预约单都在「我的预约」那一格。</div>
+        </div>
+        <div class="tabbar">
+          <div class="tb"><span class="ic">💄</span>我约过的妆娘</div>
+          <div class="tb"><span class="ic">📋</span>我的预约</div>
+          <div class="tb on"><span class="ic">👤</span>我的</div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/guest-mine/</span>
+        <span class="nm">我的</span>
+        <span class="tg">tab 3</span>
+        <span class="tg">3 行</span>
+      </div>
+      <p class="dev-desc">
+        2026-10-01 用户定的：<b>「我的」里只有切换身份 / 反馈 / 设置</b> ——
+        资料卡和「我的预约」都搬走了（预约升成 tab，资料是妆师才有的东西）。
+      </p>
+      <div class="note warn" style="margin-top:0">
+        ⚠️ <b>设置页两角色共用同一个</b> <span class="k">pages/settings/</span>（不是抄一份）。<br>
+        妆师端那三行 <b>+「微信号开关」</b>；顾客端<b>没有那个开关</b> ——
+        妆娘的原话：「<b>顾客没有展示微信号的开关，顾客不展示</b>」。<br>
+        ⚠️ 那个开关用 <span class="k">wx:if="{{isArtist}}"</span> 只对妆娘画。
+        <span class="k">getApp()</span> 取不到时<b>回 <span class="k">false</span> = 不画</b> ——
+        倒向「画出来」就是<b>把妆娘的东西摆给顾客看</b>。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4.4 C1 ── -->
+  <h3 class="sub">4.4 妆位页（C1）· 唯一的「给别人看」的一页</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft">‹</div>
+          <div class="ttl">示例的妆位</div>
+          <div class="rgt rel"><span class="mk" style="top:-9px;left:-9px" data-goto="c59">59</span>我的预约</div>
+        </div>
+        <div class="pb">
+          <div class="card">
+            <div style="display:flex;align-items:center;gap:11px">
+              <span style="display:block;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#E8C9D2,#C0556E);flex:none"></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:15px;font-weight:700">示例</div>
+                <div class="meta-line">上海 · 建模感 / 展妆 / 浓系</div>
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--line2);margin-top:10px;padding-top:10px;display:flex;align-items:center;gap:10px">
+              <div style="flex:1">
+                <div style="font-size:11px;color:var(--t3)">微信号</div>
+                <div style="font-size:13.5px;font-weight:700;font-family:ui-monospace,monospace">demo_makeup</div>
+              </div>
+              <span class="btn sec sm rel" style="height:28px;font-size:12px"><span class="mk" style="top:-8px;left:-8px" data-goto="c60">60</span>复制微信号</span>
+            </div>
+          </div>
+
+          <div class="rel" style="background:#fff;border-radius:8px;padding:9px 11px;font-size:12.5px;font-weight:600;display:flex;justify-content:space-between">
+            <span class="mk" style="top:-8px;left:-8px" data-goto="c61">61</span>
+            <span>示例漫展 · 05-02</span><span style="color:var(--t3)">▾</span>
+          </div>
+
+          <div class="sec-ttl">05-02 的妆位</div>
+          <div class="grp">
+            <div class="slot-row" style="padding:9px 11px">
+              <div class="sq">1</div>
+              <div class="tm" style="font-size:12.5px">09:30 – 10:00<small>可约</small></div>
+              <span class="piece gray">已被预订</span>
+            </div>
+            <div class="slot-row" style="padding:9px 11px;background:#FDF9F1">
+              <div class="sq" style="background:#FDF3E0;color:#8A6414">2</div>
+              <div class="tm" style="font-size:12.5px">10:40 – 11:10</div>
+              <span class="piece gold">已预约</span>
+            </div>
+            <div class="slot-row" style="padding:9px 11px">
+              <div class="sq">3</div>
+              <div class="tm" style="font-size:12.5px">11:20 – 11:50<small>可约</small></div>
+              <span class="btn pri xs rel" style="height:26px;font-size:11.5px"><span class="mk" style="top:-8px;left:-8px" data-goto="c62">62</span>选这个妆位</span>
+            </div>
+          </div>
+
+          <div class="noti info" style="font-size:11px;line-height:1.7">
+            <span>ℹ️</span><span>提交后化妆师会主动联系你。<b>如果你填完很久没人联系，可以直接加化妆师的微信。</b></span>
+          </div>
+
+          <div class="sec-ttl">简介</div>
+          <div class="card" style="padding:10px 11px">
+            <div style="font-size:12px;color:var(--t2);line-height:1.8">展妆提前 40 分钟到，眼妆我能做得很细；请自备隐形眼镜和卸妆巾。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/landing/</span>
+        <span class="nm">妆位页（C1）</span>
+        <span class="tg">无需登录</span>
+        <span class="tg">分享落点</span>
+        <span class="tg r">零金额</span>
+      </div>
+      <p class="dev-desc">
+        <b>别人从转发卡片点进来看到的就是这一页。</b>全项目<b>唯一一个会被陌生人打开</b>的页面
+        —— 所以红线全都压在这一页上。
+      </p>
+
+      <div class="note red" style="margin-top:0">
+        🔴 <b>这一页上没有一个 ¥。</b>妆位不带价格字段，定金只标状态不带金额。<br>
+        🔴 <b>没有点赞、没有收藏、没有浏览数、没有「作品」。</b>叙事是「<b>这个化妆师的个人页</b>」，不是作品广场。<br>
+        🔴 <b>微信号那一行是唯一的联系方式出口</b>，走 <span class="k">utils/contact.js</span>，
+        而且受妆娘自己的开关控制 —— <b>关掉时整个那一行不渲染（不是变灰，是不出现）</b>。
+      </div>
+
+      <table class="spec">
+        <thead><tr><th>妆位那一行</th><th>长什么样 / 能不能点</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">空位</td><td class="ps">白底 · 「可约」· <b>蓝色「选这个妆位」</b></td></tr>
+          <tr><td class="nm">我约的</td><td class="ps">浅金底 · <b>金色「已预约」</b> · ⛔ 不可点</td></tr>
+          <tr><td class="nm">别人约的</td><td class="ps">灰底 · <b>灰色「已被预订」</b> · ⛔ 不可点</td></tr>
+        </tbody>
+      </table>
+      <div class="note warn">
+        ⚠️ 判据是 <span class="k">bookingStore.isMine()</span>（<span class="k">created_by === 'user'</span>）——
+        <b>「我约的」和「别人约的」必须分得开</b>，否则自己约过的位子还会显示「选这个妆位」，点下去撞并发。
+      </div>
+
+      <div class="note red" style="margin-top:12px">
+        🔴 <b>单页模式（<span class="k">sp</span>）要降级三处。</b>
+        从<b>朋友圈</b>点进来会先进微信的单页模式（<span class="k">scene 1154</span>），
+        <b>不是直接进小程序</b> —— 要点微信那条「前往小程序」。<br>
+        ⇒ 判据同一个 <span class="k">sp</span>、在 <span class="k">onLoad</span> 里算：<b>导航栏不画</b> ·
+        <b>复制微信号不画</b> · <b>「选这个妆位」不画</b>。
+      </div>
+      <div class="note warn">
+        ⚠️ C1 认 <span class="k">?schedule_id=</span> 预选场次，<b>已选过的那场优先</b> ——
+        否则顾客换完场次一 <span class="k">onShow</span> 就被弹回去。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 5 共用页 ══════════════════ -->
+<section id="shared">
+  <h2 class="sec"><span class="n">5</span>两个角色共用的页面 · 3 个</h2>
+  <p class="lead">
+    这三个页面<b>两个角色走的是同一份代码</b> —— 不是各抄一份。
+    靠 <span class="k">mode</span> / <span class="k">isArtist</span> 分叉，分叉点都写在下面。
+  </p>
+
+  <!-- ── 5.1 填写预约单 ── -->
+  <h3 class="sub">5.1 填写预约单 · 一页两个模式</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft">‹</div><div class="ttl">填写预约单</div><div class="rgt"></div></div>
+        <div class="pb tight" style="padding:9px 10px">
+          <div class="card" style="padding:10px 11px;background:var(--brand-l);border:1px solid #EFD3DA">
+            <div style="font-size:11px;color:var(--brand-d);font-weight:600">你选的妆位</div>
+            <div style="font-size:13.5px;font-weight:700;margin-top:3px">示例漫展 · 2026-05-02 · 第 3 位 11:20–11:50</div>
+          </div>
+
+          <div class="sec-ttl">顾客档案 · CN（圈名）</div>
+          <div class="grp">
+            <div class="fld"><span class="lb">CN</span><span class="vl" style="font-size:12.5px">你的圈名，妆娘靠它认人</span></div>
+          </div>
+
+          <div class="sec-ttl">眼型（可多选）</div>
+          <div class="chips rel" style="padding:0 2px">
+            <span class="mk" style="top:-8px;left:-8px" data-goto="c65">65</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">单眼皮</span>
+            <span class="chip on" style="padding:5px 11px;font-size:12px">双眼皮</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">内双</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">肿眼泡</span>
+          </div>
+
+          <div class="sec-ttl">性别（单选）</div>
+          <div class="chips rel" style="padding:0 2px">
+            <span class="mk" style="top:-8px;left:-8px" data-goto="c66">66</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">男</span>
+            <span class="chip on" style="padding:5px 11px;font-size:12px">女</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">不便告知</span>
+          </div>
+
+          <div class="card rel" style="padding:10px 11px;display:flex;align-items:center;gap:10px;margin-top:11px">
+            <span class="mk" style="top:-7px;left:-8px" data-goto="c67">67</span>
+            <div style="flex:1">
+              <div style="font-size:13.5px">未成年</div>
+              <div style="font-size:11.5px;color:var(--t3);margin-top:2px">「否」会自动带入，下次不用再选</div>
+            </div>
+            <div class="sw"></div>
+          </div>
+
+          <div class="sec-ttl">联系方式</div>
+          <div class="grp">
+            <div class="fld"><span class="lb">微信号</span><span class="vl" style="font-size:12.5px">妆娘加你微信用的</span></div>
+            <div class="fld"><span class="lb">紧急联系</span><span class="vl" style="font-size:12.5px">当天找不到你时用（选填）</span></div>
+          </div>
+
+          <div class="sec-ttl">本次填写 · 角色名</div>
+          <div class="grp"><div class="fld"><span class="lb">角色名</span><span class="vl" style="font-size:12.5px">请输入角色名</span></div></div>
+
+          <div class="sec-ttl">妆感（可多选）</div>
+          <div class="chips" style="padding:0 2px">
+            <span class="chip on" style="padding:5px 11px;font-size:12px">展妆</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">日常</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">cos</span>
+          </div>
+
+          <div class="sec-ttl">另需服务（选填）</div>
+          <div class="chips" style="padding:0 2px">
+            <span class="chip" style="padding:5px 11px;font-size:12px">假睫毛·自备</span>
+            <span class="chip" style="padding:5px 11px;font-size:12px">贴甲片</span>
+          </div>
+
+          <div class="sec-ttl">备注</div>
+          <div class="grp"><div class="fld"><span class="lb">备注</span><span class="vl" style="font-size:12.5px">选填</span></div></div>
+        </div>
+        <div class="footbar">
+          <span class="btn pri rel" style="flex:1"><span class="mk" style="top:-8px;left:-8px" data-goto="c69">69</span>提交预约单</span>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/booking-form/</span>
+        <span class="nm">填写预约单</span>
+        <span class="tg">两角色共用</span>
+        <span class="tg r">零金额</span>
+      </div>
+      <p class="dev-desc">
+        <b>顾客自填</b>（从 C1 点「选这个妆位」进来）和<b>妆师代填</b>（从预约单页点「代填」）走的是<b>同一页</b>。
+      </p>
+
+      <table class="spec">
+        <thead><tr><th>模式</th><th>顶上那张卡的差别</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">顾客 <span class="k">mode:'user'</span></td><td class="ps">「<b>你选的妆位</b>」+ 一行现成的妆位文字。<b>没得挑</b> —— 位子是 C1 上点进来的</td></tr>
+          <tr><td class="nm">代填 <span class="k">mode:'artist'</span></td><td class="ps">「<b>代填的妆位</b>」+ <b>两个原生 picker</b>：先选场次（63），再选妆位（64）</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note red" style="margin-top:14px">
+        🔴 <b>这一页踩过一个很贵的坑：「代填静默回落到顾客端的演示妆位」。</b><br>
+        原先那行是 <span class="k">|| SLOTS[1]</span> —— 妆娘自己的档期没解析出来时，
+        <b>它不报错，而是拿顾客端的演示妆位顶上</b>。表现是「代填出来一张单，位子却是个根本不存在的场次」。<br>
+        ⇒ 现在是：<b>两个原生 picker + 提交时重查 + 空下拉按三种原因分三句话</b>。
+      </div>
+
+      <div class="note warn">
+        ⚠️ <b>顾客提交是真建单</b>（<span class="k">created_by:'user'</span> / <span class="k">status:'pending'</span>），
+        而且提交前<b>再查一次并发</b>（这个位子刚被约走 → 「这个妆位刚被约走了，换一个」）。<br>
+        🔴 <b>「代填」仍然只走 storage</b>；<b>顾客那一支</b>要找场次得走
+        <span class="k">artistStore.scheduleById()</span>（storage → 夹具，两边都滤掉已取消的）——
+        因为 C1 上那两位妆娘的档期<b>来自只读夹具，压根不在她的 storage 里</b>。
+      </div>
+
+      <div class="note warn">
+        ⚠️ <b>CN（圈名）必填，而且单独报错。</b>妆娘最需要的就是「这单是谁」——
+        没有 CN 的一单，在她那儿等于没有主。
+      </div>
+    </div>
+  </div>
+
+  <h3 class="sub" style="border-left-color:var(--warn)">5.1+ 填写预约单 · 代填模式（妆娘自己用）</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone" style="min-height:0">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft">‹</div><div class="ttl">代填预约单</div><div class="rgt"></div></div>
+        <div class="pb tight" style="padding:9px 10px">
+          <div class="card" style="padding:10px 11px;background:var(--brand-l);border:1px solid #EFD3DA">
+            <div style="font-size:11px;color:var(--brand-d);font-weight:600">代填的妆位</div>
+            <div style="margin-top:7px;display:flex;flex-direction:column;gap:7px">
+              <div class="rel" style="background:#fff;border-radius:7px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:12.5px">
+                <span class="mk" style="top:-8px;left:-8px" data-goto="c63">63</span>
+                <span style="color:var(--t2)">场次</span>
+                <span style="flex:1;font-weight:600">示例漫展 · 05-02</span>
+                <span style="color:var(--t4)">▾</span>
+              </div>
+              <div class="rel" style="background:#fff;border-radius:7px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:12.5px">
+                <span class="mk" style="top:-8px;left:-8px" data-goto="c64">64</span>
+                <span style="color:var(--t2)">妆位</span>
+                <span style="flex:1;font-weight:600">第 3 位 · 11:20 – 11:50</span>
+                <span style="color:var(--t4)">▾</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:10px 11px;display:flex;align-items:center;gap:10px;margin-top:12px">
+            <div style="flex:1">
+              <div style="font-size:13.5px">未成年</div>
+              <div style="font-size:11.5px;color:var(--t3);margin-top:2px">「否」会自动带入，下次不用再选</div>
+            </div>
+            <div class="sw on"></div>
+          </div>
+
+          <div class="rel" style="display:flex;align-items:center;gap:9px;padding:11px;background:#fff;border-radius:var(--r);margin-top:8px">
+            <span class="mk rd" style="top:-7px;left:-8px" data-goto="c68">68</span>
+            <span style="width:18px;height:18px;border-radius:5px;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;flex:none">✓</span>
+            <span style="font-size:13px">已得到监护人允许</span>
+          </div>
+        </div>
+        <div class="footbar">
+          <span class="btn pri" style="flex:1">提交预约单</span>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/booking-form/</span>
+        <span class="nm">代填模式</span>
+        <span class="tg">妆师端入口</span>
+        <span class="tg r">静默回落过的坑</span>
+      </div>
+      <table class="spec">
+        <thead><tr><th>那个空下拉，三句话</th><th>什么时候说</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">先用 <b>两个原生 picker</b></td><td class="ps">场次（63）→ 妆位（64）。<b>妆位那个要等场次选了才出得来</b></td></tr>
+          <tr><td class="nm">「请先选场次」</td><td class="ps">还没选场次 —— 这不是错误，是<b>顺序</b></td></tr>
+          <tr><td class="nm">「你还没有建过档期」</td><td class="ps">她一个档期都没有 + 一个「去建档期」的按钮</td></tr>
+          <tr><td class="nm">「这一场没有可约的妆位」</td><td class="ps">场次选了，但那一场全被占了 / 全是午休</td></tr>
+        </tbody>
+      </table>
+      <div class="note red" style="margin-top:14px">
+        🔴 <b>为什么这三句话必须分开说：</b>原先空下拉只有一句兜底，
+        真正的原因是哪种<b>完全分不出来</b> —— 妆娘看到的是「没得选」，
+        而她要做的动作（建档期 / 换场次 / 换妆位）<b>三种完全不同</b>。
+      </div>
+      <div class="note warn">
+        ⚠️ <b>「未成年」开着必须勾监护人</b>（68），否则报「未成年需先勾选『已得到监护人允许』」。
+        这是这一页唯一的硬性勾选 —— 它记的是「<b>她本人声称已获同意</b>」这个事实。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5.2 设置 ── -->
+  <h3 class="sub">5.2 设置 · 两个角色共用一页</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav"><div class="lft">‹</div><div class="ttl">设置</div><div class="rgt"></div></div>
+        <div class="pb tight">
+          <div class="card rel" style="padding:11px;display:flex;align-items:center;gap:11px">
+            <span class="mk rd" style="top:-7px;left:-8px" data-goto="c70">70</span>
+            <div style="flex:1">
+              <div style="font-size:14px">在分享页展示我的微信号</div>
+              <div style="font-size:11.5px;color:var(--t3);margin-top:3px;line-height:1.7">
+                打开后，<span style="color:var(--warn)">所有拿到链接的人（含被转发后）都能看到</span><br>
+                <span style="color:var(--ok)">关掉不减少任何功能</span>，客人仍能提交预约单
+              </div>
+            </div>
+            <div class="sw on"></div>
+          </div>
+          <div class="grp">
+            <div class="cell rel" style="padding:11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c71">71</span><span class="cl" style="font-size:13px">用户隐私保护指引</span><span class="cr">›</span></div>
+            <div class="cell rel" style="padding:11px"><span class="mk" style="top:-2px;left:-8px" data-goto="c72">72</span><span class="cl" style="font-size:13px">关于妆历</span><span class="cr">版本 0.1.0 ›</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/settings/</span>
+        <span class="nm">设置</span>
+        <span class="tg">两角色共用</span>
+        <span class="tg r">开关只对妆师画</span>
+      </div>
+      <table class="spec">
+        <thead><tr><th>谁在看</th><th>看到什么</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">妆师</td><td class="ps">微信号开关 + 隐私指引 + 关于妆历</td></tr>
+          <tr><td class="nm">顾客</td><td class="ps"><b>没有那个开关</b>，只剩下面两项</td></tr>
+        </tbody>
+      </table>
+      <div class="note warn" style="margin-top:14px">
+        ⚠️ 那个开关的副作用要写清楚：<b>打开之后，任何一个拿到链接的人（包括被转发的）都看得到她的微信号</b>。
+        所以卡片上<b>明写了这句话</b> —— 不是吓她，是这一页唯一一处「她按下之后会永久改变对外可见性」的地方。<br>
+        ⚠️ 旁边那句「<b>关掉不减少任何功能</b>」也不是安慰话：顾客<b>照样能提交预约单</b>，
+        妆娘照样能在预约单详情里看到顾客的微信号。<b>关掉只是她不被陌生人加。</b>
+      </div>
+      <div class="note">
+        📌 <b>「我的资料」不在这一页</b> —— 它已经从设置搬走了（搬到了「我的」页的资料卡上）。
+        ⛔ 不留第二处入口。设置页原来那一行连同它的 <span class="k">goProfile()</span> 一起删干净了。
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5.3 问题反馈 ── -->
+  <h3 class="sub">5.3 问题反馈 · 全项目唯一真的会写云端的通道</h3>
+  <div class="dev">
+    <div class="dev-l">
+      <div class="phone">
+        <div class="statusbar"><span>9:41</span><span class="dot">▪▪▪ ▮</span></div>
+        <div class="nav">
+          <div class="lft">‹</div>
+          <div class="ttl">问题反馈</div>
+          <div class="rgt rel"><span class="mk" style="top:-9px;left:-9px" data-goto="c73">73</span>确认反馈</div>
+        </div>
+        <div class="pb tight">
+          <div class="noti info" style="font-size:11px">
+            <span>ℹ️</span><span>用着哪里别扭、哪一步看不懂、哪里点不动，都写在这儿。点右上角「确认反馈」就发到开发者那边了。</span>
+          </div>
+          <div class="grp" style="padding:11px;min-height:150px">
+            <div style="font-size:12.5px;color:var(--t3);line-height:1.8">例如：新建档期的时候，午休那一行我总要试两次才选对时间。</div>
+          </div>
+          <div style="text-align:right;font-size:11px;color:var(--t3);padding:0 2px">0/500</div>
+        </div>
+      </div>
+    </div>
+    <div class="dev-r">
+      <div class="dev-hd">
+        <span class="id">pages/feedback/</span>
+        <span class="nm">问题反馈</span>
+        <span class="tg">两角色共用</span>
+        <span class="tg">写云开发</span>
+      </div>
+      <p class="dev-desc">
+        只写 <span class="k">{ text, created_at }</span> ——
+        <b>⛔ 不带任何本机隐私</b>（不带昵称、不带 openid 以外的身份、不带设备信息）。
+      </p>
+      <table class="spec">
+        <tbody>
+          <tr><td class="nm">写去哪</td><td class="ps">微信云开发 · 环境 <span class="k">cloud1-d0gir0d3e31de18ba</span> · 集合 <span class="k">feedback</span>（权限「<b>仅创建者可读写</b>」）</td></tr>
+          <tr><td class="nm">没配云环境时</td><td class="ps">自测里那条云端断言<b>按「配没配」分两支，两支都必须绿</b> —— ⚠️ 所以「全绿」的<b>条数会跟着配置变</b></td></tr>
+          <tr><td class="nm">限长</td><td class="ps">≤500 字，超了报「反馈最多 500 字，现在 N 字」</td></tr>
+        </tbody>
+      </table>
+      <div class="note ok" style="margin-top:14px">
+        ✅ <b>云通道已经端到端走通过一遍</b>（用户自己试的）：环境建好、集合建好、权限设好、写进去了。
+      </div>
+      <div class="note warn">
+        ⚠️ <b>隐私指引可能要因此加一条</b> —— 收集「用户主动填写的反馈内容」这件事，
+        原来那份指引里<b>没有对应条目</b>。
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ 6 可点性清单 ══════════════════ -->
+<section id="clicks">
+  <h2 class="sec"><span class="n">6</span>可点性清单 · 73 个可点元素</h2>
+  <p class="lead">
+    <b>这份清单是「界面稿」真正的用处。</b>上面每一张手机图上那个黑色小圆号，在这里都能查到
+    —— <b>它是什么、点了会怎样</b>。<br>
+    点编号能跳回它所在的那张图。
+  </p>
+
   <div class="note warn">
-    ⚠️ <b>Toast 的统一规格</b>：居中偏下（距底 ~66px，避开底部安全区）· 深色半透明底 · 1.5–2 秒自动消失 · <b>同一时刻只显示一条</b>。
-    三处文案<b>不要各写各的</b>——统一放一个常量文件。
+    ⚠️ <b>清单里每一行的「点了会怎样」，都必须是一句能验证的话。</b><br>
+    ⛔ 不许写「打开相应页面」这种说了等于没说的。写不出来，说明这个键的作用<b>还没想清楚</b>，
+    而它在真机上就会表现成「点了没反应」。
+  </div>
+
+  <div class="chk">
+    <div class="hd"><span>🖱 逐项走查</span><span class="ct">分五组：入口 / 妆师端 / 约妆端 / 共用页 / 空态</span></div>
+    <table class="spec">
+      <thead><tr><th>#</th><th>在哪一页</th><th>控件</th><th>点了会怎样</th></tr></thead>
+      <tbody>
+        <tr id="c1"><td class="no">1</td><td class="nm">角色选择</td><td class="ps">「我是妆师」卡</td><td class="ps"><span class="k">switchTab</span> → 档期页，并存下身份</td></tr>
+        <tr id="c2"><td class="no">2</td><td class="nm">角色选择</td><td class="ps">「我是约妆」卡</td><td class="ps"><span class="k">switchTab</span> → 我约过的妆娘，并存下身份</td></tr>
+
+        <tr id="c3"><td class="no">3</td><td class="nm">档期</td><td class="ps">左上「模板」</td><td class="ps">进档期模板页</td></tr>
+        <tr id="c4"><td class="no">4</td><td class="nm">档期</td><td class="ps">左上「新建」</td><td class="ps">进新建档期页</td></tr>
+        <tr id="c5"><td class="no">5</td><td class="nm">档期</td><td class="ps">卡片主体</td><td class="ps">进这一场的档期详情</td></tr>
+        <tr id="c6"><td class="no">6</td><td class="nm">档期</td><td class="ps">卡片上「取消场次」</td><td class="ps"><b>没人预约</b> → 弹二次确认，确认后整场软删除（列表里消失）<br><b>有人预约</b> → <b>先拦住</b>，拦住框里的张数 = 卡片上那个「N 人已预约」<br>⚠️ <span class="k">catchtap</span>，不冒泡成「又进详情」</td></tr>
+        <tr id="c7"><td class="no">7</td><td class="nm">档期详情</td><td class="ps">导航右「分享」</td><td class="ps">带她到<b>这一场</b>的妆位页（C1）<br>⚠️ <b>小程序不能自己弹分享面板</b> —— 最后那一下「点右上角 ···」得她本人点，toast 是唯一的说明书</td></tr>
+        <tr id="c8"><td class="no">8</td><td class="nm">档期详情</td><td class="ps">每行「改」</td><td class="ps">该行<b>原地</b>变成输入框 —— 行高、位置、按钮坐标<b>完全不变</b></td></tr>
+        <tr id="c9"><td class="no">9</td><td class="nm">档期详情</td><td class="ps">每行「取消」</td><td class="ps">删掉<b>这个妆位</b>（不是取消整场）<br>后面妆位时间<b>一律不动</b>，留一段空档</td></tr>
+        <tr id="c10"><td class="no">10</td><td class="nm">档期详情</td><td class="ps">行间「＋」</td><td class="ps">在这一行下面插一个妆位。⚠️ <b>只能插进空档里</b> —— 挤不进去就不插</td></tr>
+        <tr id="c11"><td class="no">11</td><td class="nm">档期详情</td><td class="ps">午休行「改 / 取消」</td><td class="ps">改：起点 + 时长。<b>延长只推午休的起始、结束不动</b>（被压短）；缩短会先问一句「要不要提前午休」<br>取消：这段午休没了，后面妆位时间顺延</td></tr>
+
+        <tr id="c12"><td class="no">12</td><td class="nm">新建档期</td><td class="ps">左上「取消」</td><td class="ps">直接退回，<b>不弹二次确认</b></td></tr>
+        <tr id="c13"><td class="no">13</td><td class="nm">新建档期</td><td class="ps">「日期」</td><td class="ps">原生日期 picker。<b>默认本机今天</b></td></tr>
+        <tr id="c14"><td class="no">14</td><td class="nm">新建档期</td><td class="ps">「起始时间」</td><td class="ps">原生时间 picker</td></tr>
+        <tr id="c15"><td class="no">15</td><td class="nm">新建档期</td><td class="ps">「午休」开关</td><td class="ps">开 → 多出「午休时长 / 在第几个后」两行，预览里多一段午休</td></tr>
+        <tr id="c16"><td class="no">16</td><td class="nm">新建档期</td><td class="ps">「在第几个后」</td><td class="ps">选项<b>跟着妆位数走</b>，每项直接写出几点开始</td></tr>
+        <tr id="c17"><td class="no">17</td><td class="nm">新建档期</td><td class="ps">「存为模板」</td><td class="ps">只存参数，<b>不生成档期</b></td></tr>
+        <tr id="c18"><td class="no">18</td><td class="nm">新建档期</td><td class="ps">「保存」</td><td class="ps">生成档期 → 回到档期列表 → toast「档期已保存」</td></tr>
+
+        <tr id="c19"><td class="no">19</td><td class="nm">档期模板</td><td class="ps">「删除」</td><td class="ps">删掉这个模板</td></tr>
+        <tr id="c20"><td class="no">20</td><td class="nm">档期模板</td><td class="ps">「应用」</td><td class="ps">弹日期 → 弹「这场叫什么」（预填模板名）→ <b>当场生成一条真档期</b> → 直接进它的详情页</td></tr>
+        <tr id="c21"><td class="no">21</td><td class="nm">档期模板</td><td class="ps">右下圆「＋」</td><td class="ps"><b>点</b> = 新建模板 · <b>拖</b> = 换地方并记进 storage（上沿不许越过导航栏下沿）</td></tr>
+
+        <tr id="c22"><td class="no">22</td><td class="nm">预约单</td><td class="ps">左上「代填」</td><td class="ps">进填写页的<b>代填模式</b></td></tr>
+        <tr id="c23"><td class="no">23</td><td class="nm">预约单</td><td class="ps">当前场次 / ▾</td><td class="ps">开 / 关场次面板。<b>第一项固定「全部」</b></td></tr>
+        <tr id="c24"><td class="no">24</td><td class="nm">预约单</td><td class="ps">输入框</td><td class="ps">打字<b>只改输入框</b> · 点它<b>弹搜索历史</b>（一条都没有就什么都不弹）</td></tr>
+        <tr id="c25"><td class="no">25</td><td class="nm">预约单</td><td class="ps">框里那颗 ✕</td><td class="ps">只清<b>这一次搜的词</b>（有字才出现）。⛔ <b>不动历史</b></td></tr>
+        <tr id="c26"><td class="no">26</td><td class="nm">预约单</td><td class="ps">🔍</td><td class="ps">提交搜索。<b>回车 / 🔍 / 点一条历史 —— 三条路同一个函数</b></td></tr>
+        <tr id="c27"><td class="no">27</td><td class="nm">预约单</td><td class="ps">四个状态 Tab</td><td class="ps">切状态。⚠️ 和场次筛选<b>相乘</b>，不是二选一</td></tr>
+        <tr id="c28"><td class="no">28</td><td class="nm">预约单</td><td class="ps">一张单（非勾选态）</td><td class="ps">进预约单详情</td></tr>
+        <tr id="c29"><td class="no">29</td><td class="nm">预约单（勾选态）</td><td class="ps">勾选圈</td><td class="ps">勾 / 取消勾。<b>未付定金的单勾不上</b>（不是勾上再报错）</td></tr>
+        <tr id="c30"><td class="no">30</td><td class="nm">预约单</td><td class="ps">底栏批量键</td><td class="ps">进勾选态（<b>进来就是全选</b>）。底栏那个数字实时变；一个都没勾 = 灰键</td></tr>
+
+        <tr id="c31"><td class="no">31</td><td class="nm">预约单详情</td><td class="ps">「复制去加」</td><td class="ps">复制顾客微信号 → toast「微信号已复制」</td></tr>
+        <tr id="c32"><td class="no">32</td><td class="nm">预约单详情</td><td class="ps">定金开关</td><td class="ps">切换已付 / 未付。⚠️ 已确认 + 未付 → 底部「标记已完成」是<b>灰的</b></td></tr>
+        <tr id="c33"><td class="no">33</td><td class="nm">预约单详情</td><td class="ps">底部那颗键</td><td class="ps">按状态分叉（见 §3.6）· 「标记已确认」会<b>立刻退回列表</b>防手抖</td></tr>
+
+        <tr id="c34"><td class="no">34</td><td class="nm">我的</td><td class="ps">资料卡空白处</td><td class="ps">进「我的资料」</td></tr>
+        <tr id="c35"><td class="no">35</td><td class="nm">我的</td><td class="ps">头像</td><td class="ps">弹出 / 收起换色板。⚠️ <span class="k">catchtap</span>，⛔ 不冒泡到卡片</td></tr>
+        <tr id="c36"><td class="no">36</td><td class="nm">我的</td><td class="ps">一个色点</td><td class="ps">换头像底色（存的是<b>令牌</b>，不是色值）</td></tr>
+        <tr id="c37"><td class="no">37</td><td class="nm">我的</td><td class="ps">「设置」</td><td class="ps">进设置页</td></tr>
+        <tr id="c38"><td class="no">38</td><td class="nm">我的</td><td class="ps">「问题反馈」</td><td class="ps">进反馈页</td></tr>
+        <tr id="c39"><td class="no">39</td><td class="nm">我的</td><td class="ps">「切换身份」</td><td class="ps">回角色选择页</td></tr>
+
+        <tr id="c40"><td class="no">40</td><td class="nm">我的资料</td><td class="ps">「昵称」</td><td class="ps">弹输入框（<span class="k">showModal({editable:true})</span>）· 空 / 超 12 字各有一句错</td></tr>
+        <tr id="c41"><td class="no">41</td><td class="nm">我的资料</td><td class="ps">「常驻城市」</td><td class="ps">弹输入框 · 同上</td></tr>
+        <tr id="c42"><td class="no">42</td><td class="nm">我的资料</td><td class="ps">「接妆风格」</td><td class="ps">进风格页</td></tr>
+        <tr id="c43"><td class="no">43</td><td class="nm">我的资料</td><td class="ps">「简介」</td><td class="ps">进简介页</td></tr>
+
+        <tr id="c44"><td class="no">44</td><td class="nm">接妆风格</td><td class="ps">预设词</td><td class="ps">选中 / 取消</td></tr>
+        <tr id="c45"><td class="no">45</td><td class="nm">接妆风格</td><td class="ps">自填词</td><td class="ps">选中 / 取消</td></tr>
+        <tr id="c46"><td class="no">46</td><td class="nm">接妆风格</td><td class="ps">自填词上的 ✕</td><td class="ps">删掉这个自填词</td></tr>
+        <tr id="c47"><td class="no">47</td><td class="nm">接妆风格</td><td class="ps">「＋ 自定义」</td><td class="ps">展开<b>那一组</b>的输入行</td></tr>
+        <tr id="c48"><td class="no">48</td><td class="nm">接妆风格</td><td class="ps">输入框</td><td class="ps">打词</td></tr>
+        <tr id="c49"><td class="no">49</td><td class="nm">接妆风格</td><td class="ps">「添加」</td><td class="ps">加进这一组。五道拦：≤6 个 / ≤10 字 / 不含 <span class="k">/</span> / 不与预设重复 / 不重复加 —— <b>五种错各说各的</b></td></tr>
+        <tr id="c50"><td class="no">50</td><td class="nm">接妆风格</td><td class="ps">「丢掉」</td><td class="ps">丢掉没加进来的草稿</td></tr>
+        <tr id="c51"><td class="no">51</td><td class="nm">接妆风格</td><td class="ps">「保存」</td><td class="ps">存下 → toast「接妆风格已保存」</td></tr>
+
+        <tr id="c52"><td class="no">52</td><td class="nm">简介</td><td class="ps">右上「保存」</td><td class="ps">存下 → toast「简介已保存」<br>⚠️ 放导航栏是因为<b>键盘会盖住底栏</b></td></tr>
+
+        <tr id="c53"><td class="no">53</td><td class="nm">我约过的妆娘</td><td class="ps">右上「搜索 / 收起」</td><td class="ps">展开 / 收起搜索框</td></tr>
+        <tr id="c54"><td class="no">54</td><td class="nm">我约过的妆娘</td><td class="ps">搜索框</td><td class="ps">只按<b>昵称和城市</b>找，⛔ 不按风格找</td></tr>
+        <tr id="c55"><td class="no">55</td><td class="nm">我约过的妆娘</td><td class="ps">一位妆娘</td><td class="ps">进她的妆位页（C1）</td></tr>
+        <tr id="c56"><td class="no">56</td><td class="nm">我的（约妆端）</td><td class="ps">「切换身份」</td><td class="ps">回角色选择页</td></tr>
+        <tr id="c57"><td class="no">57</td><td class="nm">我的（约妆端）</td><td class="ps">「问题反馈」</td><td class="ps">进反馈页</td></tr>
+        <tr id="c58"><td class="no">58</td><td class="nm">我的（约妆端）</td><td class="ps">「设置」</td><td class="ps">进设置页（顾客版：<b>没有微信号开关</b>）</td></tr>
+
+        <tr id="c59"><td class="no">59</td><td class="nm">妆位页 C1</td><td class="ps">右上「我的预约」</td><td class="ps"><span class="k">switchTab</span> → 我的预约</td></tr>
+        <tr id="c60"><td class="no">60</td><td class="nm">妆位页 C1</td><td class="ps">「复制微信号」</td><td class="ps">复制 → 按钮变「已复制」</td></tr>
+        <tr id="c61"><td class="no">61</td><td class="nm">妆位页 C1</td><td class="ps">场次条 / ▾</td><td class="ps">换场次。⚠️ <b>多于一场才显示</b></td></tr>
+        <tr id="c62"><td class="no">62</td><td class="nm">妆位页 C1</td><td class="ps">「选这个妆位」</td><td class="ps">进填写页，位子已带过去。<b>已占的行没有这个键</b></td></tr>
+
+        <tr id="c63"><td class="no">63</td><td class="nm">填写预约单（代填）</td><td class="ps">「场次」</td><td class="ps">原生 picker，选她自己的档期</td></tr>
+        <tr id="c64"><td class="no">64</td><td class="nm">填写预约单（代填）</td><td class="ps">「妆位」</td><td class="ps">原生 picker。⚠️ <b>选了场次才出得来</b></td></tr>
+        <tr id="c65"><td class="no">65</td><td class="nm">填写预约单</td><td class="ps">可多选的 chips</td><td class="ps">眼型 / 肤质 / 妆感 / 另需服务 —— 点一下切换</td></tr>
+        <tr id="c66"><td class="no">66</td><td class="nm">填写预约单</td><td class="ps">单选 chips</td><td class="ps">性别，三选一（选了新的自动取消旧的）</td></tr>
+        <tr id="c67"><td class="no">67</td><td class="nm">填写预约单</td><td class="ps">「未成年」开关</td><td class="ps">开 → 多出「已得到监护人允许」那一行</td></tr>
+        <tr id="c68"><td class="no">68</td><td class="nm">填写预约单</td><td class="ps">「已得到监护人允许」</td><td class="ps">不勾就提交 → 拦住：「未成年需先勾选『已得到监护人允许』」</td></tr>
+        <tr id="c69"><td class="no">69</td><td class="nm">填写预约单</td><td class="ps">「提交预约单」</td><td class="ps">顾客：<b>真建单</b> + <b>提交前再查一次并发</b>（位子刚被约走 → 「这个妆位刚被约走了，换一个」）<br>代填：也建单，toast「代填的预约单已生成，妆位已占上」</td></tr>
+
+        <tr id="c70"><td class="no">70</td><td class="nm">设置</td><td class="ps">「在分享页展示我的微信号」</td><td class="ps">⚠️ <b>只对妆师画</b>。切换 C1 上那行微信号显不显示（<b>关掉是整行不渲染</b>，不是变灰）</td></tr>
+        <tr id="c71"><td class="no">71</td><td class="nm">设置</td><td class="ps">「用户隐私保护指引」</td><td class="ps">打开指引</td></tr>
+        <tr id="c72"><td class="no">72</td><td class="nm">设置</td><td class="ps">「关于妆历」</td><td class="ps">版本 0.1.0</td></tr>
+        <tr id="c73"><td class="no">73</td><td class="nm">问题反馈</td><td class="ps">右上「确认反馈」</td><td class="ps">≤500 字写进云端 <span class="k">feedback</span> 集合 → toast「反馈已发出，谢谢」<br>空着点 → 「先写点什么再提交」</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub">6.1 两个没编号的键 · 空态里的按钮</h3>
+  <div class="chk">
+    <table class="spec">
+      <thead><tr><th>#</th><th>在哪一页</th><th>控件</th><th>点了会怎样</th></tr></thead>
+      <tbody>
+        <tr><td class="no">—</td><td class="nm">档期（空态）</td><td class="ps">「新建档期」</td><td class="ps">和 4 号同一个落点（进新建档期页）。<b>新人进来看到的就是它</b></td></tr>
+        <tr><td class="no">—</td><td class="nm">我的预约（空态）</td><td class="ps">「去找妆位」</td><td class="ps"><span class="k">switchTab</span> → 我约过的妆娘。⚠️ 跳的是 <b>tab 页</b>，⛔ 用 <span class="k">navigateTo</span> 会静默失败</td></tr>
+        <tr><td class="no">—</td><td class="nm">模板（空态）</td><td class="ps">「新建模板」</td><td class="ps">进新建模板页（和 21 号同一个落点，走那条是给没模板的人留的显式入口）</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ══════════════════ 7 Toast ══════════════════ -->
+<section id="toasts">
+  <h2 class="sec"><span class="n">7</span>Toast 文案清单（照抄）</h2>
+  <p class="lead">
+    全部住在 <span class="k">utils/toast.js</span> 的 <span class="k">TOAST</span> 里，一处定义、各处引用。
+    <b>⛔ 不许在页面里现写字符串</b> —— 同一件事两种说法，就是「两边各说各的」的最小形态。
+  </p>
+
+  <div class="note">
+    <b>这一节存在的理由：</b>下面这些句子<b>大部分是「拦住她」的时候说的</b>。
+    拦人的文案如果含糊，用户看到的就是「点了没反应」；<b>每一句都要说清「哪一步、为什么」</b>。
+  </div>
+
+  <div class="chk">
+    <div class="hd"><span>✅ 做成了</span><span class="ct">6 条</span></div>
+    <table class="spec">
+      <thead><tr><th>什么时候</th><th>说什么</th></tr></thead>
+      <tbody>
+        <tr><td class="ps">新建 / 编辑档期保存好</td><td class="nm">档期已保存</td></tr>
+        <tr><td class="ps">顾客提交预约单</td><td class="nm">预约单已提交，化妆师会联系你</td></tr>
+        <tr><td class="ps">妆娘代填生成单</td><td class="nm">代填的预约单已生成，妆位已占上</td></tr>
+        <tr><td class="ps">复制了微信号（C1 或预约单详情）</td><td class="nm">微信号已复制</td></tr>
+        <tr><td class="ps">风格 / 简介 / 资料存好</td><td class="nm">接妆风格已保存 · 简介已保存 · 已保存</td></tr>
+        <tr><td class="ps">反馈发出去了</td><td class="nm">反馈已发出，谢谢</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="chk">
+    <div class="hd"><span>⛔ 拦住她（必填 / 超长 / 非法）</span><span class="ct">都是「说清哪一步、为什么」</span></div>
+    <table class="spec">
+      <thead><tr><th>什么时候</th><th>说什么</th></tr></thead>
+      <tbody>
+        <tr><td class="ps">填表没写 CN</td><td class="nm">请先填 CN（圈名），妆娘靠它认人</td></tr>
+        <tr><td class="ps">填表缺角色名 / 微信号</td><td class="nm">请填写角色名和微信号</td></tr>
+        <tr><td class="ps">未成年没勾监护人</td><td class="nm">未成年需先勾选「已得到监护人允许」</td></tr>
+        <tr><td class="ps">昵称空 / 超 12 字</td><td class="nm">昵称不能空着 · 昵称最多 12 个字</td></tr>
+        <tr><td class="ps">城市空 / 超 12 字</td><td class="nm">常驻城市不能空着 · 常驻城市最多 12 个字</td></tr>
+        <tr><td class="ps">一个接妆风格都没选</td><td class="nm">至少选一个接妆风格，客人靠它知道你能接什么妆</td></tr>
+        <tr><td class="ps">风格里有不在选项里的</td><td class="nm">「X」不在可选风格里，请从上面选</td></tr>
+        <tr><td class="ps">简介超 200 字</td><td class="nm">简介最多 200 字，现在 N 字</td></tr>
+        <tr><td class="ps">自填词：空的</td><td class="nm">先打个词再加进来</td></tr>
+        <tr><td class="ps">自填词：带「/」</td><td class="nm">风格词里不能用「/」，它是分隔符</td></tr>
+        <tr><td class="ps">自填词：太长</td><td class="nm">一个风格词最多 10 个字，「X」有 N 个字</td></tr>
+        <tr><td class="ps">自填词：和预设重了</td><td class="nm">「X」已经是下面的选项了，直接点它就行</td></tr>
+        <tr><td class="ps">自填词：加过了</td><td class="nm">「X」已经加过了</td></tr>
+        <tr><td class="ps">自填词：超过 6 个</td><td class="nm">自填词最多 6 个，先删一个再加</td></tr>
+        <tr><td class="ps">草稿还没处理就走</td><td class="nm">「G」那个框里还有没加进来的词，先点「添加」或「丢掉」</td></tr>
+        <tr><td class="ps">反馈空着 / 超 500 字</td><td class="nm">先写点什么再提交 · 反馈最多 500 字，现在 N 字</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="chk">
+    <div class="hd"><span>⏱ 数据变了 / 并发</span><span class="ct">这一类最容易被写成静默分支</span></div>
+    <table class="spec">
+      <thead><tr><th>什么时候</th><th>说什么</th></tr></thead>
+      <tbody>
+        <tr><td class="ps">代填没选场次 / 没选妆位</td><td class="nm">先选一场档期 · 再选一个妆位</td></tr>
+        <tr><td class="ps">提交前发现位子刚被占</td><td class="nm">这个妆位刚被约走了，换一个</td></tr>
+        <tr><td class="ps">代填时那场档期没了</td><td class="nm">这一场已经不在了，换一场</td></tr>
+        <tr><td class="ps">代填时一个档期都没有</td><td class="nm">你还没有建过档期，先去「档期」建一场</td></tr>
+        <tr><td class="ps">点「取消场次」时卡片过期了</td><td class="nm">这一场已经不在了，列表刚刷新</td></tr>
+      </tbody>
+    </table>
   </div>
 
   <div class="note red">
-    ⛔ <b>M0 禁止出现的提示</b>：<br>
-    「功能开发中」「敬请期待」「该功能即将上线」—— 审核员看到这类文案，等于你主动告诉他「功能不完整」。<br>
-    <b>宁可把壳做得再浅一点，也不要写这句话。</b>
+    🔴 <b>最后那三条是同一个教训的产物。</b><br>
+    原先这类分支写的是 <span class="k">if (!s) { this.onShow(); return }</span> ——
+    它把「<b>数据过期</b>」和「<b>按钮坏了</b>」压成<b>完全一样的表现</b>（都是「点了没动静」）。<br>
+    <b>这就是那个 bug 查了三轮、猜错两次的原因。</b><br>
+    ⇒ 规矩：<b>每个分支都必须出声。</b>悄悄重画一次，等于把一次失败伪装成一次成功。
+  </div>
+  <div class="note red">
+    🔴 <b>还有三条不许省：</b><br>
+    <span class="k">没保存上，请再试一次</span> · <span class="k">没打开输入框，请再试一次</span> ·
+    <span class="k">反馈没发出去，请再试一次</span><br>
+    —— 这三句对应的都是<b>「看起来成功了，其实没成功」</b>的场景（<span class="k">setStorage</span> 失败、
+    <span class="k">showModal</span> 被吞、云端写入失败）。<b>没有这三句，用户会以为存上了。</b>
   </div>
 </section>
 
-<!-- ══════════════════ 7 红线自查 ══════════════════ -->
+<!-- ══════════════════ 8 红线 ══════════════════ -->
 <section id="redlines">
-  <h2 class="sec"><span class="n">7</span>M0 红线自查（提审前逐条打勾）</h2>
+  <h2 class="sec"><span class="n">8</span>红线自查（提审前逐条打勾）</h2>
   <p class="lead">
-    <b>§1.5 的 10 条红线 + PRD §5.2 的 13 条，在 M0 同样生效。</b>
-    不因为它是「最小版本」就可以放宽 —— 恰恰相反，<b>M0 就是拿来看这些红线会不会触发的</b>。
+    下面 13 条<b>任何一条打不了勾，就不要提交</b>。
+    它们不因为「功能还小」就可以放宽 —— <b>恰恰相反，提审就是拿来看这些红线会不会触发的</b>。
   </p>
 
+  <div class="rl-bar">
+    🔴 <b>先记住这一条：</b>个人主体开放的类目里，<b>没有任何一个是「平台」性质</b>。
+    一旦被判「多商户平台」，<b>不是补资质能解决，是无解。</b>
+  </div>
+
   <div class="chk">
-    <div class="hd"><span>⛔ 逐条确认「没有做」</span><span class="ct">任何一条打不了勾，就不要提交</span></div>
+    <div class="hd"><span>⛔ 逐条确认「没有做」</span><span class="ct">13 条</span></div>
     <table class="spec">
       <thead><tr><th>#</th><th>⛔ 不能做的事</th><th>为什么</th></tr></thead>
       <tbody>
-        <tr><td class="no">1</td><td class="nm">「邀请同行」/「邀请有奖」</td><td class="ps"><b>多商户入驻最直接的证据。</b>M0 更容易犯 —— 因为它最像「增长手段」</td></tr>
-        <tr><td class="no">2</td><td class="nm">「浏览所有化妆师」入口</td><td class="ps">立刻是平台。<b>个人主体没有平台类目可申请 = 无解</b></td></tr>
-        <tr><td class="no">3</td><td class="nm">顾客端出现任何金额</td><td class="ps"><b>红线 2</b>。妆位不带价格字段，定金只标「已收 / 未收」</td></tr>
-        <tr><td class="no">4</td><td class="nm">点赞 / 评论 / 收藏 / 浏览数</td><td class="ps"><b>红线 1</b>。个人主体无「社交」类目</td></tr>
-        <tr><td class="no">5</td><td class="nm">「更多作品」/ 作品列表页入口</td><td class="ps"><b>红线 1</b>。可枚举入口 = 公开内容区</td></tr>
-        <tr><td class="no">6</td><td class="nm">漫展名做成平台维护的枚举字典</td><td class="ps"><b>红线 3</b>。必须是自由文本。做成「展会页」= 双违规</td></tr>
-        <tr><td class="no">7</td><td class="nm">备注里写「平台」二字</td><td class="ps"><b>上次驳回的直接根因。</b>对外文案「撮合 / 平台 / 交易」三词一律删除，改「展示 / 预约 / 咨询」</td></tr>
-        <tr><td class="no">8</td><td class="nm">用「订单」这个词</td><td class="ps">个人版「信息查询」比非个人版<b>少了「订单」二字</b> → 全站用「<b>预约单</b>」</td></tr>
-        <tr><td class="no">9</td><td class="nm">用真实化妆师的照片和信息</td><td class="ps"><b>审核期是公开可查的。</b>全部用「示例」/ <code>demo_makeup</code> / 占位图</td></tr>
-        <tr><td class="no">10</td><td class="nm">「功能开发中」类提示文案</td><td class="ps">等于主动承认功能不完整</td></tr>
-        <tr><td class="no">11</td><td class="nm">开启 <span class="k">onShareTimeline</span>（分享到朋友圈）</td><td class="ps"><b>M0 禁止</b>：朋友圈打开进「小程序单页模式」，路由 API 全禁用 + <span class="k">wx.login</span> 不可用 → <b>【选这个妆位】点不动 + C1 拉不到数据会白屏</b>。见 §3.1</td></tr>
-        <tr><td class="no">12</td><td class="nm">诱导分享（分享得奖励 / 必须先分享才能继续）</td><td class="ps">微信明令禁止，且是「邀请有奖」的变体 —— <b>它同时踩平台规则和类目红线</b></td></tr>
-        <tr><td class="no">13</td><td class="nm">自定义分享面板 / 分享图自己画</td><td class="ps">原生转发已经全有。<b>自己画只会更差，还多一个「诱导分享」的嫌疑面</b></td></tr>
+        <tr class="rl"><td class="no">1</td><td class="nm">「邀请同行」/「邀请有奖」</td><td class="ps"><b>多商户入驻最直接的证据。</b>它最容易被当成「增长手段」加进来</td></tr>
+        <tr class="rl"><td class="no">2</td><td class="nm">「浏览所有化妆师」入口</td><td class="ps">立刻是平台。<b>个人主体没有平台类目可申请 = 无解</b></td></tr>
+        <tr class="rl"><td class="no">3</td><td class="nm">顾客端出现任何金额</td><td class="ps"><b>红线 2</b>。妆位不带价格字段，定金只标「已收 / 未收」<br>⚠️ <b>妆师端有 ¥ 是对的</b>（自己记账），别误删</td></tr>
+        <tr class="rl"><td class="no">4</td><td class="nm">点赞 / 评论 / 收藏 / 浏览数</td><td class="ps"><b>红线 1</b>。个人主体无「社交」类目</td></tr>
+        <tr class="rl"><td class="no">5</td><td class="nm">「更多作品」/ 作品列表页入口</td><td class="ps"><b>红线 1</b>。可枚举入口 = 公开内容区<br>📌 <b>妆娘的「我的作品」整块已经删掉了</b>（不是延后）—— 见下面的说明</td></tr>
+        <tr class="rl"><td class="no">6</td><td class="nm">漫展名做成平台维护的枚举字典</td><td class="ps"><b>红线 3</b>。必须是<b>自由文本</b>。做成「展会页」= 双违规</td></tr>
+        <tr class="rl"><td class="no">7</td><td class="nm">对外文案里写「平台」二字</td><td class="ps"><b>上次驳回的直接根因。</b>「撮合 / 平台 / 交易」三词一律删除，改「展示 / 预约 / 咨询」</td></tr>
+        <tr class="rl"><td class="no">8</td><td class="nm">用「订单」这个词</td><td class="ps">个人版类目比非个人版<b>少了「订单」二字</b> ⇒ 全站一律用「<b>预约单</b>」</td></tr>
+        <tr class="rl"><td class="no">9</td><td class="nm">用真实化妆师的照片和信息</td><td class="ps"><b>审核期是公开可查的。</b>全部用「示例」/ <code>demo_makeup</code> / 占位块</td></tr>
+        <tr class="rl"><td class="no">10</td><td class="nm">「功能开发中」类提示文案</td><td class="ps">等于主动承认功能不完整</td></tr>
+        <tr><td class="no">11</td><td class="nm">在<b>控不了落点</b>的地方开分享</td><td class="ps">⚠️ <b>本条 2026-10-02 已改口径</b>（原来写的是「M0 禁止开 <span class="k">onShareTimeline</span>」）。<br>
+          <b>现在的事实是：转发（<span class="k">onShareAppMessage</span>）18 页全开、落点统一到妆位页；朋友圈（<span class="k">onShareTimeline</span>）只给 C1 开。</b><br>
+          判据从「禁止某个 API」换成「<b>卡片落点控不控得住</b>」——<b>朋友圈不能自定义页面路径</b>，
+          所以只有在「落点就是这一页」时才允许开。其余 17 页一开，妆娘从管理页发出去，
+          别人点开看到的是<b>她的管理界面、按钮全是死的</b>（她自己还看不见那张卡片）。<br>
+          ✅ 单页模式那三处降级（导航栏 / 复制微信号 / 选这个妆位）已按 <span class="k">scene 1154</span> 做掉</td></tr>
+        <tr class="rl"><td class="no">12</td><td class="nm">诱导分享（分享得奖励 / 必须先分享才能继续）</td><td class="ps">微信明令禁止，且是「邀请有奖」的变体 —— <b>同时踩平台规则和类目红线</b></td></tr>
+        <tr><td class="no">13</td><td class="nm">自定义分享面板 / 分享图自己画</td><td class="ps">原生转发已经全有。<b>自己画只会更差，还多一个「诱导分享」的嫌疑面</b><br>
+          ✅ 2026-10-02 清掉了两处<b>读起来像在做分享、其实什么都没做</b>的死代码：
+          一组为「从没造出来的分享按钮」预留的 <span class="k">.btn-share</span> 样式，和隐私指引里的 <span class="k">shareTicket</span> 字样
+          （那是<b>实际不成立的收集声明</b>）</td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="note">
-    <b>对外文案红线（本文件已全部遵守，照着抄即可）：</b><br>
-    「妆娘」→ 一律写「<b>化妆师</b>」 · 「戳 / 戳一下」→ 属内部代号，对外写「<b>询问档期</b>」 · 「撮合 / 平台 / 交易」→ 一律删除，改「<b>展示 / 预约 / 咨询</b>」。
+  <div class="note red">
+    🔴 <b>第 5 条为什么值得单独说：</b>「我的作品」不是做不出来 ——
+    上传本身零技术障碍，<b>卡住的是「给谁看」</b>。<br>
+    妆娘上传的图<b>给顾客看</b>就是个人主体未开放的「<b>社交-笔记</b>」类目（驳回原话正是这一条）；
+    <b>不给顾客看</b>又对她本人零价值。⇒ <b>不是不值得做，是不该做。</b>
+  </div>
+
+  <div class="note warn">
+    <b>对外文案红线（旧版定的，⚠️ 下面有一处和现状对不上）：</b><br>
+    「妆娘」→ 一律写「<b>化妆师</b>」 · 「戳 / 戳一下」→ 对外写「<b>询问档期</b>」 ·
+    「撮合 / 平台 / 交易」→ 一律删除，改「<b>展示 / 预约 / 咨询</b>」。
+  </div>
+
+  <div class="note red">
+    ⏳ <b>待决：这条文案红线，代码其实没有全遵守。</b><br>
+    界面上的用户可见文案里，「妆娘」出现在这些地方（都是 <span class="k">.wxml</span> 里的真文案，不是注释）：<br>
+    <span class="k">role-select</span>「妆娘的排班本 + 接单本」 · <span class="k">role-select</span>「等妆娘联系」 ·
+    <span class="k">landing</span>「这位妆娘还没有可约的妆位」 · <span class="k">artist-list</span>「这些都是你约过的妆娘」 ·
+    <span class="k">booking-form</span>「妆娘靠它认人 / 妆娘加你微信用的」 · <span class="k">guest-bookings</span>「妆娘会主动联系你」。<br>
+    ⇒ <b>两条路二选一，得用户拍板：</b>要么<b>改代码</b>把用户可见的「妆娘」全换成「化妆师」，
+    要么<b>改这份规矩</b>（承认「妆娘」是圈内通用称呼、可对外用）。<br>
+    ⚠️ 在这件事定下来之前，<b>别把这一条打成勾</b> —— 驳回根因就是文案，这是真风险，不是洁癖。
   </div>
 </section>
 
-<!-- ══════════════════ 8 假数据 ══════════════════ -->
+<!-- ══════════════════ 9 数据 ══════════════════ -->
 <section id="data">
-  <h2 class="sec"><span class="n">8</span>假数据预置（照这个建）</h2>
+  <h2 class="sec"><span class="n">9</span>数据：三层，各管各的</h2>
   <p class="lead">
-    M0 只需要 4 条假数据就能撑起两屏。<b>全部用明显是示例的数据</b> —— 审核期是公开可查的。
+    现在<b>没有后端</b>（M0 阶段）。数据分三层，<b>每层的职责是死的，⛔ 不许越界</b>。
   </p>
 
-  <div class="chk">
-    <div class="hd"><span>🗃 假数据 · 4 项</span><span class="ct">建完就不用再动了</span></div>
+  <div class="grid2">
+    <div class="note" style="margin:0">
+      <b>① 只读夹具</b> <span class="k">mock/data.js</span><br>
+      「世界上有哪些人、哪些演示数据」。<b>⛔ 从不被写</b>。<br>
+      里面住着 3 位演示妆娘的公开资料、2 位妆娘的档期、演示模板和预约单。
+    </div>
+    <div class="note" style="margin:0">
+      <b>② 本机 storage</b> · 7 个 key<br>
+      她自己改出来的东西。<b>这一层才是「她的」</b>。
+    </div>
+  </div>
+
+  <div class="chk" style="margin-top:14px">
+    <div class="hd"><span>🔑 7 个 storage key</span><span class="ct">全部 <span class="k">zhuangli_</span> 前缀</span></div>
     <table class="spec">
-      <thead><tr><th>表 / 位置</th><th>记录</th><th>关键字段值</th></tr></thead>
+      <thead><tr><th>key</th><th>存什么</th></tr></thead>
       <tbody>
-        <tr><td class="ps"><span class="k">artists</span></td><td class="nm">1 条（示意化妆师）</td><td class="ps">昵称「<b>示例</b>」 · 城市「上海」 · 妆感标签「建模感 / 浓系 / 展妆」 · <span class="k">wechat_id</span> = <code>demo_makeup</code> · 展示开关 = <b>开</b></td></tr>
-        <tr><td class="ps"><span class="k">schedules</span></td><td class="nm">1 条（示例漫展）</td><td class="ps">名称「<b>示例漫展</b>」（自由文本） · 日期 2026-05-02</td></tr>
-        <tr><td class="ps"><span class="k">slots</span></td><td class="nm">3 条</td><td class="ps">① 09:00–10:20 <b>已约</b> · ② 10:30–11:50 可约 · ③ 13:00–14:20 可约<br>「已约」= 存在一条 <span class="k">status ∈ {pending, confirmed}</span> 的预约单</td></tr>
-        <tr><td class="ps">云存储</td><td class="nm">3 张占位图</td><td class="ps">纯色块或「占位图」字样。<b>不要用真人照片，避免肖像权问题</b></td></tr>
+        <tr><td class="nm"><span class="k">zhuangli_role</span></td><td class="ps">当前身份（<span class="k">'artist'</span> / <span class="k">'guest'</span>）</td></tr>
+        <tr><td class="nm"><span class="k">zhuangli_schedules</span></td><td class="ps">她建的档期。<b>含已软删除的</b>（<span class="k">status:'cancelled'</span>）—— 展示时滤、<b>写回时用原始列表</b></td></tr>
+        <tr><td class="nm"><span class="k">zhuangli_templates</span></td><td class="ps">她存的档期模板</td></tr>
+        <tr><td class="nm"><span class="k">zhuangli_artist</span></td><td class="ps">她的公开资料（昵称 / 城市 / 风格 / 简介 / 头像色令牌）</td></tr>
+        <tr><td class="nm"><span class="k">zhuangli_fab_tpl</span></td><td class="ps">模板页那个圆「＋」被拖到哪儿了</td></tr>
+        <tr><td class="nm"><span class="k">zhuangli_bk_sched</span></td><td class="ps">预约单页上次选的场次</td></tr>
+        <tr><td class="nm"><span class="k">zhuangli_bk_hist</span></td><td class="ps">预约单页的搜索历史（≤10 条）</td></tr>
       </tbody>
     </table>
   </div>
 
-  <div class="note warn">
-    ⚠️ <b>假数据的一个隐藏作用：它同时也是「微信号不会泄漏」这条的实现验证。</b><br>
-    <span class="k">artists.wechat_id</span> <b>绝不能出现在主页接口的返回值里</b>，只能由 <span class="k">showContact</span> 这类云函数校验后单独返回 ——
-    <b>这是全项目最容易写错、也最致命的一处</b>。M0 只有 1 条假数据，是把它写对的最好时机。
+  <div class="note red" style="margin-top:16px">
+    🔴 <b>「展示用过滤的、写回用原始的」——这条是拿真 bug 换来的。</b><br>
+    <span class="k">addSchedule</span> / <span class="k">updateSchedule</span> 原先拿<b>滤过 cancelled 的</b>
+    <span class="k">getSchedules()</span> 当底稿写回 storage，<b>把软删除的记录真删了</b>。<br>
+    触发路径普通得吓人：<b>取消 A → 点开 B 的详情页</b>（那一页 <span class="k">onLoad</span> 里就有一次
+    <span class="k">updateSchedule</span>）。<br>
+    ⇒ 拆出 <span class="k">rawList()</span>。<b>⛔ 别再让「读」和「写」走同一个被过滤过的函数。</b><br>
+    ⚠️ 这个 bug <b>自测一路绿着放过</b> —— 因为只查了「刚取消完那一瞬间」。
+    <b>要抓它必须在中间插一次别的写操作。</b>
   </div>
 
-  <h3 class="sub">8.1 🔴 M0 提审的两件「后台动作」——跟代码无关，但漏了就提不了审</h3>
+  <h3 class="sub">9.1 微信号的隔离契约（全项目最要紧的一处）</h3>
+  <div class="note red" style="margin-top:0">
+    🔴 <b>演示数据里也是真的：三个集合，职责不许混。</b>
+  </div>
+  <div class="chk">
+    <table class="spec">
+      <thead><tr><th>名字</th><th>里面有什么</th><th>谁看得到</th></tr></thead>
+      <tbody>
+        <tr><td class="nm"><span class="k">ARTIST_PUBLIC</span></td><td class="ps">她自己的公开资料（<b>降级成 seed</b>，第一次进来播种进 storage）</td><td class="ps">—</td></tr>
+        <tr><td class="nm"><span class="k">ARTIST_DIRECTORY</span></td><td class="ps">顾客端能看到的 3 位妆娘的<b>公开资料</b>（7 个键：id / 昵称 / 城市 / 标签 / 风格 / 简介 / 头像色）</td><td class="ps">顾客</td></tr>
+        <tr><td class="nm"><span class="k">ARTIST_CONTACT</span></td><td class="ps"><b>微信号</b> + 展示开关</td><td class="ps">⛔ 只有 <span class="k">utils/contact.js</span> 拿得到</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note warn">
+    ⚠️ <b><span class="k">ARTIST_DIRECTORY</span> 里永远没有 <span class="k">wechat_id</span></b> ——
+    自测里钉着。微信号的<b>唯一出口</b>是 <span class="k">getContact()</span>。<br>
+    ⚠️ 演示数据也守「私人记录」那条：那 3 位<b>每一位都至少有一条「我约过她」的单</b>。
+  </div>
 
+  <h3 class="sub">9.2 ③ 云开发 · 目前只有一条通道</h3>
+  <div class="chk">
+    <table class="spec">
+      <tbody>
+        <tr><td class="nm">环境</td><td class="ps"><span class="k">cloud1-d0gir0d3e31de18ba</span></td></tr>
+        <tr><td class="nm">唯一的集合</td><td class="ps"><span class="k">feedback</span>，权限「<b>仅创建者可读写</b>」</td></tr>
+        <tr><td class="nm">唯一的写入</td><td class="ps">问题反馈页 —— 只写 <span class="k">{ text, created_at }</span>，<b>⛔ 不带任何本机隐私</b></td></tr>
+        <tr><td class="nm">验证状态</td><td class="ps">✅ <b>端到端走通过一遍</b>（用户自己试的）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note warn">
+    ⚠️ <b>自测里那条云端断言是按「配没配」分两支写的，两支都必须绿</b> ——
+    所以「全绿」的<b>条数会跟着配置变</b>。看到条数不一样先别慌，先看环境配没配。
+  </div>
+
+  <h3 class="sub">9.3 提审前必须做完的后台动作</h3>
   <div class="note warn">
     ① <b>《用户隐私保护指引》要配置并发布</b> —— 填表页收集微信号 / 紧急联系方式，属于采集用户信息。<br>
-    ② <b>提审时「是否采集用户隐私」必须勾「采集」</b> —— 官方文档写明：<b>勾了「未采集隐私」或未声明隐私协议，平台会回收接口调用权限</b>。
-    报错长这样：<span class="k">fail appid privacy api banned</span>（权限被回收）；<span class="k">errno 112</span>（用了某个隐私类型但没在指引里声明，补齐后约 5 分钟生效）。
+    ② <b>提审时「是否采集用户隐私」必须勾「采集」</b> ——
+    官方文档写明：<b>勾了「未采集隐私」或未声明隐私协议，平台会回收接口调用权限</b>。<br>
+    报错长这样：<span class="k">fail appid privacy api banned</span>（权限被回收）；
+    <span class="k">errno 112</span>（用了某个隐私类型但没在指引里声明，补齐后约 5 分钟生效）。<br>
+    ⚠️ <b>反馈页可能要因此加一条</b>（收集「用户主动填写的内容」原来没有对应条目）。
+    ⚠️ 2026-10-02 <b>从指引里删掉了 <span class="k">shareTicket</span> 字样</b> —— 那是<b>实际不成立的收集声明</b>。
   </div>
-
   <div class="note ok">
-    ✅ <b>好消息：M0 不需要画「隐私授权弹窗」，不加屏。</b><br>
-    那个弹窗只在调用<b>隐私接口 / 组件</b>（<span class="k">chooseMedia</span> / <span class="k">chooseAvatar</span> / <span class="k">getLocation</span> 等）时才触发；
-    M0 全是手输 <span class="k">&lt;input&gt;</span> + 假数据，<b>一个都不碰</b>。<br>
-    ⚠️ 但 M1 一旦做化妆师上传头像 / 样片（<span class="k">chooseMedia</span>），弹窗就必须做 —— 那时要注册 <span class="k">wx.onNeedPrivacyAuthorization</span> 自己画，或用平台默认弹窗。
+    ✅ <b>不需要画「隐私授权弹窗」，不加屏。</b><br>
+    那个弹窗只在调用<b>隐私接口 / 组件</b>（<span class="k">chooseMedia</span> / <span class="k">chooseAvatar</span> /
+    <span class="k">getLocation</span> 等）时才触发；现在<b>全是手输 <span class="k">&lt;input&gt;</span> + 假数据，一个都不碰</b>。<br>
+    ⚠️ 一旦要做「妆娘上传头像 / 样片」（<span class="k">chooseMedia</span>），弹窗就必须做 ——
+    <b>而且那件事还撞着「社交-笔记」类目</b>，所以它现在整块是**不做**，不是延后。
   </div>
 
-  <div class="note ok" style="margin-bottom:0">
-    ✅ <b>M0 做完之后，回头看的顺序</b>：<br>
-    ① 真机走 §5.1 那两条路径各三遍 → ② 逐条打勾 §8 的 13 条红线 → ③ 配好 §8.1 那两件后台动作 → ④ 拍 A1 + C1 两张截图 → ⑤ 提交。<br>
-    <b>⚠️ 提醒：类目通过之前提不了审</b>（版本提审用的是已生效的类目），所以类目审核的等待时间和 M0 的 2 天是同一个窗口，可以并行。
+  <h3 class="sub">9.4 提审前最后一遍</h3>
+  <div class="flow">
+    <span class="n2">① 真机走一遍</span><span class="ar">→</span>
+    <span class="n2">② 逐条打勾 §8 的 13 条</span><span class="ar">→</span>
+    <span class="n2">③ 配好 §9.3 两件后台动作</span><span class="ar">→</span>
+    <span class="n2">④ 拍截图</span><span class="ar">→</span>
+    <span class="n2 p">⑤ 提交</span>
+  </div>
+  <div class="note red" style="margin-bottom:0">
+    🔴 <b>要重拍的截图：</b>底栏变成三格了（两格那份作废）·「我的」页只剩三行 ·
+    C1 上多了「简介」一段 · 要有「两场档期」而不是空态。<br>
+    📌 <b>提醒：类目通过之前提不了审</b>（版本提审用的是已生效的类目）。
   </div>
 </section>
+
+<div class="note" style="margin-top:34px;margin-bottom:0">
+  <b>这份文件怎么维护：</b>它是<b>代码的镜像</b>，不是计划。<br>
+  ⇒ <b>改了界面就回来改这里</b>；两边不一致时<b>以代码为准</b>，然后把这份改过来。<br>
+  ⇒ 改的时候<b>优先改文字，其次才动编号</b> —— 编号一旦重排，§6 那张清单就得跟着重排。<br>
+  ⇒ 历史版本在 git 里（本文件的前身是 2026-09-29 的《妆历 M0 试提审包 界面稿》，见提交 <span class="k">3ed48e4</span> 及之前）。
+</div>
 
 </div>
 
 <script>
-/* M0 界面稿的走查辅助：点带 data-goto 的控件 → 滚到真实落点并高亮。
+/* 走查辅助：点带 data-goto 的控件 → 滚到真实落点并高亮。
    只用于这份稿子的自查，与小程序实现无关。 */
 document.querySelectorAll('[data-goto]').forEach(function (el) {
   el.addEventListener('click', function (e) {
