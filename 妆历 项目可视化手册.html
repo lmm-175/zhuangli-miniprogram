@@ -325,7 +325,7 @@ table.matrix td.nm{font-weight:700;white-space:nowrap}
 <!-- ══════════════════ 封面 ══════════════════ -->
 <div class="hero">
   <div class="in">
-    <div class="kicker">微信小程序 · 个人独立项目 · M0 试提审</div>
+    <div class="kicker">微信小程序 · 个人独立项目 · M0 已上线</div>
     <h1>妆历<small>ZHUANGLI · 项目可视化手册</small></h1>
     <p class="tagline">化妆师的排班本 + 接单本。</p>
     <p class="desc">
@@ -1605,14 +1605,36 @@ table.matrix td.nm{font-weight:700;white-space:nowrap}
       <p>18 页转发统一落点；朋友圈只开 C1；隐私指引删掉不成立的收集声明；界面稿 v2.0、PRD 重写为「需求 + 现状对照」。</p>
     </div>
     <div class="tl-item">
+      <div class="when">2026-10</div>
+      <h3>M0 审核通过，小程序正式上线</h3>
+      <p>个人主体、类目「工具 - 预约/报名」，首版 18 页全部可用：妆娘排班 → 分享妆位 → 顾客选位 → 预约单处理，主流程闭环跑通。数据仍在本机 storage，只有「问题反馈」写云开发。</p>
+    </div>
+    <div class="tl-item">
       <div class="when">现在</div>
-      <h3>M0 提审准备：截图、红线自查、可点性走查</h3>
-      <p>1,395 条断言全绿；18 页 / 73 个可点元素逐条点得动；个人主体类目主选「工具 - 预约/报名」，ICP 备案已办。</p>
+      <h3>上线后维护：小步改动，每次都给一个可回滚的版本</h3>
+      <p>1,395 条断言保持全绿；下一步是订阅消息、云同步、顾客端独立详情页，仍然守 B1 / B2 / B3 三条红线。</p>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3>版本管理</h3>
+      <p>
+        本地 Git 仓库 + 私有远程仓库。每改完一处就 <span class="k">git add .</span> + <span class="k">git commit</span>，提交信息写「改了什么」，留一个可回滚的版本。<br>
+        推送后核对远程文件数与关键文件哈希，再 clone 到临时目录跑一遍自测 —— <b>「push 成功」不等于「备份上了」</b>。
+      </p>
+    </div>
+    <div class="card">
+      <h3>文档与代码同步</h3>
+      <p>
+        每个修复都同时落三处：自测里一条会「咬人」的断言、README 的「第 N 处沿革」、本手册里对应的流程或规则。<br>
+        文档不单独维护「理想状态」，只记录代码此刻真实的样子 —— 否则下一个人会照着一段过期的说明改代码。
+      </p>
     </div>
   </div>
 
   <div class="callout info">
-    <b>关于订阅消息：M0 刻意不做。</b>
+    <b>关于订阅消息：M0 刻意不做，上线版本里也没有。</b>
     订阅消息模板库按类目发放，换成「工具 - 预约/报名」后「预约提醒」还能不能申请到，要重新查；
     而且一次性订阅每次都要用户点击，在提审阶段引入会多一项审核内容，也容易做出「点了没反应」。
     代码里只在 <span class="k">onSubmit</span> 留了位置注释，M1 再做。
